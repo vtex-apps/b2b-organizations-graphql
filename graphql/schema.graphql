@@ -1,0 +1,146 @@
+type Query {
+  getAppSettings: SettingsResponse @cacheControl(scope: PRIVATE)
+  getOrganizationRequests(
+    status: [String]
+    search: String
+    page: Int = 1
+    pageSize: Int = 25
+    sortOrder: String = "DESC"
+    sortedBy: String = "created"
+  ): OrganizationRequestResult @cacheControl(scope: PRIVATE)
+  getOrganizationRequestById(id: ID!): OrganizationRequest
+    @cacheControl(scope: PRIVATE)
+  getOrganizations(
+    status: [String]
+    search: String
+    page: Int = 1
+    pageSize: Int = 25
+    sortOrder: String = "DESC"
+    sortedBy: String = "created"
+  ): OrganizationResult @cacheControl(scope: PRIVATE)
+  getOrganizationById(id: ID!): Organization @cacheControl(scope: PRIVATE)
+  getCostCentersByOrganizationId(
+    id: ID!
+    search: String
+    page: Int = 1
+    pageSize: Int = 25
+    sortOrder: String = "ASC"
+    sortedBy: String = "name"
+  ): CostCenterResult @cacheControl(scope: PRIVATE)
+  getCostCenterById(id: ID!): CostCenter @cacheControl(scope: PRIVATE)
+}
+
+type Mutation {
+  saveAppSettings: MutationResponse
+  createOrganizationRequest(input: OrganizationInput!): MasterDataResponse
+    @withUserDetails
+  updateOrganizationRequest(
+    id: ID!
+    status: String!
+    notes: String
+  ): MutationResponse
+  deleteOrganizationRequest(id: ID!): MutationResponse
+  createOrganization(input: OrganizationInput!): MasterDataResponse
+  createCostCenter(
+    organizationId: ID!
+    input: CostCenterInput!
+  ): MasterDataResponse
+  updateOrganization(id: ID!, status: String!): MutationResponse
+  updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
+  deleteOrganization(id: ID!): MutationResponse
+  deleteCostCenter(id: ID!): MutationResponse
+}
+
+type SettingsResponse {
+  adminSetup: Data
+}
+
+type OrganizationRequestResult {
+  data: [OrganizationRequest]
+  pagination: Pagination
+}
+
+type OrganizationResult {
+  data: [Organization]
+  pagination: Pagination
+}
+
+type CostCenterResult {
+  data: [CostCenter]
+  pagination: Pagination
+}
+
+type Pagination {
+  page: Int
+  pageSize: Int
+  total: Int
+}
+
+type OrganizationRequest {
+  id: ID
+  name: String
+  defaultCostCenter: DefaultCostCenter
+  b2bCustomerAdmin: String
+  status: String
+  notes: String
+  created: String
+}
+
+type DefaultCostCenter {
+  name: String
+  address: Address
+}
+
+type Organization {
+  id: ID
+  name: String
+  costCenters: [ID]
+}
+
+type CostCenter {
+  id: ID
+  name: String
+  organization: ID
+  address: Address
+}
+
+type Address {
+  line1: String
+  line2: String
+  city: String
+  state: String
+  postalCode: String
+  country: String
+}
+
+type MasterDataResponse {
+  id: String
+  href: String
+}
+
+type MutationResponse {
+  id: String
+  status: String
+  message: String
+}
+
+scalar Data
+
+input OrganizationInput {
+  name: String
+  defaultCostCenter: CostCenterInput
+}
+
+input CostCenterInput {
+  name: String
+  address: AddressInput
+}
+
+input AddressInput {
+  line1: String
+  line2: String
+  city: String
+  state: String
+  postalCode: String
+  country: String
+}

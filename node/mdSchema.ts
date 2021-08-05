@@ -1,0 +1,102 @@
+export const ORGANIZATION_REQUEST_DATA_ENTITY = 'organization_requests'
+export const ORGANIZATION_REQUEST_FIELDS = [
+  'name',
+  'defaultCostCenter',
+  'b2bCustomerAdmin',
+  'status',
+  'created',
+]
+export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.0.1'
+
+export const ORGANIZATION_DATA_ENTITY = 'organizations'
+export const ORGANIZATION_FIELDS = ['name', 'costCenters', 'status']
+export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.1'
+
+export const COST_CENTER_DATA_ENTITY = 'cost_centers'
+export const COST_CENTER_FIELDS = ['name', 'address', 'organization']
+export const COST_CENTER_SCHEMA_VERSION = 'v0.0.1'
+
+export const schemas = [
+  {
+    name: ORGANIZATION_REQUEST_DATA_ENTITY,
+    version: ORGANIZATION_REQUEST_SCHEMA_VERSION,
+    body: {
+      properties: {
+        name: {
+          type: 'string',
+          title: 'Name',
+        },
+        defaultCostCenter: {
+          type: 'object',
+          title: 'Default Cost Center',
+        },
+        b2bCustomerAdmin: {
+          type: 'string',
+          title: 'B2B Customer Admin',
+        },
+        status: {
+          type: 'string',
+          title: 'Status',
+        },
+        notes: {
+          type: 'string',
+          title: 'Notes',
+        },
+        created: {
+          type: 'string',
+          title: 'Created',
+        },
+      },
+      'v-indexed': ['name', 'status', 'created'],
+      'v-cache': false,
+    },
+  },
+  {
+    name: ORGANIZATION_DATA_ENTITY,
+    version: ORGANIZATION_SCHEMA_VERSION,
+    body: {
+      properties: {
+        name: {
+          type: 'string',
+          title: 'Name',
+        },
+        costCenters: {
+          type: 'array',
+          title: 'Cost Centers',
+        },
+        status: {
+          type: 'string',
+          title: 'Status',
+        },
+        created: {
+          type: 'string',
+          title: 'Created',
+        },
+      },
+      'v-indexed': ['name', 'status'],
+      'v-cache': false,
+    },
+  },
+  {
+    name: COST_CENTER_DATA_ENTITY,
+    version: COST_CENTER_SCHEMA_VERSION,
+    body: {
+      properties: {
+        name: {
+          type: 'string',
+          title: 'Name',
+        },
+        address: {
+          type: 'object',
+          title: 'Address',
+        },
+        organization: {
+          type: 'string',
+          title: 'Organization',
+        },
+      },
+      'v-indexed': ['name', 'organization'],
+      'v-cache': false,
+    },
+  },
+]

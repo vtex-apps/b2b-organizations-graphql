@@ -1,0 +1,1 @@
+directive @withUserDetails on FIELD | FIELD_DEFINITION
