@@ -565,6 +565,7 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+        vtex: { logger },
       } = ctx
 
       const whereArray = []
@@ -575,7 +576,7 @@ export const resolvers = {
         status.forEach((stat) => {
           statusArray.push(`status=${stat}`)
         })
-        const statuses = `(${statusArray.join(' OR ')}`
+        const statuses = `(${statusArray.join(' OR ')})`
 
         whereArray.push(statuses)
       }
@@ -596,6 +597,10 @@ export const resolvers = {
 
         return organizationRequests
       } catch (e) {
+        logger.error({
+          message: 'getOrganizationRequests-error',
+          error: e,
+        })
         if (e.message) {
           throw new GraphQLError(e.message)
         } else if (e.response?.data?.message) {
@@ -653,6 +658,7 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+        vtex: { logger },
       } = ctx
 
       const whereArray = []
@@ -663,7 +669,7 @@ export const resolvers = {
         status.forEach((stat) => {
           statusArray.push(`status=${stat}`)
         })
-        const statuses = `(${statusArray.join(' OR ')}`
+        const statuses = `(${statusArray.join(' OR ')})`
 
         whereArray.push(statuses)
       }
@@ -684,6 +690,10 @@ export const resolvers = {
 
         return organizations
       } catch (e) {
+        logger.error({
+          message: 'getOrganizations-error',
+          error: e,
+        })
         if (e.message) {
           throw new GraphQLError(e.message)
         } else if (e.response?.data?.message) {

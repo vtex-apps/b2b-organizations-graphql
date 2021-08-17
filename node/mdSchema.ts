@@ -1,5 +1,6 @@
 export const ORGANIZATION_REQUEST_DATA_ENTITY = 'organization_requests'
 export const ORGANIZATION_REQUEST_FIELDS = [
+  'id',
   'name',
   'defaultCostCenter',
   'b2bCustomerAdmin',
@@ -9,11 +10,17 @@ export const ORGANIZATION_REQUEST_FIELDS = [
 export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.0.1'
 
 export const ORGANIZATION_DATA_ENTITY = 'organizations'
-export const ORGANIZATION_FIELDS = ['name', 'costCenters', 'status']
+export const ORGANIZATION_FIELDS = [
+  'id',
+  'name',
+  'costCenters',
+  'status',
+  'created',
+]
 export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.1'
 
 export const COST_CENTER_DATA_ENTITY = 'cost_centers'
-export const COST_CENTER_FIELDS = ['name', 'address', 'organization']
+export const COST_CENTER_FIELDS = ['id', 'name', 'address', 'organization']
 export const COST_CENTER_SCHEMA_VERSION = 'v0.0.1'
 
 export const schemas = [

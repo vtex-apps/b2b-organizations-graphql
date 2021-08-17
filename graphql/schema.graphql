@@ -16,7 +16,7 @@ type Query {
     page: Int = 1
     pageSize: Int = 25
     sortOrder: String = "DESC"
-    sortedBy: String = "created"
+    sortedBy: String = "name"
   ): OrganizationResult @cacheControl(scope: PRIVATE)
   getOrganizationById(id: ID!): Organization @cacheControl(scope: PRIVATE)
   getCostCentersByOrganizationId(
@@ -95,6 +95,8 @@ type Organization {
   id: ID
   name: String
   costCenters: [ID]
+  status: String
+  created: String
 }
 
 type CostCenter {
