@@ -67,6 +67,14 @@ export const schemas = [
           type: 'string',
           title: 'Name',
         },
+        collections: {
+          type: 'array',
+          title: 'Collections',
+        },
+        priceTables: {
+          type: 'array',
+          title: 'Price Tables',
+        },
         costCenters: {
           type: 'array',
           title: 'Cost Centers',
@@ -93,9 +101,9 @@ export const schemas = [
           type: 'string',
           title: 'Name',
         },
-        address: {
-          type: 'object',
-          title: 'Address',
+        addresses: {
+          type: 'array',
+          title: 'Addresses',
         },
         organization: {
           type: 'string',

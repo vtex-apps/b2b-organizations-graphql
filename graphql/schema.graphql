@@ -45,7 +45,12 @@ type Mutation {
     organizationId: ID!
     input: CostCenterInput!
   ): MasterDataResponse
-  updateOrganization(id: ID!, status: String!): MutationResponse
+  updateOrganization(
+    id: ID!
+    status: String!
+    collections: [CollectionInput]
+    priceTables: [PriceTableInput]
+  ): MutationResponse
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
   deleteOrganization(id: ID!): MutationResponse
   deleteCostCenter(id: ID!): MutationResponse
@@ -94,25 +99,42 @@ type DefaultCostCenter {
 type Organization {
   id: ID
   name: String
+  collections: [Collection]
+  priceTables: [PriceTable]
   costCenters: [ID]
   status: String
   created: String
+}
+
+type Collection {
+  id: String
+  name: String
+}
+
+type PriceTable {
+  name: String
 }
 
 type CostCenter {
   id: ID
   name: String
   organization: ID
-  address: Address
+  addresses: [Address]
 }
 
 type Address {
-  line1: String
-  line2: String
-  city: String
-  state: String
+  addressId: String
+  addressType: String
   postalCode: String
   country: String
+  receiverName: String
+  city: String
+  state: String
+  street: String
+  number: String
+  complement: String
+  neighborhood: String
+  geoCoordinates: [Float]
 }
 
 type MasterDataResponse {
@@ -130,19 +152,39 @@ scalar Data
 
 input OrganizationInput {
   name: String
-  defaultCostCenter: CostCenterInput
+  defaultCostCenter: DefaultCostCenterInput
 }
 
-input CostCenterInput {
+input DefaultCostCenterInput {
   name: String
   address: AddressInput
 }
 
+input CostCenterInput {
+  name: String
+  addresses: [AddressInput]
+}
+
 input AddressInput {
-  line1: String
-  line2: String
-  city: String
-  state: String
+  addressId: String
+  addressType: String
   postalCode: String
   country: String
+  receiverName: String
+  city: String
+  state: String
+  street: String
+  number: String
+  complement: String
+  neighborhood: String
+  geoCoordinates: [Float]
+}
+
+input CollectionInput {
+  id: String
+  name: String
+}
+
+input PriceTableInput {
+  name: String
 }

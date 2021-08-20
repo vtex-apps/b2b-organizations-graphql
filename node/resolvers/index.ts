@@ -21,26 +21,37 @@ const getAppId = (): string => {
 
 interface OrganizationInput {
   name: string
-  defaultCostCenter: CostCenterInput
+  defaultCostCenter: DefaultCostCenterInput
 }
 
-interface CostCenterInput {
+interface DefaultCostCenterInput {
   name: string
   address: AddressInput
 }
 
+interface CostCenterInput {
+  name: string
+  addresses: [AddressInput]
+}
+
 interface AddressInput {
-  line1: string
-  line2: string
-  city: string
-  state: string
+  addressId: string
+  addressType: string
   postalCode: string
   country: string
+  receiverName: string
+  city: string
+  state: string
+  street: string
+  number: string
+  complement: string
+  neighborhood: string
+  geoCoordinates: [number]
 }
 
 interface OrganizationRequest {
   name: string
-  defaultCostCenter: CostCenterInput
+  defaultCostCenter: DefaultCostCenterInput
   b2bCustomerAdmin: string
   status: string
   created: string
@@ -188,6 +199,9 @@ export const resolvers = {
         clients: { masterdata },
       } = ctx
 
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
       if (status === 'approved') {
         // if status is approved:
         const now = new Date()
@@ -217,6 +231,8 @@ export const resolvers = {
             name: organizationRequest.name,
             status: 'active',
             created: now,
+            collections: [],
+            priceTables: [],
             costCenters: [],
           }
 
@@ -229,7 +245,7 @@ export const resolvers = {
           // create cost center
           const costCenter = {
             name: organizationRequest.defaultCostCenter.name,
-            address: organizationRequest.defaultCostCenter.address,
+            addresses: [organizationRequest.defaultCostCenter.address],
             organization: createOrganizationResult.Id,
           }
 
@@ -330,6 +346,8 @@ export const resolvers = {
           name,
           status: 'active',
           created: now,
+          collections: [],
+          priceTables: [],
           costCenters: [],
         }
 
@@ -342,7 +360,7 @@ export const resolvers = {
         // create cost center
         const costCenter = {
           name: defaultCostCenter.name,
-          address: defaultCostCenter.address,
+          addresses: [defaultCostCenter.address],
           organization: createOrganizationResult.Id,
         }
 
@@ -375,7 +393,7 @@ export const resolvers = {
       _: any,
       {
         organizationId,
-        input: { name, address },
+        input: { name, addresses },
       }: { organizationId: string; input: CostCenterInput },
       ctx: Context
     ) => {
@@ -383,10 +401,13 @@ export const resolvers = {
         clients: { masterdata },
       } = ctx
 
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
       try {
         const costCenter = {
           name,
-          address,
+          addresses,
           organization: organizationId,
         }
 
@@ -425,18 +446,26 @@ export const resolvers = {
     },
     updateOrganization: async (
       _: any,
-      { id, status }: { id: string; status: string },
+      {
+        id,
+        status,
+        collections,
+        priceTables,
+      }: { id: string; status: string; collections: any[]; priceTables: any[] },
       ctx: Context
     ) => {
       const {
         clients: { masterdata },
       } = ctx
 
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
       try {
         await masterdata.updatePartialDocument({
           id,
           dataEntity: ORGANIZATION_DATA_ENTITY,
-          fields: { status },
+          fields: { status, collections, priceTables },
         })
 
         return { status: 'success', message: '' }
@@ -452,18 +481,24 @@ export const resolvers = {
     },
     updateCostCenter: async (
       _: any,
-      { id, input: { name, address } }: { id: string; input: CostCenterInput },
+      {
+        id,
+        input: { name, addresses },
+      }: { id: string; input: CostCenterInput },
       ctx: Context
     ) => {
       const {
         clients: { masterdata },
       } = ctx
 
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
       try {
         await masterdata.updatePartialDocument({
           id,
           dataEntity: COST_CENTER_DATA_ENTITY,
-          fields: { name, address },
+          fields: { name, addresses },
         })
 
         return { status: 'success', message: '' }
@@ -568,6 +603,9 @@ export const resolvers = {
         vtex: { logger },
       } = ctx
 
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
       const whereArray = []
 
       if (status?.length) {
@@ -619,6 +657,9 @@ export const resolvers = {
         clients: { masterdata },
       } = ctx
 
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
       try {
         const organizationRequest = await masterdata.getDocument({
           dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -660,6 +701,9 @@ export const resolvers = {
         clients: { masterdata },
         vtex: { logger },
       } = ctx
+
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
 
       const whereArray = []
 
@@ -712,6 +756,9 @@ export const resolvers = {
         clients: { masterdata },
       } = ctx
 
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
       try {
         const organization = await masterdata.getDocument({
           dataEntity: ORGANIZATION_DATA_ENTITY,
@@ -753,6 +800,9 @@ export const resolvers = {
         clients: { masterdata },
       } = ctx
 
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
       const where = `organization=${id}`
 
       try {
@@ -781,6 +831,9 @@ export const resolvers = {
       const {
         clients: { masterdata },
       } = ctx
+
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
 
       try {
         const organization = await masterdata.getDocument({
