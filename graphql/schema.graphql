@@ -85,10 +85,16 @@ type OrganizationRequest {
   id: ID
   name: String
   defaultCostCenter: DefaultCostCenter
-  b2bCustomerAdmin: String
+  b2bCustomerAdmin: B2BUser
   status: String
   notes: String
   created: String
+}
+
+type B2BUser {
+  firstName: String
+  lastName: String
+  email: String
 }
 
 type DefaultCostCenter {
@@ -125,6 +131,7 @@ type CostCenter {
 type Address {
   addressId: String
   addressType: String
+  addressQuery: String
   postalCode: String
   country: String
   receiverName: String
@@ -135,6 +142,7 @@ type Address {
   complement: String
   neighborhood: String
   geoCoordinates: [Float]
+  reference: String
 }
 
 type MasterDataResponse {
@@ -152,7 +160,21 @@ scalar Data
 
 input OrganizationInput {
   name: String
+  b2bCustomerAdmin: B2BUserInput
   defaultCostCenter: DefaultCostCenterInput
+}
+
+input B2BUserInput {
+  firstName: String
+  lastName: String
+  email: String
+}
+
+input B2BUserInputWithRole {
+  firstName: String
+  lastName: String
+  email: String
+  role: String
 }
 
 input DefaultCostCenterInput {
@@ -168,6 +190,7 @@ input CostCenterInput {
 input AddressInput {
   addressId: String
   addressType: String
+  addressQuery: String
   postalCode: String
   country: String
   receiverName: String
@@ -178,6 +201,7 @@ input AddressInput {
   complement: String
   neighborhood: String
   geoCoordinates: [Float]
+  reference: String
 }
 
 input CollectionInput {

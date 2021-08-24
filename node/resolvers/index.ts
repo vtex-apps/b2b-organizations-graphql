@@ -21,8 +21,19 @@ const getAppId = (): string => {
 
 interface OrganizationInput {
   name: string
+  b2bCustomerAdmin: B2BCustomerInput
   defaultCostCenter: DefaultCostCenterInput
 }
+
+interface B2BCustomerInput {
+  firstName: string
+  lastName: string
+  email: string
+}
+
+// interface B2BCustomerInputWithRole extends B2BCustomerInput {
+//   role: string
+// }
 
 interface DefaultCostCenterInput {
   name: string
@@ -123,7 +134,7 @@ const checkConfig = async (ctx: Context) => {
         settings.adminSetup.schemaHash = currHash
       })
       .catch((e) => {
-        if (e.response.status !== 304) {
+        if (e.response?.status !== 304) {
           logger.error({
             message: 'checkConfig-createOrUpdateSchemaError',
             error: e,
@@ -142,7 +153,9 @@ export const resolvers = {
   Mutation: {
     createOrganizationRequest: async (
       _: any,
-      { input: { name, defaultCostCenter } }: { input: OrganizationInput },
+      {
+        input: { name, b2bCustomerAdmin, defaultCostCenter },
+      }: { input: OrganizationInput },
       ctx: Context
     ) => {
       const {
@@ -150,9 +163,9 @@ export const resolvers = {
         vtex: { logger },
       } = ctx
 
-      const b2bCustomerAdmin = (ctx.vtex as any).userEmail
+      // const b2bCustomerAdmin = (ctx.vtex as any).userEmail
 
-      if (!b2bCustomerAdmin) throw new GraphQLError('email-not-found')
+      // if (!b2bCustomerAdmin) throw new GraphQLError('email-not-found')
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
