@@ -33,7 +33,6 @@ type Query {
 type Mutation {
   saveAppSettings: MutationResponse
   createOrganizationRequest(input: OrganizationInput!): MasterDataResponse
-    @withUserDetails
   updateOrganizationRequest(
     id: ID!
     status: String!
@@ -49,7 +48,7 @@ type Mutation {
     id: ID!
     status: String!
     collections: [CollectionInput]
-    priceTables: [PriceTableInput]
+    priceTables: [String]
   ): MutationResponse
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
   deleteOrganization(id: ID!): MutationResponse
@@ -106,7 +105,7 @@ type Organization {
   id: ID
   name: String
   collections: [Collection]
-  priceTables: [PriceTable]
+  priceTables: [String]
   costCenters: [ID]
   status: String
   created: String
@@ -114,10 +113,6 @@ type Organization {
 
 type Collection {
   id: String
-  name: String
-}
-
-type PriceTable {
   name: String
 }
 
@@ -206,9 +201,5 @@ input AddressInput {
 
 input CollectionInput {
   id: String
-  name: String
-}
-
-input PriceTableInput {
   name: String
 }

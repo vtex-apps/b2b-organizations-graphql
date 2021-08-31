@@ -210,6 +210,7 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+        vtex: { logger },
       } = ctx
 
       // create schema if it doesn't exist
@@ -255,11 +256,16 @@ export const resolvers = {
             schema: ORGANIZATION_SCHEMA_VERSION,
           })
 
+          const organizationId = createOrganizationResult.Id.replace(
+            'organizations-',
+            ''
+          )
+
           // create cost center
           const costCenter = {
             name: organizationRequest.defaultCostCenter.name,
             addresses: [organizationRequest.defaultCostCenter.address],
-            organization: createOrganizationResult.Id,
+            organization: organizationId,
           }
 
           const createCostCenterResult = await masterdata.createDocument({
@@ -269,10 +275,14 @@ export const resolvers = {
           })
 
           // update organization with cost center ID
-          masterdata.updatePartialDocument({
-            id: createOrganizationResult.Id,
+          await masterdata.updatePartialDocument({
+            id: organizationId,
             dataEntity: ORGANIZATION_DATA_ENTITY,
-            fields: { costCenters: [createCostCenterResult.Id] },
+            fields: {
+              costCenters: [
+                createCostCenterResult.Id.replace('cost_centers-', ''),
+              ],
+            },
             schema: ORGANIZATION_SCHEMA_VERSION,
           })
 
@@ -282,6 +292,10 @@ export const resolvers = {
 
           return { status: 'success', message: '' }
         } catch (e) {
+          logger.error({
+            message: 'updateOrganizationRequest-error',
+            error: e,
+          })
           if (e.message) {
             throw new GraphQLError(e.message)
           } else if (e.response?.data?.message) {
@@ -346,6 +360,7 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+        vtex: { logger },
       } = ctx
 
       // create schema if it doesn't exist
@@ -393,6 +408,10 @@ export const resolvers = {
 
         return createOrganizationResult
       } catch (e) {
+        logger.error({
+          message: 'createOrganization-error',
+          error: e,
+        })
         if (e.message) {
           throw new GraphQLError(e.message)
         } else if (e.response?.data?.message) {
@@ -412,6 +431,7 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+        vtex: { logger },
       } = ctx
 
       // create schema if it doesn't exist
@@ -448,6 +468,10 @@ export const resolvers = {
 
         return createCostCenterResult
       } catch (e) {
+        logger.error({
+          message: 'createCostCenter-error',
+          error: e,
+        })
         if (e.message) {
           throw new GraphQLError(e.message)
         } else if (e.response?.data?.message) {
@@ -469,6 +493,7 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+        vtex: { logger },
       } = ctx
 
       // create schema if it doesn't exist
@@ -483,6 +508,10 @@ export const resolvers = {
 
         return { status: 'success', message: '' }
       } catch (e) {
+        logger.error({
+          message: 'updateOrganization-error',
+          error: e,
+        })
         if (e.message) {
           throw new GraphQLError(e.message)
         } else if (e.response?.data?.message) {
@@ -502,6 +531,7 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+        vtex: { logger },
       } = ctx
 
       // create schema if it doesn't exist
@@ -516,6 +546,10 @@ export const resolvers = {
 
         return { status: 'success', message: '' }
       } catch (e) {
+        logger.error({
+          message: 'updateCostCenter-error',
+          error: e,
+        })
         if (e.message) {
           throw new GraphQLError(e.message)
         } else if (e.response?.data?.message) {
