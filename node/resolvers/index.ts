@@ -385,11 +385,16 @@ export const resolvers = {
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
 
+        const organizationId = createOrganizationResult.Id.replace(
+          'organizations-',
+          ''
+        )
+
         // create cost center
         const costCenter = {
           name: defaultCostCenter.name,
           addresses: [defaultCostCenter.address],
-          organization: createOrganizationResult.Id,
+          organization: organizationId,
         }
 
         const createCostCenterResult = await masterdata.createDocument({
@@ -400,9 +405,13 @@ export const resolvers = {
 
         // update organization with cost center ID
         masterdata.updatePartialDocument({
-          id: createOrganizationResult.Id,
+          id: organizationId,
           dataEntity: ORGANIZATION_DATA_ENTITY,
-          fields: { costCenters: [createCostCenterResult.Id] },
+          fields: {
+            costCenters: [
+              createCostCenterResult.Id.replace('cost_centers-', ''),
+            ],
+          },
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
 
@@ -456,14 +465,17 @@ export const resolvers = {
           fields: ORGANIZATION_FIELDS,
         })
 
-        const costCenters = organization.costCenters.push(
-          createCostCenterResult.Id
+        const costCenterArray = organization.costCenters
+
+        costCenterArray.push(
+          createCostCenterResult.Id.replace('cost_centers-', '')
         )
 
         await masterdata.updatePartialDocument({
           dataEntity: ORGANIZATION_DATA_ENTITY,
           id: organizationId,
-          fields: { costCenters },
+          fields: { costCenters: costCenterArray },
+          schema: ORGANIZATION_SCHEMA_VERSION,
         })
 
         return createCostCenterResult
@@ -666,6 +678,10 @@ export const resolvers = {
         whereArray.push(statuses)
       }
 
+      if (search) {
+        whereArray.push(`name=*${search}*`)
+      }
+
       const where = whereArray.join(' AND ')
 
       try {
@@ -677,7 +693,6 @@ export const resolvers = {
             pagination: { page, pageSize },
             sort: `${sortedBy} ${sortOrder}`,
             ...(where ? { where } : {}),
-            ...(search ? { keyword: search } : {}),
           })
 
         return organizationRequests
@@ -765,6 +780,10 @@ export const resolvers = {
         whereArray.push(statuses)
       }
 
+      if (search) {
+        whereArray.push(`name=*${search}*`)
+      }
+
       const where = whereArray.join(' AND ')
 
       try {
@@ -776,7 +795,6 @@ export const resolvers = {
             pagination: { page, pageSize },
             sort: `${sortedBy} ${sortOrder}`,
             ...(where ? { where } : {}),
-            ...(search ? { keyword: search } : {}),
           })
 
         return organizations
@@ -850,7 +868,11 @@ export const resolvers = {
       // create schema if it doesn't exist
       await checkConfig(ctx)
 
-      const where = `organization=${id}`
+      let where = `organization=${id}`
+
+      if (search) {
+        where += ` AND name=*${search}*`
+      }
 
       try {
         const costCenters = await masterdata.searchDocumentsWithPaginationInfo({
@@ -860,7 +882,6 @@ export const resolvers = {
           pagination: { page, pageSize },
           sort: `${sortedBy} ${sortOrder}`,
           ...(where ? { where } : {}),
-          ...(search ? { keyword: search } : {}),
         })
 
         return costCenters

@@ -15,7 +15,7 @@ type Query {
     search: String
     page: Int = 1
     pageSize: Int = 25
-    sortOrder: String = "DESC"
+    sortOrder: String = "ASC"
     sortedBy: String = "name"
   ): OrganizationResult @cacheControl(scope: PRIVATE)
   getOrganizationById(id: ID!): Organization @cacheControl(scope: PRIVATE)
