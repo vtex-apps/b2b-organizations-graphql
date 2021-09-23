@@ -683,7 +683,7 @@ export const resolvers = {
       }
 
       if (search) {
-        whereArray.push(`name=*${search}*`)
+        whereArray.push(`name=*${encodeURI(search)}*`)
       }
 
       const where = whereArray.join(' AND ')
@@ -785,7 +785,7 @@ export const resolvers = {
       }
 
       if (search) {
-        whereArray.push(`name=*${search}*`)
+        whereArray.push(`name=*${encodeURI(search)}*`)
       }
 
       const where = whereArray.join(' AND ')
@@ -865,6 +865,7 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+        vtex: { logger },
       } = ctx
 
       // create schema if it doesn't exist
@@ -873,7 +874,7 @@ export const resolvers = {
       let where = ''
 
       if (search) {
-        where = `name=*${search}*`
+        where = `name=*${encodeURI(search)}*`
       }
 
       try {
@@ -883,11 +884,15 @@ export const resolvers = {
           schema: COST_CENTER_SCHEMA_VERSION,
           pagination: { page, pageSize },
           sort: `${sortedBy} ${sortOrder}`,
-          ...(where ? { where } : {}),
+          ...(where && { where }),
         })
 
         return costCenters
       } catch (e) {
+        logger.error({
+          message: 'getCostCenters-error',
+          e,
+        })
         if (e.message) {
           throw new GraphQLError(e.message)
         } else if (e.response?.data?.message) {
@@ -926,7 +931,7 @@ export const resolvers = {
       let where = `organization=${id}`
 
       if (search) {
-        where += ` AND name=*${search}*`
+        where += ` AND name=*${encodeURI(search)}*`
       }
 
       try {
