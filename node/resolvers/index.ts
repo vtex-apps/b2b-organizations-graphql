@@ -580,6 +580,8 @@ export const resolvers = {
         clients: { masterdata },
       } = ctx
 
+      // TODO: also delete organization's cost centers
+
       try {
         await masterdata.deleteDocument({
           id,
@@ -601,6 +603,8 @@ export const resolvers = {
       const {
         clients: { masterdata },
       } = ctx
+
+      // TODO: remove cost center from organization
 
       try {
         await masterdata.deleteDocument({
@@ -832,6 +836,57 @@ export const resolvers = {
         })
 
         return organization
+      } catch (e) {
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    },
+    getCostCenters: async (
+      _: any,
+      {
+        search,
+        page,
+        pageSize,
+        sortOrder,
+        sortedBy,
+      }: {
+        search: string
+        page: number
+        pageSize: number
+        sortOrder: string
+        sortedBy: string
+      },
+      ctx: Context
+    ) => {
+      const {
+        clients: { masterdata },
+      } = ctx
+
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
+      let where = ''
+
+      if (search) {
+        where = `name=*${search}*`
+      }
+
+      try {
+        const costCenters = await masterdata.searchDocumentsWithPaginationInfo({
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: COST_CENTER_FIELDS,
+          schema: COST_CENTER_SCHEMA_VERSION,
+          pagination: { page, pageSize },
+          sort: `${sortedBy} ${sortOrder}`,
+          ...(where ? { where } : {}),
+        })
+
+        return costCenters
       } catch (e) {
         if (e.message) {
           throw new GraphQLError(e.message)
