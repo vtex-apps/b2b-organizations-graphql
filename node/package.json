@@ -3,24 +3,24 @@
   "version": "0.0.1",
   "dependencies": {
     "@vtex/api": "6.45.4",
+    "atob": "^2.1.2",
     "co-body": "^6.0.0",
+    "graphql": "^14.5.0",
+    "graphql-tools": "^4.0.6",
     "jsonwebtoken": "^8.5.0",
     "qs": "^6.9.4",
-    "ramda": "^0.25.0",
-    "graphql": "^14.5.0",
-    "atob": "^2.1.2",
-    "graphql-tools": "^4.0.6"
+    "ramda": "^0.25.0"
   },
   "devDependencies": {
     "@types/atob": "^2.1.2",
     "@types/bluebird": "^3.5.25",
     "@types/co-body": "0.0.3",
     "@types/graphql": "^14.5.0",
+    "@types/jest": "^27.0.2",
     "@types/jsonwebtoken": "^8.5.0",
     "@types/node": "^12.0.0",
     "@types/ramda": "types/npm-ramda#dist",
-    "@vtex/api": "6.45.4",
-    "@vtex/tsconfig": "^0.2.0",
+    "@vtex/tsconfig": "^0.4.4",
     "vtex.css-handles": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.css-handles@0.4.4/public/@types/vtex.css-handles",
     "vtex.styleguide": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.styleguide@9.145.0/public/@types/vtex.styleguide"
   },
