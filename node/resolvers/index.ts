@@ -31,10 +31,6 @@ interface B2BCustomerInput {
   email: string
 }
 
-// interface B2BCustomerInputWithRole extends B2BCustomerInput {
-//   role: string
-// }
-
 interface DefaultCostCenterInput {
   name: string
   address: AddressInput
