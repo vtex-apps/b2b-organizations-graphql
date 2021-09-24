@@ -102,7 +102,7 @@ const checkConfig = async (ctx: Context) => {
 
     changed = true
 
-    schemas.forEach((schema) => {
+    schemas.forEach(schema => {
       updates.push(
         masterdata
           .createOrUpdateSchema({
@@ -129,14 +129,13 @@ const checkConfig = async (ctx: Context) => {
       .then(() => {
         settings.adminSetup.schemaHash = currHash
       })
-      .catch((e) => {
-        if (e.response?.status !== 304) {
-          logger.error({
-            message: 'checkConfig-createOrUpdateSchemaError',
-            error: e,
-          })
-          throw new Error(e)
-        }
+      .catch(e => {
+        if (e.response?.status === 304) return
+        logger.error({
+          message: 'checkConfig-createOrUpdateSchemaError',
+          error: e,
+        })
+        throw new Error(e)
       })
   }
 
@@ -218,12 +217,13 @@ export const resolvers = {
 
         try {
           // get organization request
-          const organizationRequest: OrganizationRequest =
-            await masterdata.getDocument({
+          const organizationRequest: OrganizationRequest = await masterdata.getDocument(
+            {
               dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
               id,
               fields: ORGANIZATION_REQUEST_FIELDS,
-            })
+            }
+          )
 
           if (organizationRequest.status === 'approved') {
             throw new GraphQLError('organization-already-approved')
@@ -670,7 +670,7 @@ export const resolvers = {
       if (status?.length) {
         const statusArray = [] as string[]
 
-        status.forEach((stat) => {
+        status.forEach(stat => {
           statusArray.push(`status=${stat}`)
         })
         const statuses = `(${statusArray.join(' OR ')})`
@@ -685,15 +685,16 @@ export const resolvers = {
       const where = whereArray.join(' AND ')
 
       try {
-        const organizationRequests =
-          await masterdata.searchDocumentsWithPaginationInfo({
+        const organizationRequests = await masterdata.searchDocumentsWithPaginationInfo(
+          {
             dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
             fields: ORGANIZATION_REQUEST_FIELDS,
             schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
             pagination: { page, pageSize },
             sort: `${sortedBy} ${sortOrder}`,
             ...(where ? { where } : {}),
-          })
+          }
+        )
 
         return organizationRequests
       } catch (e) {
@@ -772,7 +773,7 @@ export const resolvers = {
       if (status?.length) {
         const statusArray = [] as string[]
 
-        status.forEach((stat) => {
+        status.forEach(stat => {
           statusArray.push(`status=${stat}`)
         })
         const statuses = `(${statusArray.join(' OR ')})`
@@ -787,15 +788,16 @@ export const resolvers = {
       const where = whereArray.join(' AND ')
 
       try {
-        const organizations =
-          await masterdata.searchDocumentsWithPaginationInfo({
+        const organizations = await masterdata.searchDocumentsWithPaginationInfo(
+          {
             dataEntity: ORGANIZATION_DATA_ENTITY,
             fields: ORGANIZATION_FIELDS,
             schema: ORGANIZATION_SCHEMA_VERSION,
             pagination: { page, pageSize },
             sort: `${sortedBy} ${sortOrder}`,
             ...(where ? { where } : {}),
-          })
+          }
+        )
 
         return organizations
       } catch (e) {
@@ -997,7 +999,7 @@ export const resolvers = {
       ) {
         const updates: any = []
 
-        schemas.forEach((schema) => {
+        schemas.forEach(schema => {
           updates.push(
             masterdata
               .createOrUpdateSchema({
@@ -1020,7 +1022,7 @@ export const resolvers = {
           .then(() => {
             settings.adminSetup.schemaHash = currHash
           })
-          .catch((e) => {
+          .catch(e => {
             if (e.response.status !== 304) {
               throw new Error(e)
             }
