@@ -19,6 +19,13 @@ type Query {
     sortedBy: String = "name"
   ): OrganizationResult @cacheControl(scope: PRIVATE)
   getOrganizationById(id: ID!): Organization @cacheControl(scope: PRIVATE)
+  getCostCenters(
+    search: String
+    page: Int = 1
+    pageSize: Int = 25
+    sortOrder: String = "ASC"
+    sortedBy: String = "name"
+  ): CostCenterResult @cacheControl(scope: PRIVATE)
   getCostCentersByOrganizationId(
     id: ID!
     search: String

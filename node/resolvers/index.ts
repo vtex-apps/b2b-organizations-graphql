@@ -31,10 +31,6 @@ interface B2BCustomerInput {
   email: string
 }
 
-// interface B2BCustomerInputWithRole extends B2BCustomerInput {
-//   role: string
-// }
-
 interface DefaultCostCenterInput {
   name: string
   address: AddressInput
@@ -106,7 +102,7 @@ const checkConfig = async (ctx: Context) => {
 
     changed = true
 
-    schemas.forEach((schema) => {
+    schemas.forEach(schema => {
       updates.push(
         masterdata
           .createOrUpdateSchema({
@@ -133,14 +129,13 @@ const checkConfig = async (ctx: Context) => {
       .then(() => {
         settings.adminSetup.schemaHash = currHash
       })
-      .catch((e) => {
-        if (e.response?.status !== 304) {
-          logger.error({
-            message: 'checkConfig-createOrUpdateSchemaError',
-            error: e,
-          })
-          throw new Error(e)
-        }
+      .catch(e => {
+        if (e.response?.status === 304) return
+        logger.error({
+          message: 'checkConfig-createOrUpdateSchemaError',
+          error: e,
+        })
+        throw new Error(e)
       })
   }
 
@@ -222,12 +217,13 @@ export const resolvers = {
 
         try {
           // get organization request
-          const organizationRequest: OrganizationRequest =
-            await masterdata.getDocument({
+          const organizationRequest: OrganizationRequest = await masterdata.getDocument(
+            {
               dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
               id,
               fields: ORGANIZATION_REQUEST_FIELDS,
-            })
+            }
+          )
 
           if (organizationRequest.status === 'approved') {
             throw new GraphQLError('organization-already-approved')
@@ -580,6 +576,8 @@ export const resolvers = {
         clients: { masterdata },
       } = ctx
 
+      // TODO: also delete organization's cost centers
+
       try {
         await masterdata.deleteDocument({
           id,
@@ -601,6 +599,8 @@ export const resolvers = {
       const {
         clients: { masterdata },
       } = ctx
+
+      // TODO: remove cost center from organization
 
       try {
         await masterdata.deleteDocument({
@@ -670,7 +670,7 @@ export const resolvers = {
       if (status?.length) {
         const statusArray = [] as string[]
 
-        status.forEach((stat) => {
+        status.forEach(stat => {
           statusArray.push(`status=${stat}`)
         })
         const statuses = `(${statusArray.join(' OR ')})`
@@ -679,21 +679,22 @@ export const resolvers = {
       }
 
       if (search) {
-        whereArray.push(`name=*${search}*`)
+        whereArray.push(`name=*${encodeURI(search)}*`)
       }
 
       const where = whereArray.join(' AND ')
 
       try {
-        const organizationRequests =
-          await masterdata.searchDocumentsWithPaginationInfo({
+        const organizationRequests = await masterdata.searchDocumentsWithPaginationInfo(
+          {
             dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
             fields: ORGANIZATION_REQUEST_FIELDS,
             schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
             pagination: { page, pageSize },
             sort: `${sortedBy} ${sortOrder}`,
             ...(where ? { where } : {}),
-          })
+          }
+        )
 
         return organizationRequests
       } catch (e) {
@@ -772,7 +773,7 @@ export const resolvers = {
       if (status?.length) {
         const statusArray = [] as string[]
 
-        status.forEach((stat) => {
+        status.forEach(stat => {
           statusArray.push(`status=${stat}`)
         })
         const statuses = `(${statusArray.join(' OR ')})`
@@ -781,21 +782,22 @@ export const resolvers = {
       }
 
       if (search) {
-        whereArray.push(`name=*${search}*`)
+        whereArray.push(`name=*${encodeURI(search)}*`)
       }
 
       const where = whereArray.join(' AND ')
 
       try {
-        const organizations =
-          await masterdata.searchDocumentsWithPaginationInfo({
+        const organizations = await masterdata.searchDocumentsWithPaginationInfo(
+          {
             dataEntity: ORGANIZATION_DATA_ENTITY,
             fields: ORGANIZATION_FIELDS,
             schema: ORGANIZATION_SCHEMA_VERSION,
             pagination: { page, pageSize },
             sort: `${sortedBy} ${sortOrder}`,
             ...(where ? { where } : {}),
-          })
+          }
+        )
 
         return organizations
       } catch (e) {
@@ -842,6 +844,62 @@ export const resolvers = {
         }
       }
     },
+    getCostCenters: async (
+      _: any,
+      {
+        search,
+        page,
+        pageSize,
+        sortOrder,
+        sortedBy,
+      }: {
+        search: string
+        page: number
+        pageSize: number
+        sortOrder: string
+        sortedBy: string
+      },
+      ctx: Context
+    ) => {
+      const {
+        clients: { masterdata },
+        vtex: { logger },
+      } = ctx
+
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
+      let where = ''
+
+      if (search) {
+        where = `name=*${encodeURI(search)}*`
+      }
+
+      try {
+        const costCenters = await masterdata.searchDocumentsWithPaginationInfo({
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: COST_CENTER_FIELDS,
+          schema: COST_CENTER_SCHEMA_VERSION,
+          pagination: { page, pageSize },
+          sort: `${sortedBy} ${sortOrder}`,
+          ...(where && { where }),
+        })
+
+        return costCenters
+      } catch (e) {
+        logger.error({
+          message: 'getCostCenters-error',
+          e,
+        })
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    },
     getCostCentersByOrganizationId: async (
       _: any,
       {
@@ -871,7 +929,7 @@ export const resolvers = {
       let where = `organization=${id}`
 
       if (search) {
-        where += ` AND name=*${search}*`
+        where += ` AND name=*${encodeURI(search)}*`
       }
 
       try {
@@ -941,7 +999,7 @@ export const resolvers = {
       ) {
         const updates: any = []
 
-        schemas.forEach((schema) => {
+        schemas.forEach(schema => {
           updates.push(
             masterdata
               .createOrUpdateSchema({
@@ -964,7 +1022,7 @@ export const resolvers = {
           .then(() => {
             settings.adminSetup.schemaHash = currHash
           })
-          .catch((e) => {
+          .catch(e => {
             if (e.response.status !== 304) {
               throw new Error(e)
             }

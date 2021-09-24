@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- `getCostCenters` query
+
+### Fixed
+
+- handle spaces in masterdata search terms
+
 ## [0.0.3] - 2021-09-10
 
 ### Fixed
