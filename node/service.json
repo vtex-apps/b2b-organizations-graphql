@@ -10,5 +10,15 @@
   },
   "minReplicas": 8,
   "maxReplicas": 80,
-  "workers": 1
+  "workers": 1,
+  "routes": {
+    "orders": {
+      "path": "/b2b/oms/user/orders/",
+      "public": true
+    },
+    "order": {
+      "path": "/b2b/oms/user/orders/:orderId",
+      "public": true
+    }
+  }
 }

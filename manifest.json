@@ -11,7 +11,11 @@
   "builders": {
     "docs": "0.x",
     "node": "6.x",
-    "graphql": "1.x"
+    "graphql": "1.x",
+    "vtex.storefront-permissions": "1.x"
+  },
+  "dependencies": {
+    "vtex.graphql-server": "1.x"
   },
   "policies": [
     {
@@ -21,6 +25,9 @@
       "name": "ADMIN_DS"
     },
     {
+      "name": "OMSViewer"
+    },
+    {
       "name": "Get_Account_By_Identifier"
     },
     {
@@ -28,6 +35,9 @@
     },
     {
       "name": "update-app-settings"
+    },
+    {
+      "name": "vtex.storefront-permissions:resolve-graphql"
     },
     {
       "name": "outbound-access",

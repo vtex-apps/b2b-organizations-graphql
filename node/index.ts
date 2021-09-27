@@ -10,7 +10,7 @@ import { Clients } from './clients'
 import { schemaDirectives } from './resolvers/directives'
 import { resolvers } from './resolvers'
 
-const TIMEOUT_MS = 800
+const TIMEOUT_MS = 3000
 
 // Create a LRU memory cache for the Status client.
 // The @vtex/api HttpClient respects Cache-Control headers and uses the provided cache.
@@ -48,4 +48,5 @@ export default new Service<Clients, RecorderState, ParamsContext>({
     },
     schemaDirectives,
   },
+  routes: resolvers.Routes,
 })
