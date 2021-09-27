@@ -191,6 +191,9 @@ export const resolvers = {
         })
 
         const filterByPermission = (permissions: String[]) => {
+          if (permissions.indexOf('all-orders') !== -1) {
+            return ``
+          }
           if (permissions.indexOf('organization-orders') !== -1) {
             return `&f_UtmCampaign=${sessionData.namespaces['storefront-permissions'].organization.value}`
           }
