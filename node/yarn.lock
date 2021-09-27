@@ -202,7 +202,6 @@
     "@types/mime" "^1"
     "@types/node" "*"
 
-<<<<<<< HEAD
 "@types/yargs-parser@*":
   version "20.2.1"
   resolved "https://registry.yarnpkg.com/@types/yargs-parser/-/yargs-parser-20.2.1.tgz#3b9ce2489919d9e4fea439b76916abc34b2df129"
@@ -215,8 +214,6 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-=======
->>>>>>> 144eef96f9f66d5521f1768c5b5a07fcce1e1acf
 "@vtex/api@6.45.4":
   version "6.45.4"
   resolved "https://registry.yarnpkg.com/@vtex/api/-/api-6.45.4.tgz#58be7497c0c0f91a388fabd42149e48cb95e271d"
