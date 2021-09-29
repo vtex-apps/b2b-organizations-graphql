@@ -209,7 +209,7 @@ export const resolvers = {
           {
             persistedQuery: {
               provider: 'vtex.storefront-permissions@1.x',
-              sender: 'vtex.b2b-organizations-graphql@0.x',
+              sender: 'vtex.b2b-organizations@0.x',
             },
           }
         ).catch((err: any) => {

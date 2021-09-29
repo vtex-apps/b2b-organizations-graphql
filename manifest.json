@@ -11,7 +11,9 @@
   "builders": {
     "docs": "0.x",
     "node": "6.x",
-    "graphql": "1.x",
+    "graphql": "1.x"
+  },
+  "dependencies": {
     "vtex.storefront-permissions": "1.x"
   },
   "policies": [
