@@ -1,39 +1,39 @@
-import {
-  InstanceOptions,
-  IOContext,
-  JanusClient,
-  RequestConfig,
-} from "@vtex/api";
-import { statusToError } from "../utils";
+import type { InstanceOptions, IOContext, RequestConfig } from '@vtex/api'
+import { JanusClient } from '@vtex/api'
+
+import { statusToError } from '../utils'
 
 export class OMSClient extends JanusClient {
-  public constructor(ctx: IOContext, options?: InstanceOptions) {
+  constructor(ctx: IOContext, options?: InstanceOptions) {
     super(ctx, {
       ...options,
       headers: {
         ...(options && options.headers),
         VtexIdclientAutCookie: ctx.authToken,
       },
-    });
+    })
   }
 
   public order = (id: string) =>
-    this.get(this.routes.order(id), { metric: "oms-order" });
+    this.get(this.routes.order(id), { metric: 'oms-order' })
 
   public search = (query: string) =>
-    this.get(this.routes.search(query), { metric: "oms-order-search" });
+    this.get(this.routes.search(query), { metric: 'oms-order-search' })
 
   protected get = <T>(url: string, config: RequestConfig = {}) => {
     config.headers = {
       ...config.headers,
-    };
-    return this.http.get<T>(url, config).catch(statusToError);
-  };
+    }
+
+    return this.http.get<T>(url, config).catch(statusToError)
+  }
+
   private get routes() {
-    const base = "/api/oms";
+    const base = '/api/oms'
+
     return {
       order: (id: string) => `${base}/pvt/orders/${id}`,
       search: (query: string) => `${base}/pvt/orders?${query}`,
-    };
+    }
   }
 }

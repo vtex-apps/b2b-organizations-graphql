@@ -1828,17 +1828,13 @@ vary@^1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=
 
-"vtex.b2b-organizations-graphql@http://vtex.vtexassets.com/_v/public/typings/v1/vtex.b2b-organizations-graphql@0.0.3/public/@types/vtex.b2b-organizations-graphql":
-  version "0.0.3"
-  resolved "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.b2b-organizations-graphql@0.0.3/public/@types/vtex.b2b-organizations-graphql#b6cc7c202f5cd4a86b2a91aafd72bf8285feea1c"
+"vtex.b2b-organizations-graphql@https://collection--sandboxusdev.myvtex.com/_v/private/typings/linked/v1/vtex.b2b-organizations-graphql@0.1.0+build1632937851/public/@types/vtex.b2b-organizations-graphql":
+  version "0.1.0"
+  resolved "https://collection--sandboxusdev.myvtex.com/_v/private/typings/linked/v1/vtex.b2b-organizations-graphql@0.1.0+build1632937851/public/@types/vtex.b2b-organizations-graphql#30f7a190e9b44bae38a8b057924c58b5f18e898e"
 
-"vtex.css-handles@http://vtex.vtexassets.com/_v/public/typings/v1/vtex.css-handles@0.4.4/public/@types/vtex.css-handles":
-  version "0.4.4"
-  resolved "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.css-handles@0.4.4/public/@types/vtex.css-handles#8c45c6decf9acd2b944e07261686decff93d6422"
-
-"vtex.styleguide@http://vtex.vtexassets.com/_v/public/typings/v1/vtex.styleguide@9.145.0/public/@types/vtex.styleguide":
-  version "9.145.0"
-  resolved "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.styleguide@9.145.0/public/@types/vtex.styleguide#41dfb32af8756eb5528dbd452e47003a8f67fe8c"
+"vtex.storefront-permissions@https://collection--sandboxusdev.myvtex.com/_v/private/typings/linked/v1/vtex.storefront-permissions@1.5.0-beta.4+build1632929001/public/@types/vtex.storefront-permissions":
+  version "1.5.0-beta.4"
+  resolved "https://collection--sandboxusdev.myvtex.com/_v/private/typings/linked/v1/vtex.storefront-permissions@1.5.0-beta.4+build1632929001/public/@types/vtex.storefront-permissions#70fbf20f6fba0c81639519a11638366e58ab4d20"
 
 wrappy@1:
   version "1.0.2"
