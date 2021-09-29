@@ -2,9 +2,7 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
 import { AppGraphQLClient } from '@vtex/api'
 
-
 export class SFPGraphQL extends AppGraphQLClient {
-
   constructor(ctx: IOContext, options?: InstanceOptions) {
     super('vtex.storefront-permissions@1.x', ctx, options)
   }

@@ -145,6 +145,7 @@ const checkConfig = async (ctx: Context) => {
 
   return settings
 }
+
 const QUERIES = {
   getPermission: `query permissions {
     checkUserPermission{
@@ -163,18 +164,12 @@ export const resolvers = {
     orders: async (ctx: Context) => {
       const {
         vtex: { storeUserAuthToken, sessionToken, logger },
-        clients: {
-          vtexId,
-          session,
-          sfpGraphQL,
-          oms,
-        },
+        clients: { vtexId, session, sfpGraphQL, oms },
       } = ctx
-
 
       const token: any = storeUserAuthToken
 
-      if (!token ) {
+      if (!token) {
         throw new ForbiddenError('Access denied')
       }
 
@@ -187,46 +182,58 @@ export const resolvers = {
         })
         .catch((err: any) => {
           logger.error(err)
+
           return null
         })
 
-        const filterByPermission = (permissions: String[]) => {
-          if (permissions.indexOf('all-orders') !== -1) {
-            return ``
-          }
-          if (permissions.indexOf('organization-orders') !== -1) {
-            return `&f_UtmCampaign=${sessionData.namespaces['storefront-permissions'].organization.value}`
-          }
-          if (permissions.indexOf('costcenter-orders') !== -1) {
-            return `&f_UtmMedium=${sessionData.namespaces['storefront-permissions'].costcenter.value}`
-          }
-          return `&clientEmail=${authUser.user}`
+      const filterByPermission = (permissions: string[]) => {
+        if (permissions.indexOf('all-orders') !== -1) {
+          return ``
         }
 
-        const appPermissions: any = await sfpGraphQL.query(
+        if (permissions.indexOf('organization-orders') !== -1) {
+          return `&f_UtmCampaign=${sessionData.namespaces['storefront-permissions'].organization.value}`
+        }
+
+        if (permissions.indexOf('costcenter-orders') !== -1) {
+          return `&f_UtmMedium=${sessionData.namespaces['storefront-permissions'].costcenter.value}`
+        }
+
+        return `&clientEmail=${authUser.user}`
+      }
+
+      const appPermissions: any = await sfpGraphQL
+        .query(
           QUERIES.getPermission,
-          { },
+          {},
           {
             persistedQuery: {
               provider: 'vtex.storefront-permissions@1.x',
               sender: 'vtex.b2b-organizations@0.x',
             },
           }
-        ).catch((err: any) => {
+        )
+        .catch((err: any) => {
           logger.error(err)
+
           return null
         })
 
       const pastYear: any = new Date()
-            pastYear.setDate(pastYear.getDate()-365)
+
+      pastYear.setDate(pastYear.getDate() - 365)
 
       const now = new Date().toISOString()
-      let query = `f_creationDate=creationDate:[${pastYear.toISOString()} TO ${now}]&${ctx.request.querystring}`
+      let query = `f_creationDate=creationDate:[${pastYear.toISOString()} TO ${now}]&${
+        ctx.request.querystring
+      }`
 
       if (appPermissions?.data?.checkUserPermission?.permissions?.length) {
-        query+=filterByPermission(appPermissions.data?.checkUserPermission.permissions)
+        query += filterByPermission(
+          appPermissions.data?.checkUserPermission.permissions
+        )
       } else {
-        query+= `&clientEmail=${authUser.user}`
+        query += `&clientEmail=${authUser.user}`
       }
 
       const orders: any = await oms.search(query)
@@ -245,9 +252,7 @@ export const resolvers = {
             params: { orderId },
           },
         },
-        clients: {
-          oms
-        }
+        clients: { oms },
       } = ctx
 
       const order: any = await oms.order(String(orderId))

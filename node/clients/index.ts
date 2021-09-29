@@ -9,9 +9,11 @@ export class Clients extends IOClients {
   public get vtexId() {
     return this.getOrSet('vtexId', VtexId)
   }
+
   public get oms() {
     return this.getOrSet('oms', OMSClient)
   }
+
   public get sfpGraphQL() {
     return this.getOrSet('sfpGraphQL', SFPGraphQL)
   }
