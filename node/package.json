@@ -26,9 +26,7 @@
     "tslint": "^5.12.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-config-vtex": "^2.1.0",
-    "typescript": "3.9.7",
-    "vtex.b2b-organizations-graphql": "https://collection--sandboxusdev.myvtex.com/_v/private/typings/linked/v1/vtex.b2b-organizations-graphql@0.1.0+build1632937851/public/@types/vtex.b2b-organizations-graphql",
-    "vtex.storefront-permissions": "https://collection--sandboxusdev.myvtex.com/_v/private/typings/linked/v1/vtex.storefront-permissions@1.5.0-beta.4+build1632929001/public/@types/vtex.storefront-permissions"
+    "typescript": "3.9.7"
   },
   "scripts": {
     "lint": "tsc --noEmit && tslint -c tslint.json './**/*.ts'"

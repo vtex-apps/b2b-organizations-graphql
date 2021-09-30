@@ -1828,14 +1828,6 @@ vary@^1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=
 
-"vtex.b2b-organizations-graphql@https://collection--sandboxusdev.myvtex.com/_v/private/typings/linked/v1/vtex.b2b-organizations-graphql@0.1.0+build1632937851/public/@types/vtex.b2b-organizations-graphql":
-  version "0.1.0"
-  resolved "https://collection--sandboxusdev.myvtex.com/_v/private/typings/linked/v1/vtex.b2b-organizations-graphql@0.1.0+build1632937851/public/@types/vtex.b2b-organizations-graphql#30f7a190e9b44bae38a8b057924c58b5f18e898e"
-
-"vtex.storefront-permissions@https://collection--sandboxusdev.myvtex.com/_v/private/typings/linked/v1/vtex.storefront-permissions@1.5.0-beta.4+build1632929001/public/@types/vtex.storefront-permissions":
-  version "1.5.0-beta.4"
-  resolved "https://collection--sandboxusdev.myvtex.com/_v/private/typings/linked/v1/vtex.storefront-permissions@1.5.0-beta.4+build1632929001/public/@types/vtex.storefront-permissions#70fbf20f6fba0c81639519a11638366e58ab4d20"
-
 wrappy@1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/wrappy/-/wrappy-1.0.2.tgz#b5243d8f3ec1aa35f1364605bc0d1036e30ab69f"
