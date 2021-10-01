@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { InstanceOptions, IOContext } from '@vtex/api'
-import { AppGraphQLClient } from '@vtex/api'
+import { AppClient, GraphQLClient } from '@vtex/api'
 
-export class SFPGraphQL extends AppGraphQLClient {
+export class GraphQLServer extends AppClient {
+  protected graphql: GraphQLClient
+
   constructor(ctx: IOContext, options?: InstanceOptions) {
-    super('vtex.storefront-permissions@1.x', ctx, options)
+    super('vtex.graphql-server@1.x', ctx, options)
+    this.graphql = new GraphQLClient(this.http)
   }
 
   public query = async (query: string, variables: any, extensions: any) => {
@@ -14,6 +17,10 @@ export class SFPGraphQL extends AppGraphQLClient {
         params: {
           locale: this.context.locale,
         },
+        headers: {
+          sessionToken: this.context.sessionToken,
+        },
+        url: `/graphql`,
       }
     )
   }

@@ -2,7 +2,7 @@ import { IOClients } from '@vtex/api'
 
 import VtexId from './vtexId'
 import { OMSClient } from './Oms'
-import { SFPGraphQL } from './SFPGraphQL'
+import { GraphQLServer } from './graphqlServer'
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
@@ -14,7 +14,7 @@ export class Clients extends IOClients {
     return this.getOrSet('oms', OMSClient)
   }
 
-  public get sfpGraphQL() {
-    return this.getOrSet('sfpGraphQL', SFPGraphQL)
+  public get graphQLServer() {
+    return this.getOrSet('graphQLServer', GraphQLServer)
   }
 }

@@ -148,7 +148,7 @@ const checkConfig = async (ctx: Context) => {
 
 const QUERIES = {
   getPermission: `query permissions {
-    checkUserPermission{
+    checkUserPermission @context(provider: "vtex.storefront-permissions"){
       role {
         id
         name
@@ -164,7 +164,7 @@ export const resolvers = {
     orders: async (ctx: Context) => {
       const {
         vtex: { storeUserAuthToken, sessionToken, logger },
-        clients: { vtexId, session, sfpGraphQL, oms },
+        clients: { vtexId, session, graphQLServer, oms },
       } = ctx
 
       const token: any = storeUserAuthToken
@@ -202,7 +202,9 @@ export const resolvers = {
         return `&clientEmail=${authUser.user}`
       }
 
-      const appPermissions: any = await sfpGraphQL
+      const {
+        data: { checkUserPermission },
+      }: any = await graphQLServer
         .query(
           QUERIES.getPermission,
           {},
@@ -215,8 +217,6 @@ export const resolvers = {
         )
         .catch((err: any) => {
           logger.error(err)
-
-          return null
         })
 
       const pastYear: any = new Date()
@@ -228,10 +228,8 @@ export const resolvers = {
         ctx.request.querystring
       }`
 
-      if (appPermissions?.data?.checkUserPermission?.permissions?.length) {
-        query += filterByPermission(
-          appPermissions.data?.checkUserPermission.permissions
-        )
+      if (checkUserPermission?.permissions?.length) {
+        query += filterByPermission(checkUserPermission.permissions)
       } else {
         query += `&clientEmail=${authUser.user}`
       }

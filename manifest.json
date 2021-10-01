@@ -14,7 +14,7 @@
     "graphql": "1.x"
   },
   "dependencies": {
-    "vtex.storefront-permissions": "1.x"
+    "vtex.graphql-server": "1.x"
   },
   "policies": [
     {
@@ -36,7 +36,7 @@
       "name": "update-app-settings"
     },
     {
-      "name": "vtex.storefront-permissions:resolve-graphql"
+      "name": "vtex.graphql-server:resolve-graphql"
     },
     {
       "name": "outbound-access",
