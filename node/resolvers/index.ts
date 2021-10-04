@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { ForbiddenError } from '@vtex/api'
+
 import {
   schemas,
   ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -144,7 +146,123 @@ const checkConfig = async (ctx: Context) => {
   return settings
 }
 
+const QUERIES = {
+  getPermission: `query permissions {
+    checkUserPermission @context(provider: "vtex.storefront-permissions"){
+      role {
+        id
+        name
+        slug
+      }
+      permissions
+    }
+  }`,
+}
+
 export const resolvers = {
+  Routes: {
+    orders: async (ctx: Context) => {
+      const {
+        vtex: { storeUserAuthToken, sessionToken, logger },
+        clients: { vtexId, session, graphQLServer, oms },
+      } = ctx
+
+      const token: any = storeUserAuthToken
+
+      if (!token) {
+        throw new ForbiddenError('Access denied')
+      }
+
+      const authUser = await vtexId.getAuthenticatedUser(token)
+
+      const sessionData = await session
+        .getSession(sessionToken as string, ['*'])
+        .then((currentSession: any) => {
+          return currentSession.sessionData
+        })
+        .catch((err: any) => {
+          logger.error(err)
+
+          return null
+        })
+
+      const filterByPermission = (permissions: string[]) => {
+        if (permissions.indexOf('all-orders') !== -1) {
+          return ``
+        }
+
+        if (permissions.indexOf('organization-orders') !== -1) {
+          return `&f_UtmCampaign=${sessionData.namespaces['storefront-permissions'].organization.value}`
+        }
+
+        if (permissions.indexOf('costcenter-orders') !== -1) {
+          return `&f_UtmMedium=${sessionData.namespaces['storefront-permissions'].costcenter.value}`
+        }
+
+        return `&clientEmail=${authUser.user}`
+      }
+
+      const {
+        data: { checkUserPermission },
+      }: any = await graphQLServer
+        .query(
+          QUERIES.getPermission,
+          {},
+          {
+            persistedQuery: {
+              provider: 'vtex.storefront-permissions@1.x',
+              sender: 'vtex.b2b-organizations@0.x',
+            },
+          }
+        )
+        .catch((err: any) => {
+          logger.error(err)
+        })
+
+      const pastYear: any = new Date()
+
+      pastYear.setDate(pastYear.getDate() - 365)
+
+      const now = new Date().toISOString()
+      let query = `f_creationDate=creationDate:[${pastYear.toISOString()} TO ${now}]&${
+        ctx.request.querystring
+      }`
+
+      if (checkUserPermission?.permissions?.length) {
+        query += filterByPermission(checkUserPermission.permissions)
+      } else {
+        query += `&clientEmail=${authUser.user}`
+      }
+
+      const orders: any = await oms.search(query)
+
+      ctx.set('Content-Type', 'application/json')
+      ctx.set('Cache-Control', 'no-cache, no-store')
+
+      ctx.response.body = orders
+
+      ctx.response.status = 200
+    },
+    order: async (ctx: Context) => {
+      const {
+        vtex: {
+          route: {
+            params: { orderId },
+          },
+        },
+        clients: { oms },
+      } = ctx
+
+      const order: any = await oms.order(String(orderId))
+
+      ctx.set('Content-Type', 'application/json')
+      ctx.set('Cache-Control', 'no-cache, no-store')
+
+      ctx.response.body = order
+
+      ctx.response.status = 200
+    },
+  },
   Mutation: {
     createOrganizationRequest: async (
       _: any,

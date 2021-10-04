@@ -13,12 +13,18 @@
     "node": "6.x",
     "graphql": "1.x"
   },
+  "dependencies": {
+    "vtex.graphql-server": "1.x"
+  },
   "policies": [
     {
       "name": "POWER_USER_DS"
     },
     {
       "name": "ADMIN_DS"
+    },
+    {
+      "name": "OMSViewer"
     },
     {
       "name": "Get_Account_By_Identifier"
@@ -28,6 +34,9 @@
     },
     {
       "name": "update-app-settings"
+    },
+    {
+      "name": "vtex.graphql-server:resolve-graphql"
     },
     {
       "name": "outbound-access",
