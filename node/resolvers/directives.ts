@@ -1,5 +1,5 @@
-import { WithUserDetails } from './directives/withUserDetails'
+import { WithSession } from './directives/withSession'
 
 export const schemaDirectives = {
-  withUserDetails: WithUserDetails as any,
+  withSession: WithSession as any,
 }

@@ -568,11 +568,27 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+        vtex,
         vtex: { logger },
       } = ctx
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
+
+      if (!organizationId) {
+        // get user's organization from session
+        const { sessionData } = vtex as any
+
+        if (!sessionData?.namespaces['storefront-permissions']) {
+          throw new GraphQLError('organization-data-not-found')
+        }
+
+        const {
+          organization: { value: userOrganizationId },
+        } = sessionData.namespaces['storefront-permissions']
+
+        organizationId = userOrganizationId
+      }
 
       try {
         const costCenter = {
@@ -717,7 +733,7 @@ export const resolvers = {
         clients: { masterdata },
       } = ctx
 
-      // TODO: also delete organization's cost centers
+      // TODO: also delete organization's cost centers?
 
       try {
         await masterdata.deleteDocument({
@@ -742,6 +758,7 @@ export const resolvers = {
       } = ctx
 
       // TODO: remove cost center from organization
+      // or just remove the costCenters array from the organization entity, probably don't need it
 
       try {
         await masterdata.deleteDocument({
@@ -962,10 +979,26 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+        vtex,
       } = ctx
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
+
+      if (!id) {
+        // get user's organization from session
+        const { sessionData } = vtex as any
+
+        if (!sessionData?.namespaces['storefront-permissions']) {
+          throw new GraphQLError('organization-data-not-found')
+        }
+
+        const {
+          organization: { value: userOrganizationId },
+        } = sessionData.namespaces['storefront-permissions']
+
+        id = userOrganizationId
+      }
 
       try {
         const organization = await masterdata.getDocument({
@@ -1062,10 +1095,26 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+        vtex,
       } = ctx
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
+
+      if (!id) {
+        // get user's organization from session
+        const { sessionData } = vtex as any
+
+        if (!sessionData?.namespaces['storefront-permissions']) {
+          throw new GraphQLError('organization-data-not-found')
+        }
+
+        const {
+          organization: { value: userOrganizationId },
+        } = sessionData.namespaces['storefront-permissions']
+
+        id = userOrganizationId
+      }
 
       let where = `organization=${id}`
 

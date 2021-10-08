@@ -1,5 +1,5 @@
 type Query {
-  getAppSettings: SettingsResponse @cacheControl(scope: PRIVATE)
+  getAppSettings: SettingsResponse @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getOrganizationRequests(
     status: [String]
     search: String
@@ -7,9 +7,9 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "DESC"
     sortedBy: String = "created"
-  ): OrganizationRequestResult @cacheControl(scope: PRIVATE)
+  ): OrganizationRequestResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getOrganizationRequestById(id: ID!): OrganizationRequest
-    @cacheControl(scope: PRIVATE)
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getOrganizations(
     status: [String]
     search: String
@@ -17,25 +17,28 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): OrganizationResult @cacheControl(scope: PRIVATE)
-  getOrganizationById(id: ID!): Organization @cacheControl(scope: PRIVATE)
+  ): OrganizationResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getOrganizationById(id: ID): Organization
+    @withSession
+    @cacheControl(scope: PRIVATE)
   getCostCenters(
     search: String
     page: Int = 1
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): CostCenterResult @cacheControl(scope: PRIVATE)
+  ): CostCenterResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getCostCentersByOrganizationId(
-    id: ID!
+    id: ID
     search: String
     page: Int = 1
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): CostCenterResult @cacheControl(scope: PRIVATE)
-  getCostCenterById(id: ID!): CostCenter @cacheControl(scope: PRIVATE)
-  getPaymentTerms: [PaymentTerm] @cacheControl(scope: PRIVATE)
+  ): CostCenterResult @withSession @cacheControl(scope: PRIVATE)
+  getCostCenterById(id: ID!): CostCenter
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
 type Mutation {
@@ -49,9 +52,9 @@ type Mutation {
   deleteOrganizationRequest(id: ID!): MutationResponse
   createOrganization(input: OrganizationInput!): MasterDataResponse
   createCostCenter(
-    organizationId: ID!
+    organizationId: ID
     input: CostCenterInput!
-  ): MasterDataResponse
+  ): MasterDataResponse @withSession
   updateOrganization(
     id: ID!
     name: String!
