@@ -15,6 +15,7 @@ export const ORGANIZATION_FIELDS = [
   'id',
   'name',
   'collections',
+  'paymentTerms',
   'priceTables',
   'costCenters',
   'status',
@@ -73,6 +74,10 @@ export const schemas = [
         collections: {
           type: 'array',
           title: 'Collections',
+        },
+        paymentTerms: {
+          type: 'array',
+          title: 'Payment Terms',
         },
         priceTables: {
           type: 'array',

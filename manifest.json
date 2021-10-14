@@ -1,7 +1,7 @@
 {
   "name": "b2b-organizations-graphql",
   "vendor": "vtex",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "title": "B2B Organizations",
   "description": "App to create and manage B2B Organizations and Cost Centers",
   "mustUpdateAt": "2022-08-28",
@@ -25,6 +25,9 @@
     },
     {
       "name": "OMSViewer"
+    },
+    {
+      "name": "ViewPayments"
     },
     {
       "name": "Get_Account_By_Identifier"

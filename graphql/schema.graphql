@@ -35,6 +35,7 @@ type Query {
     sortedBy: String = "name"
   ): CostCenterResult @cacheControl(scope: PRIVATE)
   getCostCenterById(id: ID!): CostCenter @cacheControl(scope: PRIVATE)
+  getPaymentTerms: [PaymentTerm] @cacheControl(scope: PRIVATE)
 }
 
 type Mutation {
@@ -55,6 +56,7 @@ type Mutation {
     id: ID!
     status: String!
     collections: [CollectionInput]
+    paymentTerms: [PaymentTermInput]
     priceTables: [String]
   ): MutationResponse
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
@@ -112,6 +114,7 @@ type Organization {
   id: ID
   name: String
   collections: [Collection]
+  paymentTerms: [PaymentTerm]
   priceTables: [String]
   costCenters: [ID]
   status: String
@@ -120,6 +123,11 @@ type Organization {
 
 type Collection {
   id: String
+  name: String
+}
+
+type PaymentTerm {
+  id: ID
   name: String
 }
 
@@ -208,5 +216,10 @@ input AddressInput {
 
 input CollectionInput {
   id: String
+  name: String
+}
+
+input PaymentTermInput {
+  id: ID
   name: String
 }
