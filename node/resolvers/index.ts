@@ -43,6 +43,10 @@ interface CostCenterInput {
   addresses: [AddressInput]
 }
 
+const CONNECTOR = {
+  PROMISSORY: 'Vtex.PaymentGateway.Connectors.PromissoryConnector',
+} as const
+
 interface AddressInput {
   addressId: string
   addressType: string
@@ -360,6 +364,7 @@ export const resolvers = {
             status: 'active',
             created: now,
             collections: [],
+            paymentTerms: [],
             priceTables: [],
             costCenters: [],
           }
@@ -489,6 +494,7 @@ export const resolvers = {
           status: 'active',
           created: now,
           collections: [],
+          paymentTerms: [],
           priceTables: [],
           costCenters: [],
         }
@@ -613,8 +619,15 @@ export const resolvers = {
         id,
         status,
         collections,
+        paymentTerms,
         priceTables,
-      }: { id: string; status: string; collections: any[]; priceTables: any[] },
+      }: {
+        id: string
+        status: string
+        collections: any[]
+        paymentTerms: any[]
+        priceTables: any[]
+      },
       ctx: Context
     ) => {
       const {
@@ -629,7 +642,7 @@ export const resolvers = {
         await masterdata.updatePartialDocument({
           id,
           dataEntity: ORGANIZATION_DATA_ENTITY,
-          fields: { status, collections, priceTables },
+          fields: { status, collections, paymentTerms, priceTables },
         })
 
         return { status: 'success', message: '' }
@@ -1087,6 +1100,29 @@ export const resolvers = {
         })
 
         return organization
+      } catch (e) {
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    },
+    getPaymentTerms: async (_: any, __: any, ctx: Context) => {
+      const {
+        clients: { payments },
+      } = ctx
+
+      try {
+        const paymentRules = await payments.rules()
+
+        const promissoryConnectors = paymentRules.filter(
+          rule => rule.connector.implementation === CONNECTOR.PROMISSORY
+        )
+
+        return promissoryConnectors.map(connector => connector.paymentSystem)
       } catch (e) {
         if (e.message) {
           throw new GraphQLError(e.message)

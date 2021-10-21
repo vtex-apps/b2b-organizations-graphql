@@ -1,6 +1,7 @@
 import { IOClients } from '@vtex/api'
 
 import VtexId from './vtexId'
+import PaymentsClient from './payments'
 import { OMSClient } from './Oms'
 import { GraphQLServer } from './graphqlServer'
 
@@ -8,6 +9,10 @@ import { GraphQLServer } from './graphqlServer'
 export class Clients extends IOClients {
   public get vtexId() {
     return this.getOrSet('vtexId', VtexId)
+  }
+
+  public get payments() {
+    return this.getOrSet('payments', PaymentsClient)
   }
 
   public get oms() {

@@ -15,12 +15,13 @@ export const ORGANIZATION_FIELDS = [
   'id',
   'name',
   'collections',
+  'paymentTerms',
   'priceTables',
   'costCenters',
   'status',
   'created',
 ]
-export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.3'
+export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.4'
 
 export const COST_CENTER_DATA_ENTITY = 'cost_centers'
 export const COST_CENTER_FIELDS = ['id', 'name', 'addresses', 'organization']
@@ -73,6 +74,10 @@ export const schemas = [
         collections: {
           type: 'array',
           title: 'Collections',
+        },
+        paymentTerms: {
+          type: 'array',
+          title: 'Payment Terms',
         },
         priceTables: {
           type: 'array',

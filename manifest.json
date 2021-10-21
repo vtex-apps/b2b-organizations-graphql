@@ -27,6 +27,9 @@
       "name": "OMSViewer"
     },
     {
+      "name": "ViewPayments"
+    },
+    {
       "name": "Get_Account_By_Identifier"
     },
     {

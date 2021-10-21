@@ -10,7 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.2.0] - 2021-10-04
 
 ### Added
+
+- Payment Term support
 - Orders history support
+
 ## [0.1.0] - 2021-09-24
 
 ### Added
