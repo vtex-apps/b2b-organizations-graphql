@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ForbiddenError } from '@vtex/api'
@@ -215,12 +216,19 @@ export const resolvers = {
           {
             persistedQuery: {
               provider: 'vtex.storefront-permissions@1.x',
-              sender: 'vtex.b2b-organizations@0.x',
+              sender: 'vtex.b2b-orders-history@0.x',
             },
           }
         )
         .catch((err: any) => {
+          console.log('Error quering permissions =>', err)
           logger.error(err)
+
+          return {
+            data: {
+              checkUserPermission: null,
+            },
+          }
         })
 
       const pastYear: any = new Date()
