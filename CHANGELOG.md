@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- App sender from `vtex.b2b-organizations@0.x` to `vtex.b2b-orders-history@0.x`
 ## [0.2.1] - 2021-10-21
 
 ## [0.2.0] - 2021-10-04
