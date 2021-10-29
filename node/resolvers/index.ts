@@ -625,12 +625,14 @@ export const resolvers = {
       _: any,
       {
         id,
+        name,
         status,
         collections,
         paymentTerms,
         priceTables,
       }: {
         id: string
+        name: string
         status: string
         collections: any[]
         paymentTerms: any[]
@@ -650,7 +652,7 @@ export const resolvers = {
         await masterdata.updatePartialDocument({
           id,
           dataEntity: ORGANIZATION_DATA_ENTITY,
-          fields: { status, collections, paymentTerms, priceTables },
+          fields: { name, status, collections, paymentTerms, priceTables },
         })
 
         return { status: 'success', message: '' }
