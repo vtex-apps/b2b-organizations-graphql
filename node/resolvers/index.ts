@@ -17,66 +17,15 @@ import {
 } from '../mdSchema'
 import { toHash } from '../utils'
 import GraphQLError from '../utils/GraphQLError'
+import { organizationName, costCenterName } from './fieldResolvers'
 
 const getAppId = (): string => {
   return process.env.VTEX_APP_ID ?? ''
 }
 
-interface OrganizationInput {
-  name: string
-  b2bCustomerAdmin: B2BCustomerInput
-  defaultCostCenter: DefaultCostCenterInput
-}
-
-interface B2BCustomerInput {
-  firstName: string
-  lastName: string
-  email: string
-}
-
-interface DefaultCostCenterInput {
-  name: string
-  address: AddressInput
-}
-
-interface CostCenterInput {
-  name: string
-  addresses: [AddressInput]
-}
-
 const CONNECTOR = {
   PROMISSORY: 'Vtex.PaymentGateway.Connectors.PromissoryConnector',
 } as const
-
-interface AddressInput {
-  addressId: string
-  addressType: string
-  postalCode: string
-  country: string
-  receiverName: string
-  city: string
-  state: string
-  street: string
-  number: string
-  complement: string
-  neighborhood: string
-  geoCoordinates: [number]
-}
-
-interface OrganizationRequest {
-  name: string
-  defaultCostCenter: DefaultCostCenterInput
-  b2bCustomerAdmin: string
-  status: string
-  created: string
-}
-
-interface Organization {
-  name: string
-  costCenters: string[]
-  status: string
-  created: string
-}
 
 const defaultSettings = {
   adminSetup: {
@@ -160,6 +109,19 @@ const QUERIES = {
         slug
       }
       permissions
+    }
+  }`,
+  listUsers: `query users($organizationId: ID, $costCenterId: ID) {
+    listUsers(organizationId: $organizationId, costCenterId: $costCenterId) @context(provider: "vtex.storefront-permissions") {
+      id
+      roleId
+      userId
+      clId
+      orgId
+      costId
+      name
+      email
+      canImpersonate
     }
   }`,
 }
@@ -850,7 +812,7 @@ export const resolvers = {
             schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
             pagination: { page, pageSize },
             sort: `${sortedBy} ${sortOrder}`,
-            ...(where ? { where } : {}),
+            ...(where && { where }),
           }
         )
 
@@ -953,7 +915,7 @@ export const resolvers = {
             schema: ORGANIZATION_SCHEMA_VERSION,
             pagination: { page, pageSize },
             sort: `${sortedBy} ${sortOrder}`,
-            ...(where ? { where } : {}),
+            ...(where && { where }),
           }
         )
 
@@ -980,15 +942,16 @@ export const resolvers = {
       const {
         clients: { masterdata },
         vtex,
+        vtex: { adminUserAuthToken },
       } = ctx
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
 
+      const { sessionData } = vtex as any
+
       if (!id) {
         // get user's organization from session
-        const { sessionData } = vtex as any
-
         if (!sessionData?.namespaces['storefront-permissions']) {
           throw new GraphQLError('organization-data-not-found')
         }
@@ -998,6 +961,18 @@ export const resolvers = {
         } = sessionData.namespaces['storefront-permissions']
 
         id = userOrganizationId
+      }
+
+      if (!adminUserAuthToken) {
+        // if not admin user, verify user has access to requested organization
+
+        const {
+          organization: { value: userOrganizationId },
+        } = sessionData.namespaces['storefront-permissions']
+
+        if (id !== userOrganizationId) {
+          throw new GraphQLError('operation-not-permitted')
+        }
       }
 
       try {
@@ -1096,14 +1071,16 @@ export const resolvers = {
       const {
         clients: { masterdata },
         vtex,
+        vtex: { adminUserAuthToken },
       } = ctx
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
 
+      const { sessionData } = vtex as any
+
       if (!id) {
         // get user's organization from session
-        const { sessionData } = vtex as any
 
         if (!sessionData?.namespaces['storefront-permissions']) {
           throw new GraphQLError('organization-data-not-found')
@@ -1114,6 +1091,18 @@ export const resolvers = {
         } = sessionData.namespaces['storefront-permissions']
 
         id = userOrganizationId
+      }
+
+      if (!adminUserAuthToken) {
+        // if not admin user, verify user has access to requested organization
+
+        const {
+          organization: { value: userOrganizationId },
+        } = sessionData.namespaces['storefront-permissions']
+
+        if (id !== userOrganizationId) {
+          throw new GraphQLError('operation-not-permitted')
+        }
       }
 
       let where = `organization=${id}`
@@ -1129,7 +1118,7 @@ export const resolvers = {
           schema: COST_CENTER_SCHEMA_VERSION,
           pagination: { page, pageSize },
           sort: `${sortedBy} ${sortOrder}`,
-          ...(where ? { where } : {}),
+          ...(where && { where }),
         })
 
         return costCenters
@@ -1146,19 +1135,39 @@ export const resolvers = {
     getCostCenterById: async (_: any, { id }: { id: string }, ctx: Context) => {
       const {
         clients: { masterdata },
+        vtex,
+        vtex: { adminUserAuthToken },
       } = ctx
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
 
       try {
-        const organization = await masterdata.getDocument({
+        const costCenter: CostCenter = await masterdata.getDocument({
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: COST_CENTER_FIELDS,
           id,
         })
 
-        return organization
+        if (!adminUserAuthToken) {
+          // if not admin user, verify user has access to requested organization
+
+          const { sessionData } = vtex as any
+
+          if (!sessionData?.namespaces['storefront-permissions']) {
+            throw new GraphQLError('organization-data-not-found')
+          }
+
+          const {
+            organization: { value: userOrganizationId },
+          } = sessionData.namespaces['storefront-permissions']
+
+          if (costCenter.organization !== userOrganizationId) {
+            throw new GraphQLError('operation-not-permitted')
+          }
+        }
+
+        return costCenter
       } catch (e) {
         if (e.message) {
           throw new GraphQLError(e.message)
@@ -1191,6 +1200,50 @@ export const resolvers = {
           throw new GraphQLError(e)
         }
       }
+    },
+    getUsers: async (
+      _: any,
+      {
+        organizationId,
+        costCenterId,
+      }: { organizationId: string; costCenterId: string },
+      ctx: Context
+    ) => {
+      const {
+        clients: { graphQLServer },
+        vtex: { logger },
+      } = ctx
+
+      const variables = {
+        ...(organizationId && { organizationId }),
+        ...(costCenterId && { costCenterId }),
+      }
+
+      const users = await graphQLServer
+        .query(QUERIES.listUsers, variables, {
+          persistedQuery: {
+            provider: 'vtex.storefront-permissions@1.x',
+            sender: 'vtex.b2b-organizations@0.x',
+          },
+        })
+        .then((result: any) => {
+          return result.data.listUsers
+        })
+        .catch(error => {
+          logger.error({
+            message: 'getUsers-error',
+            error,
+          })
+          if (error.message) {
+            throw new GraphQLError(error.message)
+          } else if (error.response?.data?.message) {
+            throw new GraphQLError(error.response.data.message)
+          } else {
+            throw new GraphQLError(error)
+          }
+        })
+
+      return users
     },
     getAppSettings: async (_: any, __: any, ctx: Context) => {
       const {
@@ -1246,5 +1299,9 @@ export const resolvers = {
 
       return settings
     },
+  },
+  B2BUser: {
+    organizationName,
+    costCenterName,
   },
 }

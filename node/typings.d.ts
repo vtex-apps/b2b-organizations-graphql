@@ -37,3 +37,63 @@ declare module '*.json' {
   const value: any
   export default value
 }
+
+interface OrganizationInput {
+  name: string
+  b2bCustomerAdmin: B2BCustomerInput
+  defaultCostCenter: DefaultCostCenterInput
+}
+
+interface B2BCustomerInput {
+  firstName: string
+  lastName: string
+  email: string
+}
+
+interface DefaultCostCenterInput {
+  name: string
+  address: AddressInput
+}
+
+interface CostCenterInput {
+  name: string
+  addresses: AddressInput[]
+}
+
+interface AddressInput {
+  addressId: string
+  addressType: string
+  postalCode: string
+  country: string
+  receiverName: string
+  city: string
+  state: string
+  street: string
+  number: string
+  complement: string
+  neighborhood: string
+  geoCoordinates: [number]
+}
+
+interface OrganizationRequest {
+  name: string
+  defaultCostCenter: DefaultCostCenterInput
+  b2bCustomerAdmin: string
+  status: string
+  created: string
+}
+
+interface Organization {
+  id: string
+  name: string
+  costCenters: string[]
+  status: string
+  created: string
+}
+
+interface CostCenter {
+  id: string
+  name: string
+  organization: string
+  addresses: any[]
+}
