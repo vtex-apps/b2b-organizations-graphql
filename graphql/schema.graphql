@@ -54,6 +54,7 @@ type Mutation {
   ): MasterDataResponse
   updateOrganization(
     id: ID!
+    name: String!
     status: String!
     collections: [CollectionInput]
     paymentTerms: [PaymentTermInput]
