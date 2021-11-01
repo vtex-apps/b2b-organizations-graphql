@@ -6,6 +6,16 @@ import {
   COST_CENTER_FIELDS,
 } from '../mdSchema'
 
+const QUERIES = {
+  getRole: `query role($id: ID!) {
+    getRole(id: $id) @context(provider: "vtex.storefront-permissions") {
+        id
+        name
+        slug
+    }
+  }`,
+}
+
 export const organizationName = async (
   { orgId }: { orgId: string },
   _: any,
@@ -81,4 +91,28 @@ export const role = async (
     clients: { graphQLServer },
     vtex: { logger },
   } = ctx
+
+  const roleData = await graphQLServer
+    .query(
+      QUERIES.getRole,
+      { id: roleId },
+      {
+        persistedQuery: {
+          provider: 'vtex.storefront-permissions@1.x',
+          sender: 'vtex.b2b-organizations@0.x',
+        },
+      }
+    )
+    .then((result: any) => {
+      return result.data.getRole
+    })
+    .catch((error: any) => {
+      console.error(error)
+      logger.error({
+        message: 'getRoleError',
+        error,
+      })
+    })
+
+  return roleData
 }

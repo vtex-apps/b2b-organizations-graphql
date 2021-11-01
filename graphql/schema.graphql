@@ -81,6 +81,20 @@ type Mutation {
     @withPermissions
   deleteOrganization(id: ID!): MutationResponse
   deleteCostCenter(id: ID!): MutationResponse @withSession @withPermissions
+  saveUser(
+    id: ID
+    roleId: ID!
+    userId: ID
+    orgId: ID
+    costId: ID
+    clId: ID
+    canImpersonate: Boolean = false
+    name: String!
+    email: String!
+  ): MutationResponse @withSession @withPermissions
+  removeUser(id: ID!, userId: ID, email: String!): MutationResponse
+    @withSession
+    @withPermissions
 }
 
 type SettingsResponse {

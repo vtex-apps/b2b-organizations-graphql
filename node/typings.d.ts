@@ -97,3 +97,15 @@ interface CostCenter {
   organization: string
   addresses: any[]
 }
+
+interface UserArgs {
+  id?: string
+  roleId: string
+  userId?: string
+  orgId?: string
+  costId?: string
+  clId?: string
+  canImpersonate?: boolean
+  name: string
+  email: string
+}

@@ -24,4 +24,19 @@ export class GraphQLServer extends AppClient {
       }
     )
   }
+
+  public mutation = async (mutate: string, variables: any) => {
+    return this.graphql.mutate(
+      { mutate, variables },
+      {
+        params: {
+          locale: this.context.locale,
+        },
+        headers: {
+          sessionToken: this.context.sessionToken,
+        },
+        url: `/graphql`,
+      }
+    )
+  }
 }

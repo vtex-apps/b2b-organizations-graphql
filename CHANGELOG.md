@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- `getUsers` query
+- `saveUser` and `removeUser` mutations
 - `withSession` directive
 - `getOrganizationById` and `getCostCenterByOrganizationId` queries will now use the user's organization ID if no ID argument is provided
 

@@ -126,6 +126,23 @@ const QUERIES = {
   }`,
 }
 
+const MUTATIONS = {
+  saveUser: `mutation saveUser($id: ID, $roleId: ID!, $userId: ID, $orgId: ID, $costId: ID, $clId: ID, $canImpersonate: Boolean, $name: String!, $email: String!) {
+    saveUser(id: $id, roleId: $roleId, userId: $userId, orgId: $orgId, costId: $costId, clId: $clId, canImpersonate: $canImpersonate, name: $name, email: $email) @context(provider: "vtex.storefront-permissions") {
+      id
+      status
+      message
+    }
+  }`,
+  deleteUser: `mutation deleteUser($id: ID!, $userId: ID, $email: String!) {
+    deleteUser(id: $id, userId: $userId, email: $email) @context(provider: "vtex.storefront-permissions") {
+      id
+      status
+      message
+    }
+  }`,
+}
+
 export const resolvers = {
   Routes: {
     orders: async (ctx: Context) => {
@@ -738,6 +755,133 @@ export const resolvers = {
           throw new GraphQLError(e)
         }
       }
+    },
+    saveUser: async (
+      _: any,
+      {
+        id,
+        roleId,
+        userId,
+        orgId,
+        costId,
+        clId,
+        canImpersonate = false,
+        name,
+        email,
+      }: UserArgs,
+      ctx: Context
+    ) => {
+      const {
+        clients: { graphQLServer },
+        vtex,
+        vtex: { adminUserAuthToken, logger },
+      } = ctx
+
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
+      const { sessionData, storefrontPermissions } = vtex as any
+
+      if (
+        !adminUserAuthToken &&
+        !sessionData?.namespaces['storefront-permissions']?.organization
+      ) {
+        throw new GraphQLError('organization-data-not-found')
+      }
+
+      if (
+        !adminUserAuthToken &&
+        !storefrontPermissions?.permissions?.includes('add-users-organization')
+      ) {
+        throw new GraphQLError('operation-not-permitted')
+      }
+
+      if (
+        !adminUserAuthToken &&
+        sessionData.namespaces['storefront-permissions'].organization !== orgId
+      ) {
+        throw new GraphQLError('operation-not-permitted')
+      }
+
+      const addUserResult = await graphQLServer
+        .mutation(MUTATIONS.saveUser, {
+          id,
+          roleId,
+          userId,
+          orgId,
+          costId,
+          clId,
+          canImpersonate,
+          name,
+          email,
+        })
+        .then((result: any) => {
+          return result.data.saveUser
+        })
+        .catch((error: any) => {
+          console.error(error)
+          logger.error({
+            message: 'addUser-error',
+            error,
+          })
+
+          return { status: 'error', message: error }
+        })
+
+      return addUserResult
+    },
+    removeUser: async (
+      _: any,
+      { id, userId, email }: UserArgs,
+      ctx: Context
+    ) => {
+      const {
+        clients: { graphQLServer },
+        vtex,
+        vtex: { adminUserAuthToken, logger },
+      } = ctx
+
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
+      const { sessionData, storefrontPermissions } = vtex as any
+
+      if (
+        !adminUserAuthToken &&
+        !sessionData?.namespaces['storefront-permissions']?.organization
+      ) {
+        throw new GraphQLError('organization-data-not-found')
+      }
+
+      if (
+        !adminUserAuthToken &&
+        !storefrontPermissions?.permissions?.includes(
+          'remove-users-organization'
+        )
+      ) {
+        throw new GraphQLError('operation-not-permitted')
+      }
+
+      const deleteUserResult = await graphQLServer
+        .mutation(MUTATIONS.deleteUser, {
+          id,
+          userId,
+          email,
+        })
+        .then((result: any) => {
+          return result.data.deleteUser
+        })
+        .catch((error: any) => {
+          console.error(error)
+          logger.error({
+            message: 'deleteUser-error',
+            error,
+          })
+
+          return { status: 'error', message: error }
+        })
+
+      return deleteUserResult
     },
     saveAppSettings: async (_: any, __: any, ctx: Context) => {
       const {
