@@ -83,6 +83,7 @@ export const schemas = [
           type: 'array',
           title: 'Price Tables',
         },
+        // we probably don't need this
         costCenters: {
           type: 'array',
           title: 'Cost Centers',

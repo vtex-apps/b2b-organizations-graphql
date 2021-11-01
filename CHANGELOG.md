@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- `getUsers` query
+- `saveUser` and `removeUser` mutations
+- `withSession` directive
+- `getOrganizationById` and `getCostCenterByOrganizationId` queries will now use the user's organization ID if no ID argument is provided
+
 ## [0.2.3] - 2021-10-29
 
 ### Fixed
@@ -21,11 +28,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.2.1] - 2021-10-21
 
+### Added
+
+- Payment Term support
+
 ## [0.2.0] - 2021-10-04
 
 ### Added
 
-- Payment Term support
 - Orders history support
 
 ## [0.1.0] - 2021-09-24

@@ -1,1 +1,2 @@
-directive @withUserDetails on FIELD | FIELD_DEFINITION
+directive @withSession on FIELD | FIELD_DEFINITION
+directive @withPermissions on FIELD | FIELD_DEFINITION
