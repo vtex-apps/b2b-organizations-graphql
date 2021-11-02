@@ -17,7 +17,7 @@ import {
 } from '../mdSchema'
 import { toHash } from '../utils'
 import GraphQLError from '../utils/GraphQLError'
-import { organizationName, costCenterName } from './fieldResolvers'
+import { organizationName, costCenterName, role } from './fieldResolvers'
 
 const getAppId = (): string => {
   return process.env.VTEX_APP_ID ?? ''
@@ -1447,5 +1447,6 @@ export const resolvers = {
   B2BUser: {
     organizationName,
     costCenterName,
+    role,
   },
 }

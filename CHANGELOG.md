@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Initialize `B2BUser` query field resolvers
+- Don't set `sessionToken` header in `GraphQLServer` client if token is null
+
 ## [0.3.0] - 2021-11-01
 
 ### Added
