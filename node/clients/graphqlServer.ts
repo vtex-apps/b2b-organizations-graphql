@@ -18,7 +18,9 @@ export class GraphQLServer extends AppClient {
           locale: this.context.locale,
         },
         headers: {
-          sessionToken: this.context.sessionToken,
+          ...(this.context.sessionToken && {
+            sessionToken: this.context.sessionToken,
+          }),
         },
         url: `/graphql`,
       }
@@ -33,7 +35,9 @@ export class GraphQLServer extends AppClient {
           locale: this.context.locale,
         },
         headers: {
-          sessionToken: this.context.sessionToken,
+          ...(this.context.sessionToken && {
+            sessionToken: this.context.sessionToken,
+          }),
         },
         url: `/graphql`,
       }

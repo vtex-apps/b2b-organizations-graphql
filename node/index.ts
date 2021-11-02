@@ -45,6 +45,7 @@ export default new Service<Clients, RecorderState, ParamsContext>({
     resolvers: {
       Query: resolvers.Query,
       Mutation: resolvers.Mutation,
+      B2BUser: resolvers.B2BUser,
     },
     schemaDirectives,
   },
