@@ -1085,8 +1085,37 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+      } = ctx
+
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
+      try {
+        const organization = await masterdata.getDocument({
+          dataEntity: ORGANIZATION_DATA_ENTITY,
+          fields: ORGANIZATION_FIELDS,
+          id,
+        })
+
+        return organization
+      } catch (e) {
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    },
+    getOrganizationByIdStorefront: async (
+      _: any,
+      { id }: { id: string },
+      ctx: Context
+    ) => {
+      const {
+        clients: { masterdata },
         vtex,
-        vtex: { adminUserAuthToken },
       } = ctx
 
       // create schema if it doesn't exist
@@ -1094,29 +1123,21 @@ export const resolvers = {
 
       const { sessionData } = vtex as any
 
+      if (!sessionData?.namespaces['storefront-permissions']) {
+        throw new GraphQLError('organization-data-not-found')
+      }
+
+      const {
+        organization: { value: userOrganizationId },
+      } = sessionData.namespaces['storefront-permissions']
+
       if (!id) {
         // get user's organization from session
-        if (!sessionData?.namespaces['storefront-permissions']) {
-          throw new GraphQLError('organization-data-not-found')
-        }
-
-        const {
-          organization: { value: userOrganizationId },
-        } = sessionData.namespaces['storefront-permissions']
-
         id = userOrganizationId
       }
 
-      if (!adminUserAuthToken) {
-        // if not admin user, verify user has access to requested organization
-
-        const {
-          organization: { value: userOrganizationId },
-        } = sessionData.namespaces['storefront-permissions']
-
-        if (id !== userOrganizationId) {
-          throw new GraphQLError('operation-not-permitted')
-        }
+      if (id !== userOrganizationId) {
+        throw new GraphQLError('operation-not-permitted')
       }
 
       try {
@@ -1214,8 +1235,60 @@ export const resolvers = {
     ) => {
       const {
         clients: { masterdata },
+      } = ctx
+
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
+      let where = `organization=${id}`
+
+      if (search) {
+        where += ` AND name=*${encodeURI(search)}*`
+      }
+
+      try {
+        const costCenters = await masterdata.searchDocumentsWithPaginationInfo({
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: COST_CENTER_FIELDS,
+          schema: COST_CENTER_SCHEMA_VERSION,
+          pagination: { page, pageSize },
+          sort: `${sortedBy} ${sortOrder}`,
+          ...(where && { where }),
+        })
+
+        return costCenters
+      } catch (e) {
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    },
+    getCostCentersByOrganizationIdStorefront: async (
+      _: any,
+      {
+        id,
+        search,
+        page,
+        pageSize,
+        sortOrder,
+        sortedBy,
+      }: {
+        id: string
+        search: string
+        page: number
+        pageSize: number
+        sortOrder: string
+        sortedBy: string
+      },
+      ctx: Context
+    ) => {
+      const {
+        clients: { masterdata },
         vtex,
-        vtex: { adminUserAuthToken },
       } = ctx
 
       // create schema if it doesn't exist
@@ -1223,30 +1296,21 @@ export const resolvers = {
 
       const { sessionData } = vtex as any
 
+      if (!sessionData?.namespaces['storefront-permissions']) {
+        throw new GraphQLError('organization-data-not-found')
+      }
+
+      const {
+        organization: { value: userOrganizationId },
+      } = sessionData.namespaces['storefront-permissions']
+
       if (!id) {
         // get user's organization from session
-
-        if (!sessionData?.namespaces['storefront-permissions']) {
-          throw new GraphQLError('organization-data-not-found')
-        }
-
-        const {
-          organization: { value: userOrganizationId },
-        } = sessionData.namespaces['storefront-permissions']
-
         id = userOrganizationId
       }
 
-      if (!adminUserAuthToken) {
-        // if not admin user, verify user has access to requested organization
-
-        const {
-          organization: { value: userOrganizationId },
-        } = sessionData.namespaces['storefront-permissions']
-
-        if (id !== userOrganizationId) {
-          throw new GraphQLError('operation-not-permitted')
-        }
+      if (id !== userOrganizationId) {
+        throw new GraphQLError('operation-not-permitted')
       }
 
       let where = `organization=${id}`
@@ -1279,8 +1343,6 @@ export const resolvers = {
     getCostCenterById: async (_: any, { id }: { id: string }, ctx: Context) => {
       const {
         clients: { masterdata },
-        vtex,
-        vtex: { adminUserAuthToken },
       } = ctx
 
       // create schema if it doesn't exist
@@ -1293,22 +1355,49 @@ export const resolvers = {
           id,
         })
 
-        if (!adminUserAuthToken) {
-          // if not admin user, verify user has access to requested organization
+        return costCenter
+      } catch (e) {
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    },
+    getCostCenterByIdStorefront: async (
+      _: any,
+      { id }: { id: string },
+      ctx: Context
+    ) => {
+      const {
+        clients: { masterdata },
+        vtex,
+      } = ctx
 
-          const { sessionData } = vtex as any
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
 
-          if (!sessionData?.namespaces['storefront-permissions']) {
-            throw new GraphQLError('organization-data-not-found')
-          }
+      const { sessionData } = vtex as any
 
-          const {
-            organization: { value: userOrganizationId },
-          } = sessionData.namespaces['storefront-permissions']
+      if (!sessionData?.namespaces['storefront-permissions']) {
+        throw new GraphQLError('organization-data-not-found')
+      }
 
-          if (costCenter.organization !== userOrganizationId) {
-            throw new GraphQLError('operation-not-permitted')
-          }
+      try {
+        const costCenter: CostCenter = await masterdata.getDocument({
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: COST_CENTER_FIELDS,
+          id,
+        })
+
+        const {
+          organization: { value: userOrganizationId },
+        } = sessionData.namespaces['storefront-permissions']
+
+        if (costCenter.organization !== userOrganizationId) {
+          throw new GraphQLError('operation-not-permitted')
         }
 
         return costCenter

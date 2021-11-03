@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Create separate queries for storefront users that check user's permissions
+
 ## [0.3.1] - 2021-11-02
 
 ### Fixed
