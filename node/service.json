@@ -16,6 +16,10 @@
       "path": "/b2b/oms/user/orders/",
       "public": true
     },
+    "checkout": {
+      "path": "/b2b/oms/user/checkout/",
+      "public": true
+    },
     "order": {
       "path": "/b2b/oms/user/orders/:orderId",
       "public": true

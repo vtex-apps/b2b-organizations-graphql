@@ -145,6 +145,66 @@ const MUTATIONS = {
 
 export const resolvers = {
   Routes: {
+    checkout: async (ctx: Context) => {
+      const {
+        vtex: { storeUserAuthToken, sessionToken, logger },
+        clients: { session, masterdata },
+      } = ctx
+
+      const token: any = storeUserAuthToken
+      const response: any = {}
+
+      ctx.response.status = !token ? 403 : 200
+
+      if (token) {
+        const sessionData = await session
+          .getSession(sessionToken as string, ['*'])
+          .then((currentSession: any) => {
+            return currentSession.sessionData
+          })
+          .catch((err: any) => {
+            logger.error(err)
+
+            return null
+          })
+
+        if (sessionData?.namespaces['storefront-permissions']) {
+          if (
+            sessionData.namespaces['storefront-permissions']?.organization
+              ?.value
+          ) {
+            const organization = await masterdata.getDocument({
+              dataEntity: ORGANIZATION_DATA_ENTITY,
+              fields: ['paymentTerms'],
+              id:
+                sessionData.namespaces['storefront-permissions']?.organization
+                  ?.value,
+            })
+
+            response.organization = organization
+          }
+
+          if (
+            sessionData.namespaces['storefront-permissions']?.costcenter?.value
+          ) {
+            const costcenter = await masterdata.getDocument({
+              dataEntity: COST_CENTER_DATA_ENTITY,
+              fields: ['addresses'],
+              id:
+                sessionData.namespaces['storefront-permissions']?.costcenter
+                  ?.value,
+            })
+
+            response.costcenter = costcenter
+          }
+        }
+      }
+
+      ctx.set('Content-Type', 'application/json')
+      ctx.set('Cache-Control', 'no-cache, no-store')
+
+      ctx.response.body = response
+    },
     orders: async (ctx: Context) => {
       const {
         vtex: { storeUserAuthToken, sessionToken, logger },
@@ -1086,6 +1146,8 @@ export const resolvers = {
       const {
         clients: { masterdata },
       } = ctx
+
+      console.log('getOrganizationById =>', id)
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
