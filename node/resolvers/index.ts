@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ForbiddenError } from '@vtex/api'
@@ -162,8 +161,11 @@ export const resolvers = {
           .then((currentSession: any) => {
             return currentSession.sessionData
           })
-          .catch((err: any) => {
-            logger.error(err)
+          .catch((error: any) => {
+            logger.error({
+              message: 'getSession-error',
+              error,
+            })
 
             return null
           })
@@ -224,8 +226,11 @@ export const resolvers = {
         .then((currentSession: any) => {
           return currentSession.sessionData
         })
-        .catch((err: any) => {
-          logger.error(err)
+        .catch((error: any) => {
+          logger.error({
+            message: 'getSession-error',
+            error,
+          })
 
           return null
         })
@@ -259,9 +264,11 @@ export const resolvers = {
             },
           }
         )
-        .catch((err: any) => {
-          console.log('Error quering permissions =>', err)
-          logger.error(err)
+        .catch((error: any) => {
+          logger.error({
+            message: 'checkUserPermission-error',
+            error,
+          })
 
           return {
             data: {
@@ -879,7 +886,6 @@ export const resolvers = {
           return result.data.saveUser
         })
         .catch((error: any) => {
-          console.error(error)
           logger.error({
             message: 'addUser-error',
             error,
@@ -932,7 +938,6 @@ export const resolvers = {
           return result.data.deleteUser
         })
         .catch((error: any) => {
-          console.error(error)
           logger.error({
             message: 'deleteUser-error',
             error,
@@ -1146,8 +1151,6 @@ export const resolvers = {
       const {
         clients: { masterdata },
       } = ctx
-
-      console.log('getOrganizationById =>', id)
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
