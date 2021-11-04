@@ -42,6 +42,12 @@
       "name": "vtex.graphql-server:resolve-graphql"
     },
     {
+      "name": "template-criar"
+    },
+    {
+      "name": "send-message"
+    },
+    {
       "name": "outbound-access",
       "attrs": {
         "host": "portal.vtexcommercestable.com.br",
