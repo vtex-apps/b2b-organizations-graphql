@@ -2,6 +2,7 @@ import { IOClients } from '@vtex/api'
 
 import VtexId from './vtexId'
 import PaymentsClient from './payments'
+import MailClient from './email'
 import { OMSClient } from './Oms'
 import { GraphQLServer } from './graphqlServer'
 
@@ -13,6 +14,10 @@ export class Clients extends IOClients {
 
   public get payments() {
     return this.getOrSet('payments', PaymentsClient)
+  }
+
+  public get mail() {
+    return this.getOrSet('mail', MailClient)
   }
 
   public get oms() {

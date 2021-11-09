@@ -78,7 +78,7 @@ interface AddressInput {
 interface OrganizationRequest {
   name: string
   defaultCostCenter: DefaultCostCenterInput
-  b2bCustomerAdmin: string
+  b2bCustomerAdmin: B2BCustomerInput
   status: string
   created: string
 }

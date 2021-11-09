@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Send email to Sales Admins and Customer Admin on organization and request updates.
+
 ## [0.4.0] - 2021-11-04
 
 ### Added
+
 - `/b2b/oms/user/checkout/` route to return `paymentTerms` and Cost Center addresses
 
 ## [0.3.2] - 2021-11-03

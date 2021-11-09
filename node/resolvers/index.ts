@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { EventContext } from '@vtex/api'
 import { ForbiddenError } from '@vtex/api'
 
 import {
@@ -14,9 +15,12 @@ import {
   COST_CENTER_FIELDS,
   COST_CENTER_SCHEMA_VERSION,
 } from '../mdSchema'
+import type { Clients } from '../clients'
 import { toHash } from '../utils'
 import GraphQLError from '../utils/GraphQLError'
 import { organizationName, costCenterName, role } from './fieldResolvers'
+import message from './message'
+import templates from '../templates'
 
 const getAppId = (): string => {
   return process.env.VTEX_APP_ID ?? ''
@@ -99,7 +103,7 @@ const checkConfig = async (ctx: Context) => {
   return settings
 }
 
-const QUERIES = {
+export const QUERIES = {
   getPermission: `query permissions {
     checkUserPermission @context(provider: "vtex.storefront-permissions"){
       role {
@@ -110,7 +114,7 @@ const QUERIES = {
       permissions
     }
   }`,
-  listUsers: `query users($organizationId: ID, $costCenterId: ID) {
+  listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID) {
     listUsers(organizationId: $organizationId, costCenterId: $costCenterId) @context(provider: "vtex.storefront-permissions") {
       id
       roleId
@@ -121,6 +125,13 @@ const QUERIES = {
       name
       email
       canImpersonate
+    }
+  }`,
+  listRoles: `query roles {
+    listRoles @context(provider: "vtex.storefront-permissions"){
+      id
+      name
+      slug
     }
   }`,
 }
@@ -143,6 +154,13 @@ const MUTATIONS = {
 }
 
 export const resolvers = {
+  Events: {
+    createDefaultTemplate: async (ctx: EventContext<Clients>) => {
+      for (const template of templates) {
+        ctx.clients.mail.publishTemplate(template)
+      }
+    },
+  },
   Routes: {
     checkout: async (ctx: Context) => {
       const {
@@ -380,27 +398,43 @@ export const resolvers = {
       ctx: Context
     ) => {
       const {
-        clients: { masterdata },
+        clients: { masterdata, mail, graphQLServer },
         vtex: { logger },
       } = ctx
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
 
+      let organizationRequest: OrganizationRequest
+
+      try {
+        // get organization request
+        organizationRequest = await masterdata.getDocument({
+          dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
+          id,
+          fields: ORGANIZATION_REQUEST_FIELDS,
+        })
+      } catch (e) {
+        logger.error({
+          message: 'getOrganizationRequest-error',
+          error: e,
+        })
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+
+      const { email, firstName } = organizationRequest.b2bCustomerAdmin
+
       if (status === 'approved') {
         // if status is approved:
         const now = new Date()
 
         try {
-          // get organization request
-          const organizationRequest: OrganizationRequest = await masterdata.getDocument(
-            {
-              dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
-              id,
-              fields: ORGANIZATION_REQUEST_FIELDS,
-            }
-          )
-
           if (organizationRequest.status === 'approved') {
             throw new GraphQLError('organization-already-approved')
           }
@@ -459,9 +493,14 @@ export const resolvers = {
             schema: ORGANIZATION_SCHEMA_VERSION,
           })
 
+          message({ graphQLServer, logger, mail }).organizationApproved(
+            organizationRequest.name,
+            firstName,
+            email
+          )
+
           // TODO: grant B2B Customer Admin role to user
           // TODO: assign organization ID and cost center ID to user
-          // TODO: send email to user
 
           return { status: 'success', message: '' }
         } catch (e) {
@@ -487,7 +526,12 @@ export const resolvers = {
           id,
           fields: { status, notes },
         })
-        // TODO: send email to user
+
+        message({ graphQLServer, logger, mail }).organizationDeclined(
+          organizationRequest.name,
+          firstName,
+          email
+        )
 
         return { status: 'success', message: '' }
       } catch (e) {
@@ -532,7 +576,7 @@ export const resolvers = {
       ctx: Context
     ) => {
       const {
-        clients: { masterdata },
+        clients: { masterdata, graphQLServer, mail },
         vtex: { logger },
       } = ctx
 
@@ -588,6 +632,8 @@ export const resolvers = {
           },
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
+
+        message({ graphQLServer, logger, mail }).organizationCreated(name)
 
         return createOrganizationResult
       } catch (e) {

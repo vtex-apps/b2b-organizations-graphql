@@ -24,5 +24,15 @@
       "path": "/b2b/oms/user/orders/:orderId",
       "public": true
     }
+  },
+  "events": {
+    "onAppInstalled": {
+      "sender": "apps",
+      "keys": ["setup"]
+    },
+    "onAppLinked": {
+      "sender": "apps",
+      "keys": ["linked", "relinked"]
+    }
   }
 }
