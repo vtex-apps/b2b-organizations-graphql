@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Permissions check to `getUsers` query and `saveUser`, `removeUser` mutations
 
+### Changed
+
+- `getCostCenterByIdStorefront` query ID argument is now optional, will use user's cost center ID as default
+
 ### Fixed
 
 - Made storefront queries private

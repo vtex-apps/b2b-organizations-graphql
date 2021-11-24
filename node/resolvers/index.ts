@@ -1604,16 +1604,22 @@ export const resolvers = {
         throw new GraphQLError('organization-data-not-found')
       }
 
+      const {
+        organization: { value: userOrganizationId },
+        costcenter: { value: userCostCenterId },
+      } = sessionData.namespaces['storefront-permissions']
+
+      if (!id) {
+        // get user's organization from session
+        id = userCostCenterId
+      }
+
       try {
         const costCenter: CostCenter = await masterdata.getDocument({
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: COST_CENTER_FIELDS,
           id,
         })
-
-        const {
-          organization: { value: userOrganizationId },
-        } = sessionData.namespaces['storefront-permissions']
 
         if (costCenter.organization !== userOrganizationId) {
           throw new GraphQLError('operation-not-permitted')

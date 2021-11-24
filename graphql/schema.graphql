@@ -52,7 +52,7 @@ type Query {
     @cacheControl(scope: PRIVATE)
   getCostCenterById(id: ID!): CostCenter
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
-  getCostCenterByIdStorefront(id: ID!): CostCenter
+  getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
