@@ -55,11 +55,11 @@ type Query {
   getCostCenterByIdStorefront(id: ID!): CostCenter
     @withSession
     @withPermissions
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getUsers(organizationId: ID, costCenterId: ID): [B2BUser]
     @withSession
     @withPermissions
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
