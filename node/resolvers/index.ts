@@ -115,7 +115,7 @@ export const QUERIES = {
     }
   }`,
   listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID) {
-    listUsers(organizationId: $organizationId, costCenterId: $costCenterId) @context(provider: "vtex.storefront-permissions") {
+    listUsers(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId) @context(provider: "vtex.storefront-permissions") {
       id
       roleId
       userId
@@ -128,7 +128,19 @@ export const QUERIES = {
     }
   }`,
   listRoles: `query roles {
-    listRoles @context(provider: "vtex.storefront-permissions"){
+    listRoles @context(provider: "vtex.storefront-permissions") {
+      id
+      name
+      slug
+    }
+  }`,
+  getUser: `query user($id: ID!) {
+    getUser(id: $id) @context(provider: "vtex.storefront-permissions") {
+      roleId
+    }
+  }`,
+  getRole: `query role($id: ID!) {
+    getRole(id: $id) @context(provider: "vtex.storefront-permissions") {
       id
       name
       slug
@@ -151,6 +163,51 @@ const MUTATIONS = {
       message
     }
   }`,
+}
+
+const getUserRoleSlug = async (id: string, ctx: Context) => {
+  const {
+    clients: { graphQLServer },
+    vtex: { logger },
+  } = ctx
+
+  return graphQLServer
+    .query(
+      QUERIES.getUser,
+      { id },
+      {
+        persistedQuery: {
+          provider: 'vtex.storefront-permissions@1.x',
+          sender: 'vtex.b2b-organizations@0.x',
+        },
+      }
+    )
+    .then((result: any) => {
+      return result.data.getUser
+    })
+    .then((userData: any) => {
+      return graphQLServer.query(
+        QUERIES.getRole,
+        { id: userData.roleId },
+        {
+          persistedQuery: {
+            provider: 'vtex.storefront-permissions@1.x',
+            sender: 'vtex.b2b-organizations@0.x',
+          },
+        }
+      )
+    })
+    .then((result: any) => {
+      return result.data.getRole.slug
+    })
+    .catch((error: any) => {
+      logger.error({
+        message: 'getUserRoleSlug-error',
+        error,
+      })
+
+      return { status: 'error', message: error }
+    })
 }
 
 export const resolvers = {
@@ -916,6 +973,45 @@ export const resolvers = {
         throw new GraphQLError('operation-not-permitted')
       }
 
+      if (id) {
+        // check the role of the user to be saved
+        const roleSlug = await getUserRoleSlug(id, ctx)
+
+        // organization admin can only save organization users
+        if (roleSlug.indexOf('sales') !== -1) {
+          throw new GraphQLError('operation-not-permitted')
+        }
+      } else {
+        // check the role of the user being added
+        const roleSlug = await graphQLServer
+          .query(
+            QUERIES.getRole,
+            { id: roleId },
+            {
+              persistedQuery: {
+                provider: 'vtex.storefront-permissions@1.x',
+                sender: 'vtex.b2b-organizations@0.x',
+              },
+            }
+          )
+          .then((result: any) => {
+            return result.data.getRole.slug
+          })
+          .catch((error: any) => {
+            logger.error({
+              message: 'saveUser-getRoleError',
+              error,
+            })
+
+            return { status: 'error', message: error }
+          })
+
+        // organization admin can only add organization users
+        if (roleSlug.indexOf('sales') !== -1) {
+          throw new GraphQLError('operation-not-permitted')
+        }
+      }
+
       const addUserResult = await graphQLServer
         .mutation(MUTATIONS.saveUser, {
           id,
@@ -953,6 +1049,10 @@ export const resolvers = {
         vtex: { adminUserAuthToken, logger },
       } = ctx
 
+      if (!id || !userId || !email) {
+        throw new GraphQLError('user-information-not-provided')
+      }
+
       // create schema if it doesn't exist
       await checkConfig(ctx)
 
@@ -974,6 +1074,14 @@ export const resolvers = {
         throw new GraphQLError('operation-not-permitted')
       }
 
+      // check the role of the user to be removed
+      const roleSlug = await getUserRoleSlug(id, ctx)
+
+      // organization admin can only remove organization users
+      if (roleSlug.indexOf('sales') !== -1) {
+        throw new GraphQLError('operation-not-permitted')
+      }
+
       const deleteUserResult = await graphQLServer
         .mutation(MUTATIONS.deleteUser, {
           id,
@@ -985,7 +1093,7 @@ export const resolvers = {
         })
         .catch((error: any) => {
           logger.error({
-            message: 'deleteUser-error',
+            message: 'removeUser-deleteUserError',
             error,
           })
 
@@ -1496,16 +1604,22 @@ export const resolvers = {
         throw new GraphQLError('organization-data-not-found')
       }
 
+      const {
+        organization: { value: userOrganizationId },
+        costcenter: { value: userCostCenterId },
+      } = sessionData.namespaces['storefront-permissions']
+
+      if (!id) {
+        // get user's organization from session
+        id = userCostCenterId
+      }
+
       try {
         const costCenter: CostCenter = await masterdata.getDocument({
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: COST_CENTER_FIELDS,
           id,
         })
-
-        const {
-          organization: { value: userOrganizationId },
-        } = sessionData.namespaces['storefront-permissions']
 
         if (costCenter.organization !== userOrganizationId) {
           throw new GraphQLError('operation-not-permitted')
@@ -1556,7 +1670,27 @@ export const resolvers = {
       const {
         clients: { graphQLServer },
         vtex: { logger },
+        vtex,
       } = ctx
+
+      const { sessionData } = vtex as any
+
+      if (!sessionData?.namespaces['storefront-permissions']) {
+        throw new GraphQLError('organization-data-not-found')
+      }
+
+      const {
+        organization: { value: userOrganizationId },
+      } = sessionData.namespaces['storefront-permissions']
+
+      if (!organizationId) {
+        // get user's organization from session
+        organizationId = userOrganizationId
+      }
+
+      if (organizationId !== userOrganizationId) {
+        throw new GraphQLError('operation-not-permitted')
+      }
 
       const variables = {
         ...(organizationId && { organizationId }),
