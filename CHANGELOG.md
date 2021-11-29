@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.6.0] - 2021-11-29
+
 ### Added
 
 - Permissions check to `getUsers` query and `saveUser`, `removeUser` mutations
