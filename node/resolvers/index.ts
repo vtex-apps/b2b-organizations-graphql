@@ -434,7 +434,7 @@ export const resolvers = {
           schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
         })
 
-        return result
+        return { href: result.Href, id: result.DocumentId }
       } catch (e) {
         logger.error({
           message: 'createOrganizationRequest-error',
@@ -520,10 +520,7 @@ export const resolvers = {
             schema: ORGANIZATION_SCHEMA_VERSION,
           })
 
-          const organizationId = createOrganizationResult.Id.replace(
-            'organizations-',
-            ''
-          )
+          const organizationId = createOrganizationResult.DocumentId
 
           // create cost center
           const costCenter = {
@@ -543,9 +540,7 @@ export const resolvers = {
             id: organizationId,
             dataEntity: ORGANIZATION_DATA_ENTITY,
             fields: {
-              costCenters: [
-                createCostCenterResult.Id.replace('cost_centers-', ''),
-              ],
+              costCenters: [createCostCenterResult.DocumentId],
             },
             schema: ORGANIZATION_SCHEMA_VERSION,
           })
@@ -660,10 +655,7 @@ export const resolvers = {
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
 
-        const organizationId = createOrganizationResult.Id.replace(
-          'organizations-',
-          ''
-        )
+        const organizationId = createOrganizationResult.DocumentId
 
         // create cost center
         const costCenter = {
@@ -683,16 +675,17 @@ export const resolvers = {
           id: organizationId,
           dataEntity: ORGANIZATION_DATA_ENTITY,
           fields: {
-            costCenters: [
-              createCostCenterResult.Id.replace('cost_centers-', ''),
-            ],
+            costCenters: [createCostCenterResult.DocumentId],
           },
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
 
         message({ graphQLServer, logger, mail }).organizationCreated(name)
 
-        return createOrganizationResult
+        return {
+          href: createOrganizationResult.Href,
+          id: createOrganizationResult.DocumentId,
+        }
       } catch (e) {
         logger.error({
           message: 'createOrganization-error',
@@ -760,9 +753,7 @@ export const resolvers = {
 
         const costCenterArray = organization.costCenters
 
-        costCenterArray.push(
-          createCostCenterResult.Id.replace('cost_centers-', '')
-        )
+        costCenterArray.push(createCostCenterResult.DocumentId)
 
         await masterdata.updatePartialDocument({
           dataEntity: ORGANIZATION_DATA_ENTITY,
@@ -771,7 +762,10 @@ export const resolvers = {
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
 
-        return createCostCenterResult
+        return {
+          href: createCostCenterResult.Href,
+          id: createCostCenterResult.DocumentId,
+        }
       } catch (e) {
         logger.error({
           message: 'createCostCenter-error',
