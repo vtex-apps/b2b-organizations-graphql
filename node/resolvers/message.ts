@@ -1,3 +1,4 @@
+/* eslint-disable max-params */
 import { QUERIES } from '.'
 
 const getUsers = async (graphQLServer: any, roleSlug: string) => {
@@ -60,13 +61,14 @@ const message = ({ graphQLServer, logger, mail }: any) => {
   const organizationApproved = async (
     name: string,
     admin: string,
-    email: string
+    email: string,
+    note: string
   ) => {
     mail.sendMail({
       templateName: 'organization-approved',
       jsonData: {
         message: { to: email },
-        organization: { name, admin },
+        organization: { name, admin, note },
       },
     })
   }
@@ -74,13 +76,14 @@ const message = ({ graphQLServer, logger, mail }: any) => {
   const organizationDeclined = async (
     name: string,
     admin: string,
-    email: string
+    email: string,
+    note: string
   ) => {
     mail.sendMail({
       templateName: 'organization-declined',
       jsonData: {
         message: { to: email },
-        organization: { name, admin },
+        organization: { name, admin, note },
       },
     })
   }

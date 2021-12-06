@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- When an organization request is approved, the user specified as the organization admin is now created and/or the appropriate permissions and organization / cost center are assigned to them.
+
+### Fixed
+
+- Improved email templates for organization creation / approval / denial
+- Format of creation date MD schema fields to allow for proper date sorting
+- Properly return ID of created MD document in GraphQL mutations that create documents
+- Use returned value `DocumentId` from MD creation operations instead of `Id` to eliminate unnecessary `replace()` functions
+
 ## [0.6.0] - 2021-11-29
 
 ### Added

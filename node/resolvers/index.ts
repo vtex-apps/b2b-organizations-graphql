@@ -136,7 +136,15 @@ export const QUERIES = {
   }`,
   getUser: `query user($id: ID!) {
     getUser(id: $id) @context(provider: "vtex.storefront-permissions") {
+      id
       roleId
+      userId
+      clId
+      orgId
+      costId
+      name
+      email
+      canImpersonate
     }
   }`,
   getRole: `query role($id: ID!) {
@@ -434,7 +442,7 @@ export const resolvers = {
           schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
         })
 
-        return result
+        return { href: result.Href, id: result.DocumentId }
       } catch (e) {
         logger.error({
           message: 'createOrganizationRequest-error',
@@ -520,10 +528,7 @@ export const resolvers = {
             schema: ORGANIZATION_SCHEMA_VERSION,
           })
 
-          const organizationId = createOrganizationResult.Id.replace(
-            'organizations-',
-            ''
-          )
+          const organizationId = createOrganizationResult.DocumentId
 
           // create cost center
           const costCenter = {
@@ -543,21 +548,101 @@ export const resolvers = {
             id: organizationId,
             dataEntity: ORGANIZATION_DATA_ENTITY,
             fields: {
-              costCenters: [
-                createCostCenterResult.Id.replace('cost_centers-', ''),
-              ],
+              costCenters: [createCostCenterResult.DocumentId],
             },
             schema: ORGANIZATION_SCHEMA_VERSION,
           })
 
-          message({ graphQLServer, logger, mail }).organizationApproved(
-            organizationRequest.name,
-            firstName,
-            email
-          )
+          // get roleId of org admin
+          const roles = await graphQLServer
+            .query(
+              QUERIES.listRoles,
+              {},
+              {
+                persistedQuery: {
+                  provider: 'vtex.storefront-permissions@1.x',
+                  sender: 'vtex.b2b-organizations@0.x',
+                },
+              }
+            )
+            .then((result: any) => {
+              return result.data.listRoles
+            })
 
-          // TODO: grant B2B Customer Admin role to user
-          // TODO: assign organization ID and cost center ID to user
+          const roleId = roles.find(
+            (roleItem: any) => roleItem.slug === 'customer-admin'
+          ).id
+
+          // check if user already exists in CL
+          let existingUser = {} as any
+          const clId = await masterdata
+            .searchDocuments({
+              dataEntity: 'CL',
+              fields: ['id'],
+              where: `email=${email}`,
+              pagination: {
+                page: 1,
+                pageSize: 1,
+              },
+            })
+            .then((res: any) => {
+              return res[0]?.id ?? undefined
+            })
+            .catch(() => undefined)
+
+          // check if user already exists in storefront-permissions
+          if (clId) {
+            await graphQLServer
+              .query(
+                QUERIES.getUser,
+                { id: clId },
+                {
+                  persistedQuery: {
+                    provider: 'vtex.storefront-permissions@1.x',
+                    sender: 'vtex.b2b-organizations@0.x',
+                  },
+                }
+              )
+              .then((result: any) => {
+                existingUser = result?.data?.getUser ?? {}
+              })
+              .catch(() => null)
+          }
+
+          // grant user org admin role, assign org and cost center
+          const addUserResult = await graphQLServer
+            .mutation(MUTATIONS.saveUser, {
+              ...existingUser,
+              roleId,
+              orgId: organizationId,
+              costId: createCostCenterResult.DocumentId,
+              canImpersonate: existingUser?.canImpersonate ?? false,
+              name: existingUser?.name || firstName,
+              email,
+            })
+            .then((result: any) => {
+              return result.data.saveUser
+            })
+            .catch((error: any) => {
+              logger.error({
+                message: 'addUser-error',
+                error,
+              })
+            })
+
+          if (addUserResult?.status === 'success') {
+            message({ graphQLServer, logger, mail }).organizationApproved(
+              organizationRequest.name,
+              firstName,
+              email,
+              notes
+            )
+          }
+
+          // notify sales admin
+          message({ graphQLServer, logger, mail }).organizationCreated(
+            organizationRequest.name
+          )
 
           return { status: 'success', message: '' }
         } catch (e) {
@@ -587,7 +672,8 @@ export const resolvers = {
         message({ graphQLServer, logger, mail }).organizationDeclined(
           organizationRequest.name,
           firstName,
-          email
+          email,
+          notes
         )
 
         return { status: 'success', message: '' }
@@ -660,10 +746,7 @@ export const resolvers = {
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
 
-        const organizationId = createOrganizationResult.Id.replace(
-          'organizations-',
-          ''
-        )
+        const organizationId = createOrganizationResult.DocumentId
 
         // create cost center
         const costCenter = {
@@ -683,16 +766,17 @@ export const resolvers = {
           id: organizationId,
           dataEntity: ORGANIZATION_DATA_ENTITY,
           fields: {
-            costCenters: [
-              createCostCenterResult.Id.replace('cost_centers-', ''),
-            ],
+            costCenters: [createCostCenterResult.DocumentId],
           },
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
 
         message({ graphQLServer, logger, mail }).organizationCreated(name)
 
-        return createOrganizationResult
+        return {
+          href: createOrganizationResult.Href,
+          id: createOrganizationResult.DocumentId,
+        }
       } catch (e) {
         logger.error({
           message: 'createOrganization-error',
@@ -760,9 +844,7 @@ export const resolvers = {
 
         const costCenterArray = organization.costCenters
 
-        costCenterArray.push(
-          createCostCenterResult.Id.replace('cost_centers-', '')
-        )
+        costCenterArray.push(createCostCenterResult.DocumentId)
 
         await masterdata.updatePartialDocument({
           dataEntity: ORGANIZATION_DATA_ENTITY,
@@ -771,7 +853,10 @@ export const resolvers = {
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
 
-        return createCostCenterResult
+        return {
+          href: createCostCenterResult.Href,
+          id: createCostCenterResult.DocumentId,
+        }
       } catch (e) {
         logger.error({
           message: 'createCostCenter-error',
