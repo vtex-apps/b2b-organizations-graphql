@@ -58,6 +58,7 @@ interface DefaultCostCenterInput {
 interface CostCenterInput {
   name: string
   addresses: AddressInput[]
+  paymentTerms: PaymentTerm[]
 }
 
 interface AddressInput {
@@ -87,6 +88,7 @@ interface Organization {
   id: string
   name: string
   costCenters: string[]
+  paymentTerms: PaymentTerm[]
   status: string
   created: string
 }
@@ -96,6 +98,7 @@ interface CostCenter {
   name: string
   organization: string
   addresses: any[]
+  paymentTerms: PaymentTerm[]
 }
 
 interface UserArgs {
@@ -108,4 +111,9 @@ interface UserArgs {
   canImpersonate?: boolean
   name: string
   email: string
+}
+
+interface PaymentTerm {
+  name: string
+  id: string
 }

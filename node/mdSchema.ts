@@ -24,8 +24,14 @@ export const ORGANIZATION_FIELDS = [
 export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.5'
 
 export const COST_CENTER_DATA_ENTITY = 'cost_centers'
-export const COST_CENTER_FIELDS = ['id', 'name', 'addresses', 'organization']
-export const COST_CENTER_SCHEMA_VERSION = 'v0.0.2'
+export const COST_CENTER_FIELDS = [
+  'id',
+  'name',
+  'addresses',
+  'paymentTerms',
+  'organization',
+]
+export const COST_CENTER_SCHEMA_VERSION = 'v0.0.3'
 
 export const schemas = [
   {
@@ -115,6 +121,10 @@ export const schemas = [
         addresses: {
           type: 'array',
           title: 'Addresses',
+        },
+        paymentTerms: {
+          type: 'array',
+          title: 'Payment Terms',
         },
         organization: {
           type: 'string',
