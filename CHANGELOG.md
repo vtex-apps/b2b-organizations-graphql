@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Support for enabling/disabling specific payment terms per cost center
+
 ## [0.7.0] - 2021-12-06
 
 ### Added

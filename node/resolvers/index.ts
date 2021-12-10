@@ -924,7 +924,7 @@ export const resolvers = {
       _: any,
       {
         id,
-        input: { name, addresses },
+        input: { name, addresses, paymentTerms },
       }: { id: string; input: CostCenterInput },
       ctx: Context
     ) => {
@@ -940,7 +940,11 @@ export const resolvers = {
         await masterdata.updatePartialDocument({
           id,
           dataEntity: COST_CENTER_DATA_ENTITY,
-          fields: { name, addresses },
+          fields: {
+            name,
+            addresses,
+            ...(paymentTerms ? { paymentTerms } : {}),
+          },
         })
 
         return { status: 'success', message: '' }

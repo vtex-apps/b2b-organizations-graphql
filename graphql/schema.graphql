@@ -178,6 +178,7 @@ type CostCenter {
   name: String
   organization: ID
   addresses: [Address]
+  paymentTerms: [PaymentTerm]
 }
 
 type Address {
@@ -251,6 +252,7 @@ input DefaultCostCenterInput {
 input CostCenterInput {
   name: String
   addresses: [AddressInput]
+  paymentTerms: [PaymentTermInput]
 }
 
 input AddressInput {
