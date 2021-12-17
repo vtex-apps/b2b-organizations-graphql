@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Enable immediate indexing for MD schemas
+
+### Deprecated
+
+- `costCenters` property in organization schema (expect this to be an empty array)
+
 ## [0.8.0] - 2021-12-10
 
 ### Added

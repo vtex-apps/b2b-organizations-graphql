@@ -8,7 +8,7 @@ export const ORGANIZATION_REQUEST_FIELDS = [
   'notes',
   'created',
 ]
-export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.0.3'
+export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.0.4'
 
 export const ORGANIZATION_DATA_ENTITY = 'organizations'
 export const ORGANIZATION_FIELDS = [
@@ -21,7 +21,7 @@ export const ORGANIZATION_FIELDS = [
   'status',
   'created',
 ]
-export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.5'
+export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.6'
 
 export const COST_CENTER_DATA_ENTITY = 'cost_centers'
 export const COST_CENTER_FIELDS = [
@@ -31,7 +31,7 @@ export const COST_CENTER_FIELDS = [
   'paymentTerms',
   'organization',
 ]
-export const COST_CENTER_SCHEMA_VERSION = 'v0.0.3'
+export const COST_CENTER_SCHEMA_VERSION = 'v0.0.4'
 
 export const schemas = [
   {
@@ -66,6 +66,7 @@ export const schemas = [
         },
       },
       'v-indexed': ['name', 'status', 'created'],
+      'v-immediate-indexing': true,
       'v-cache': false,
     },
   },
@@ -90,8 +91,8 @@ export const schemas = [
           type: 'array',
           title: 'Price Tables',
         },
-        // we probably don't need this
         costCenters: {
+          // deprecated
           type: 'array',
           title: 'Cost Centers',
         },
@@ -105,7 +106,8 @@ export const schemas = [
           format: 'date-time',
         },
       },
-      'v-indexed': ['name', 'status'],
+      'v-indexed': ['name', 'status', 'created'],
+      'v-immediate-indexing': true,
       'v-cache': false,
     },
   },
@@ -132,6 +134,7 @@ export const schemas = [
         },
       },
       'v-indexed': ['name', 'organization'],
+      'v-immediate-indexing': true,
       'v-cache': false,
     },
   },

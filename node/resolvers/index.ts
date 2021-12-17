@@ -543,16 +543,6 @@ export const resolvers = {
             schema: COST_CENTER_SCHEMA_VERSION,
           })
 
-          // update organization with cost center ID
-          await masterdata.updatePartialDocument({
-            id: organizationId,
-            dataEntity: ORGANIZATION_DATA_ENTITY,
-            fields: {
-              costCenters: [createCostCenterResult.DocumentId],
-            },
-            schema: ORGANIZATION_SCHEMA_VERSION,
-          })
-
           // get roleId of org admin
           const roles = await graphQLServer
             .query(
@@ -755,20 +745,10 @@ export const resolvers = {
           organization: organizationId,
         }
 
-        const createCostCenterResult = await masterdata.createDocument({
+        await masterdata.createDocument({
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: costCenter,
           schema: COST_CENTER_SCHEMA_VERSION,
-        })
-
-        // update organization with cost center ID
-        masterdata.updatePartialDocument({
-          id: organizationId,
-          dataEntity: ORGANIZATION_DATA_ENTITY,
-          fields: {
-            costCenters: [createCostCenterResult.DocumentId],
-          },
-          schema: ORGANIZATION_SCHEMA_VERSION,
         })
 
         message({ graphQLServer, logger, mail }).organizationCreated(name)
@@ -834,23 +814,6 @@ export const resolvers = {
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: costCenter,
           schema: COST_CENTER_SCHEMA_VERSION,
-        })
-
-        const organization: Organization = await masterdata.getDocument({
-          dataEntity: ORGANIZATION_DATA_ENTITY,
-          id: organizationId,
-          fields: ORGANIZATION_FIELDS,
-        })
-
-        const costCenterArray = organization.costCenters
-
-        costCenterArray.push(createCostCenterResult.DocumentId)
-
-        await masterdata.updatePartialDocument({
-          dataEntity: ORGANIZATION_DATA_ENTITY,
-          id: organizationId,
-          fields: { costCenters: costCenterArray },
-          schema: ORGANIZATION_SCHEMA_VERSION,
         })
 
         return {
@@ -994,9 +957,6 @@ export const resolvers = {
       const {
         clients: { masterdata },
       } = ctx
-
-      // TODO: remove cost center from organization
-      // or just remove the costCenters array from the organization entity, probably don't need it
 
       try {
         await masterdata.deleteDocument({
