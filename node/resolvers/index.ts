@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { EventContext } from '@vtex/api'
 import { ForbiddenError } from '@vtex/api'
 
 import {
@@ -15,12 +14,16 @@ import {
   COST_CENTER_FIELDS,
   COST_CENTER_SCHEMA_VERSION,
 } from '../mdSchema'
-import type { Clients } from '../clients'
 import { toHash } from '../utils'
 import GraphQLError from '../utils/GraphQLError'
 import { organizationName, costCenterName, role } from './fieldResolvers'
 import message from './message'
 import templates from '../templates'
+
+interface Settings {
+  schemaHash: string | null
+  templateHash: string | null
+}
 
 const getAppId = (): string => {
   return process.env.VTEX_APP_ID ?? ''
@@ -31,32 +34,29 @@ const CONNECTOR = {
 } as const
 
 const defaultSettings = {
-  adminSetup: {
-    schemaHash: null,
-  },
+  schemaHash: null,
+  templateHash: null,
 }
 
 const checkConfig = async (ctx: Context) => {
   const {
     vtex: { logger },
-    clients: { apps, masterdata },
+    clients: { mail, masterdata, vbase },
   } = ctx
 
-  const app: string = getAppId()
-  let settings = await apps.getAppSettings(app)
+  let settings: Settings = await vbase.getJSON('mdSchema', 'settings', true)
+
   let changed = false
 
-  if (!settings.adminSetup) {
+  if (!settings?.schemaHash || !settings?.templateHash) {
     settings = defaultSettings
     changed = true
   }
 
-  const currHash = toHash(schemas)
+  const currSchemaHash = toHash(schemas)
+  const currTemplateHash = toHash(templates)
 
-  if (
-    !settings.adminSetup?.schemaHash ||
-    settings.adminSetup?.schemaHash !== currHash
-  ) {
+  if (!settings?.schemaHash || settings.schemaHash !== currSchemaHash) {
     const updates: any = []
 
     changed = true
@@ -86,7 +86,7 @@ const checkConfig = async (ctx: Context) => {
 
     await Promise.all(updates)
       .then(() => {
-        settings.adminSetup.schemaHash = currHash
+        settings.schemaHash = currSchemaHash
       })
       .catch(e => {
         if (e.response?.status === 304) return
@@ -98,7 +98,33 @@ const checkConfig = async (ctx: Context) => {
       })
   }
 
-  if (changed) await apps.saveAppSettings(app, settings)
+  if (!settings?.templateHash || settings.templateHash !== currTemplateHash) {
+    const updates: any = []
+
+    changed = true
+
+    templates.forEach(async template => {
+      const existingData = await mail.getTemplate(template.Name)
+
+      if (!existingData) {
+        updates.push(mail.publishTemplate(template))
+      }
+    })
+
+    await Promise.all(updates)
+      .then(() => {
+        settings.templateHash = currTemplateHash
+      })
+      .catch(e => {
+        logger.error({
+          message: 'checkConfig-publishTemplateError',
+          error: e,
+        })
+        throw new Error(e)
+      })
+  }
+
+  if (changed) await vbase.saveJSON('mdSchema', 'settings', settings)
 
   return settings
 }
@@ -219,13 +245,6 @@ const getUserRoleSlug = async (id: string, ctx: Context) => {
 }
 
 export const resolvers = {
-  Events: {
-    createDefaultTemplate: async (ctx: EventContext<Clients>) => {
-      for (const template of templates) {
-        ctx.clients.mail.publishTemplate(template)
-      }
-    },
-  },
   Routes: {
     checkout: async (ctx: Context) => {
       const {
@@ -416,10 +435,6 @@ export const resolvers = {
         clients: { masterdata },
         vtex: { logger },
       } = ctx
-
-      // const b2bCustomerAdmin = (ctx.vtex as any).userEmail
-
-      // if (!b2bCustomerAdmin) throw new GraphQLError('email-not-found')
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
@@ -854,12 +869,33 @@ export const resolvers = {
       ctx: Context
     ) => {
       const {
-        clients: { masterdata },
+        clients: { graphQLServer, mail, masterdata },
         vtex: { logger },
       } = ctx
 
       // create schema if it doesn't exist
       await checkConfig(ctx)
+
+      try {
+        const currentData: Organization = await masterdata.getDocument({
+          dataEntity: ORGANIZATION_DATA_ENTITY,
+          id,
+          fields: ORGANIZATION_FIELDS,
+        })
+
+        if (currentData.status !== status) {
+          await message({
+            graphQLServer,
+            logger,
+            mail,
+          }).organizationStatusChanged(name, id, status)
+        }
+      } catch (error) {
+        logger.warn({
+          message: 'updateOrganization-emailOnStatusChangeError',
+          error,
+        })
+      }
 
       try {
         await masterdata.updatePartialDocument({

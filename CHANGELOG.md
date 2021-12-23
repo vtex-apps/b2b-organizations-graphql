@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Organization admins will be notified via email if an organization's status changes
+
+### Fixed
+
+- App no longer stores data in AppSettings, to allow app to function without being explicitly installed
+
 ## [0.8.1] - 2021-12-17
 
 ### Fixed

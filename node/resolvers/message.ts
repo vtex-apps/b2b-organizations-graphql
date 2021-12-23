@@ -1,10 +1,18 @@
 /* eslint-disable max-params */
-import { QUERIES } from '.'
+import type { Logger } from '@vtex/api'
 
-const getUsers = async (graphQLServer: any, roleSlug: string) => {
+import { QUERIES } from '.'
+import type MailClient from '../clients/email'
+import type { GraphQLServer } from '../clients/graphqlServer'
+
+const getUsers = async (
+  graphQLServer: GraphQLServer,
+  roleSlug: string,
+  organizationId?: string
+) => {
   const {
     data: { listRoles },
-  } = await graphQLServer.query(
+  }: any = await graphQLServer.query(
     QUERIES.listRoles,
     {},
     {
@@ -25,6 +33,7 @@ const getUsers = async (graphQLServer: any, roleSlug: string) => {
     QUERIES.listUsers,
     {
       roleId: role.id,
+      ...(organizationId && { organizationId }),
     },
     {
       persistedQuery: {
@@ -37,7 +46,15 @@ const getUsers = async (graphQLServer: any, roleSlug: string) => {
   return listUsers
 }
 
-const message = ({ graphQLServer, logger, mail }: any) => {
+const message = ({
+  graphQLServer,
+  logger,
+  mail,
+}: {
+  graphQLServer: GraphQLServer
+  logger: Logger
+  mail: MailClient
+}) => {
   const organizationCreated = async (name: string) => {
     let users = []
 
@@ -88,7 +105,36 @@ const message = ({ graphQLServer, logger, mail }: any) => {
     })
   }
 
-  return { organizationCreated, organizationApproved, organizationDeclined }
+  const organizationStatusChanged = async (
+    name: string,
+    id: string,
+    status: string
+  ) => {
+    let users = []
+
+    try {
+      users = await getUsers(graphQLServer, 'customer-admin', id)
+    } catch (err) {
+      logger.error(err)
+    }
+
+    for (const user of users) {
+      mail.sendMail({
+        templateName: 'organization-status-changed',
+        jsonData: {
+          message: { to: user.email },
+          organization: { name, admin: user.name, status },
+        },
+      })
+    }
+  }
+
+  return {
+    organizationCreated,
+    organizationApproved,
+    organizationDeclined,
+    organizationStatusChanged,
+  }
 }
 
 export default message

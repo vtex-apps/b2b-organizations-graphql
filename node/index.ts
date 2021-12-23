@@ -50,8 +50,4 @@ export default new Service<Clients, RecorderState, ParamsContext>({
     schemaDirectives,
   },
   routes: resolvers.Routes,
-  events: {
-    onAppInstalled: resolvers.Events.createDefaultTemplate,
-    onAppLinked: resolvers.Events.createDefaultTemplate,
-  },
 })
