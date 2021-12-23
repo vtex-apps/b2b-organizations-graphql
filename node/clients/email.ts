@@ -46,6 +46,7 @@ export interface JsonData {
     name: string
     admin?: string
     note?: string
+    status?: string
   }
 }
 

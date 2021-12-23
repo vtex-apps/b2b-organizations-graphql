@@ -1,14 +1,18 @@
 /* eslint-disable max-params */
+import type { Logger } from '@vtex/api'
+
 import { QUERIES } from '.'
+import type MailClient from '../clients/email'
+import type { GraphQLServer } from '../clients/graphqlServer'
 
 const getUsers = async (
-  graphQLServer: any,
+  graphQLServer: GraphQLServer,
   roleSlug: string,
-  orgId?: string
+  organizationId?: string
 ) => {
   const {
     data: { listRoles },
-  } = await graphQLServer.query(
+  }: any = await graphQLServer.query(
     QUERIES.listRoles,
     {},
     {
@@ -29,7 +33,7 @@ const getUsers = async (
     QUERIES.listUsers,
     {
       roleId: role.id,
-      ...(orgId && { orgId }),
+      ...(organizationId && { organizationId }),
     },
     {
       persistedQuery: {
@@ -42,7 +46,15 @@ const getUsers = async (
   return listUsers
 }
 
-const message = ({ graphQLServer, logger, mail }: any) => {
+const message = ({
+  graphQLServer,
+  logger,
+  mail,
+}: {
+  graphQLServer: GraphQLServer
+  logger: Logger
+  mail: MailClient
+}) => {
   const organizationCreated = async (name: string) => {
     let users = []
 
