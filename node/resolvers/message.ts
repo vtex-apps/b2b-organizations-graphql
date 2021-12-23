@@ -1,7 +1,11 @@
 /* eslint-disable max-params */
 import { QUERIES } from '.'
 
-const getUsers = async (graphQLServer: any, roleSlug: string) => {
+const getUsers = async (
+  graphQLServer: any,
+  roleSlug: string,
+  orgId?: string
+) => {
   const {
     data: { listRoles },
   } = await graphQLServer.query(
@@ -25,6 +29,7 @@ const getUsers = async (graphQLServer: any, roleSlug: string) => {
     QUERIES.listUsers,
     {
       roleId: role.id,
+      ...(orgId && { orgId }),
     },
     {
       persistedQuery: {
@@ -88,7 +93,36 @@ const message = ({ graphQLServer, logger, mail }: any) => {
     })
   }
 
-  return { organizationCreated, organizationApproved, organizationDeclined }
+  const organizationStatusChanged = async (
+    name: string,
+    id: string,
+    status: string
+  ) => {
+    let users = []
+
+    try {
+      users = await getUsers(graphQLServer, 'customer-admin', id)
+    } catch (err) {
+      logger.error(err)
+    }
+
+    for (const user of users) {
+      mail.sendMail({
+        templateName: 'organization-status-changed',
+        jsonData: {
+          message: { to: user.email },
+          organization: { name, admin: user.name, status },
+        },
+      })
+    }
+  }
+
+  return {
+    organizationCreated,
+    organizationApproved,
+    organizationDeclined,
+    organizationStatusChanged,
+  }
 }
 
 export default message

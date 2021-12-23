@@ -36,9 +36,6 @@
       "name": "read-workspace-apps"
     },
     {
-      "name": "update-app-settings"
-    },
-    {
       "name": "vtex.graphql-server:resolve-graphql"
     },
     {
@@ -46,6 +43,9 @@
     },
     {
       "name": "send-message"
+    },
+    {
+      "name": "vbase-read-write"
     },
     {
       "name": "outbound-access",

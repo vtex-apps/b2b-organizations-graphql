@@ -20,11 +20,11 @@ export default class MailClient extends JanusClient {
     })
   }
 
-  // public getTemplate(name: string) {
-  //   return this.http.get<Template>(`${TEMPLATE_RENDER_PATH}/${name}`, {
-  //     metric: 'mail-get-template',
-  //   })
-  // }
+  public getTemplate(name: string) {
+    return this.http.get<Template>(`${TEMPLATE_RENDER_PATH}/${name}`, {
+      metric: 'mail-get-template',
+    })
+  }
 
   public publishTemplate(template: Template) {
     return this.http.post(TEMPLATE_RENDER_PATH, template, {
