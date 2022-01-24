@@ -1247,7 +1247,7 @@ export const resolvers = {
       }
 
       if (search) {
-        whereArray.push(`name=*${encodeURI(search)}*`)
+        whereArray.push(`name="*${search}*"`)
       }
 
       const where = whereArray.join(' AND ')
@@ -1490,7 +1490,7 @@ export const resolvers = {
       let where = ''
 
       if (search) {
-        where = `name=*${encodeURI(search)}*`
+        where = `name="*${search}*"`
       }
 
       try {
@@ -1547,7 +1547,7 @@ export const resolvers = {
       let where = `organization=${id}`
 
       if (search) {
-        where += ` AND name=*${encodeURI(search)}*`
+        where += ` AND name="*${search}*"`
       }
 
       try {
@@ -1620,7 +1620,7 @@ export const resolvers = {
       let where = `organization=${id}`
 
       if (search) {
-        where += ` AND name=*${encodeURI(search)}*`
+        where += ` AND name="*${search}*"`
       }
 
       try {

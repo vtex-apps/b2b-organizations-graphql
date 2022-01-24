@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- Correctly handle spaces when searching masterdata
 - Use CL id instead of user id in `saveUser` and `removeUser` operations
 
 ## [0.9.1] - 2022-01-06
