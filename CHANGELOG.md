@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Use CL id instead of user id in `saveUser` and `removeUser` operations
+
 ## [0.9.1] - 2022-01-06
+
+### Added
+
+- SonarCloud PR integration
 
 ## [0.9.0] - 2021-12-23
 

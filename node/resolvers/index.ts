@@ -232,15 +232,15 @@ const getUserRoleSlug = async (id: string, ctx: Context) => {
       )
     })
     .then((result: any) => {
-      return result.data.getRole.slug
+      return result?.data?.getRole?.slug ?? ''
     })
     .catch((error: any) => {
-      logger.error({
+      logger.warn({
         message: 'getUserRoleSlug-error',
         error,
       })
 
-      return { status: 'error', message: error }
+      return ''
     })
 }
 
@@ -1058,9 +1058,9 @@ export const resolvers = {
         throw new GraphQLError('operation-not-permitted')
       }
 
-      if (id) {
+      if (clId) {
         // check the role of the user to be saved
-        const roleSlug = await getUserRoleSlug(id, ctx)
+        const roleSlug = await getUserRoleSlug(clId, ctx)
 
         // organization admin can only save organization users
         if (roleSlug.indexOf('sales') !== -1) {
@@ -1068,7 +1068,7 @@ export const resolvers = {
         }
       } else {
         // check the role of the user being added
-        const roleSlug = await graphQLServer
+        const roleSlug: string = await graphQLServer
           .query(
             QUERIES.getRole,
             { id: roleId },
@@ -1080,15 +1080,15 @@ export const resolvers = {
             }
           )
           .then((result: any) => {
-            return result.data.getRole.slug
+            return result?.data?.getRole?.slug ?? ''
           })
           .catch((error: any) => {
-            logger.error({
+            logger.warn({
               message: 'saveUser-getRoleError',
               error,
             })
 
-            return { status: 'error', message: error }
+            return ''
           })
 
         // organization admin can only add organization users
@@ -1125,7 +1125,7 @@ export const resolvers = {
     },
     removeUser: async (
       _: any,
-      { id, userId, email }: UserArgs,
+      { id, userId, email, clId }: UserArgs,
       ctx: Context
     ) => {
       const {
@@ -1134,7 +1134,7 @@ export const resolvers = {
         vtex: { adminUserAuthToken, logger },
       } = ctx
 
-      if (!id || !userId || !email) {
+      if (!id || !clId || !email) {
         throw new GraphQLError('user-information-not-provided')
       }
 
@@ -1160,7 +1160,7 @@ export const resolvers = {
       }
 
       // check the role of the user to be removed
-      const roleSlug = await getUserRoleSlug(id, ctx)
+      const roleSlug = await getUserRoleSlug(clId, ctx)
 
       // organization admin can only remove organization users
       if (roleSlug.indexOf('sales') !== -1) {
@@ -1350,7 +1350,7 @@ export const resolvers = {
       }
 
       if (search) {
-        whereArray.push(`name=*${encodeURI(search)}*`)
+        whereArray.push(`name="*${search}*"`)
       }
 
       const where = whereArray.join(' AND ')
