@@ -101,7 +101,7 @@ type Mutation {
     name: String!
     email: String!
   ): MutationResponse @withSession @withPermissions
-  removeUser(id: ID!, userId: ID, email: String!): MutationResponse
+  removeUser(id: ID!, userId: ID, email: String!, clId: ID!): MutationResponse
     @withSession
     @withPermissions
 }
