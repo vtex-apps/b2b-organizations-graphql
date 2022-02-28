@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Graphql storefront permissions listUsers fixed 
+
 ## [0.9.2] - 2022-01-26
 
 ### Fixed

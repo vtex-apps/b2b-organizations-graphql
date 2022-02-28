@@ -140,8 +140,8 @@ export const QUERIES = {
       permissions
     }
   }`,
-  listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID) {
-    listUsers(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId) @context(provider: "vtex.storefront-permissions") {
+  listUsers: `query users($organizationId: ID, $costCenterId: ID) {
+    listUsers(organizationId: $organizationId, costCenterId: $costCenterId) @context(provider: "vtex.storefront-permissions") {
       id
       roleId
       userId
