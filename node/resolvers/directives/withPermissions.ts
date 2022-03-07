@@ -24,7 +24,7 @@ export class WithPermissions extends SchemaDirectiveVisitor {
     field.resolve = async (root: any, args: any, context: any, info: any) => {
       const {
         clients: { graphQLServer },
-        vtex: { logger },
+        vtex: { adminUserAuthToken, logger },
       } = context
 
       context.vtex.storefrontPermissions = await graphQLServer
@@ -39,14 +39,18 @@ export class WithPermissions extends SchemaDirectiveVisitor {
           }
         )
         .then((result: any) => {
-          return result.data.checkUserPermission
+          return result?.data?.checkUserPermission ?? null
         })
         .catch((error: any) => {
           console.error(error)
-          logger.error({
-            message: 'getPermissionsError',
-            error,
-          })
+          if (!adminUserAuthToken) {
+            logger.error({
+              message: 'getPermissionsError',
+              error,
+            })
+          }
+
+          return null
         })
 
       return resolve(root, args, context, info)
