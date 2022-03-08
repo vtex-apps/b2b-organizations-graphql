@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- `impersonateUser` mutation
+- Permission checks related to sales roles
+
+### Changed
+
+- Increase timeout
+
+### Fixed
+
+- `checkConfig` promise bug that prevented MD schema from being created
+
 ## [0.9.2] - 2022-01-26
 
 ### Fixed

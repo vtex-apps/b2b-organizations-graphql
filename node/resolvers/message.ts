@@ -1,7 +1,7 @@
 /* eslint-disable max-params */
 import type { Logger } from '@vtex/api'
 
-import { QUERIES } from '.'
+import { QUERIES } from '../constants'
 import type MailClient from '../clients/email'
 import type { GraphQLServer } from '../clients/graphqlServer'
 

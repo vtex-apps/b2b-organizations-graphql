@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ForbiddenError } from '@vtex/api'
 
+import { QUERIES, MUTATIONS, CONNECTOR } from '../constants'
 import {
   schemas,
   ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -29,10 +30,6 @@ const getAppId = (): string => {
   return process.env.VTEX_APP_ID ?? ''
 }
 
-const CONNECTOR = {
-  PROMISSORY: 'Vtex.PaymentGateway.Connectors.PromissoryConnector',
-} as const
-
 const defaultSettings = {
   schemaHash: null,
   templateHash: null,
@@ -46,11 +43,11 @@ const checkConfig = async (ctx: Context) => {
 
   let settings: Settings = await vbase.getJSON('mdSchema', 'settings', true)
 
-  let changed = false
+  let schemaChanged = false
+  let templatesChanged = false
 
   if (!settings?.schemaHash || !settings?.templateHash) {
     settings = defaultSettings
-    changed = true
   }
 
   const currSchemaHash = toHash(schemas)
@@ -59,7 +56,9 @@ const checkConfig = async (ctx: Context) => {
   if (!settings?.schemaHash || settings.schemaHash !== currSchemaHash) {
     const updates: any = []
 
-    changed = true
+    logger.info({
+      message: 'checkConfig-updatingSchema',
+    })
 
     schemas.forEach(schema => {
       updates.push(
@@ -76,7 +75,8 @@ const checkConfig = async (ctx: Context) => {
                 message: 'checkConfig-createOrUpdateSchemaError',
                 error: e,
               })
-              throw e
+
+              return false
             }
 
             return true
@@ -84,24 +84,20 @@ const checkConfig = async (ctx: Context) => {
       )
     })
 
-    await Promise.all(updates)
-      .then(() => {
+    await Promise.all(updates).then(results => {
+      if (results.every(res => res === true)) {
         settings.schemaHash = currSchemaHash
-      })
-      .catch(e => {
-        if (e.response?.status === 304) return
-        logger.error({
-          message: 'checkConfig-createOrUpdateSchemaError',
-          error: e,
-        })
-        throw new Error(e)
-      })
+        schemaChanged = true
+      }
+    })
   }
 
   if (!settings?.templateHash || settings.templateHash !== currTemplateHash) {
     const updates: any = []
 
-    changed = true
+    logger.info({
+      message: 'checkConfig-updatingTemplates',
+    })
 
     templates.forEach(async template => {
       const existingData = await mail.getTemplate(template.Name)
@@ -114,6 +110,7 @@ const checkConfig = async (ctx: Context) => {
     await Promise.all(updates)
       .then(() => {
         settings.templateHash = currTemplateHash
+        templatesChanged = true
       })
       .catch(e => {
         logger.error({
@@ -124,82 +121,17 @@ const checkConfig = async (ctx: Context) => {
       })
   }
 
-  if (changed) await vbase.saveJSON('mdSchema', 'settings', settings)
+  if (schemaChanged || templatesChanged) {
+    await vbase.saveJSON('mdSchema', 'settings', settings)
+  }
 
   return settings
 }
 
-export const QUERIES = {
-  getPermission: `query permissions {
-    checkUserPermission @context(provider: "vtex.storefront-permissions"){
-      role {
-        id
-        name
-        slug
-      }
-      permissions
-    }
-  }`,
-  listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID) {
-    listUsers(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId) @context(provider: "vtex.storefront-permissions") {
-      id
-      roleId
-      userId
-      clId
-      orgId
-      costId
-      name
-      email
-      canImpersonate
-    }
-  }`,
-  listRoles: `query roles {
-    listRoles @context(provider: "vtex.storefront-permissions") {
-      id
-      name
-      slug
-    }
-  }`,
-  getUser: `query user($id: ID!) {
-    getUser(id: $id) @context(provider: "vtex.storefront-permissions") {
-      id
-      roleId
-      userId
-      clId
-      orgId
-      costId
-      name
-      email
-      canImpersonate
-    }
-  }`,
-  getRole: `query role($id: ID!) {
-    getRole(id: $id) @context(provider: "vtex.storefront-permissions") {
-      id
-      name
-      slug
-    }
-  }`,
-}
-
-const MUTATIONS = {
-  saveUser: `mutation saveUser($id: ID, $roleId: ID!, $userId: ID, $orgId: ID, $costId: ID, $clId: ID, $canImpersonate: Boolean, $name: String!, $email: String!) {
-    saveUser(id: $id, roleId: $roleId, userId: $userId, orgId: $orgId, costId: $costId, clId: $clId, canImpersonate: $canImpersonate, name: $name, email: $email) @context(provider: "vtex.storefront-permissions") {
-      id
-      status
-      message
-    }
-  }`,
-  deleteUser: `mutation deleteUser($id: ID!, $userId: ID, $email: String!) {
-    deleteUser(id: $id, userId: $userId, email: $email) @context(provider: "vtex.storefront-permissions") {
-      id
-      status
-      message
-    }
-  }`,
-}
-
-const getUserRoleSlug = async (id: string, ctx: Context) => {
+const getUserRoleSlug: (id: string, ctx: Context) => Promise<string> = async (
+  id,
+  ctx
+) => {
   const {
     clients: { graphQLServer },
     vtex: { logger },
@@ -425,7 +357,7 @@ export const resolvers = {
   },
   Mutation: {
     createOrganizationRequest: async (
-      _: any,
+      _: void,
       {
         input: { name, b2bCustomerAdmin, defaultCostCenter },
       }: { input: OrganizationInput },
@@ -473,7 +405,7 @@ export const resolvers = {
       }
     },
     updateOrganizationRequest: async (
-      _: any,
+      _: void,
       { id, status, notes }: { id: string; status: string; notes: string },
       ctx: Context
     ) => {
@@ -693,7 +625,7 @@ export const resolvers = {
       }
     },
     deleteOrganizationRequest: async (
-      _: any,
+      _: void,
       { id }: { id: string },
       ctx: Context
     ) => {
@@ -719,7 +651,7 @@ export const resolvers = {
       }
     },
     createOrganization: async (
-      _: any,
+      _: void,
       { input: { name, defaultCostCenter } }: { input: OrganizationInput },
       ctx: Context
     ) => {
@@ -787,7 +719,7 @@ export const resolvers = {
       }
     },
     createCostCenter: async (
-      _: any,
+      _: void,
       {
         organizationId,
         input: { name, addresses },
@@ -850,7 +782,7 @@ export const resolvers = {
       }
     },
     updateOrganization: async (
-      _: any,
+      _: void,
       {
         id,
         name,
@@ -920,7 +852,7 @@ export const resolvers = {
       }
     },
     updateCostCenter: async (
-      _: any,
+      _: void,
       {
         id,
         input: { name, addresses, paymentTerms },
@@ -962,7 +894,7 @@ export const resolvers = {
       }
     },
     deleteOrganization: async (
-      _: any,
+      _: void,
       { id }: { id: string },
       ctx: Context
     ) => {
@@ -989,7 +921,7 @@ export const resolvers = {
         }
       }
     },
-    deleteCostCenter: async (_: any, { id }: { id: string }, ctx: Context) => {
+    deleteCostCenter: async (_: void, { id }: { id: string }, ctx: Context) => {
       const {
         clients: { masterdata },
       } = ctx
@@ -1012,7 +944,7 @@ export const resolvers = {
       }
     },
     saveUser: async (
-      _: any,
+      _: void,
       {
         id,
         roleId,
@@ -1032,67 +964,69 @@ export const resolvers = {
         vtex: { adminUserAuthToken, logger },
       } = ctx
 
-      // create schema if it doesn't exist
-      await checkConfig(ctx)
-
       const { sessionData, storefrontPermissions } = vtex as any
 
-      if (
-        !adminUserAuthToken &&
-        !sessionData?.namespaces['storefront-permissions']?.organization
-      ) {
-        throw new GraphQLError('organization-data-not-found')
-      }
-
-      if (
-        !adminUserAuthToken &&
-        !storefrontPermissions?.permissions?.includes('add-users-organization')
-      ) {
-        throw new GraphQLError('operation-not-permitted')
-      }
-
-      if (
-        !adminUserAuthToken &&
-        sessionData.namespaces['storefront-permissions'].organization !== orgId
-      ) {
-        throw new GraphQLError('operation-not-permitted')
-      }
-
-      if (clId) {
-        // check the role of the user to be saved
-        const roleSlug = await getUserRoleSlug(clId, ctx)
-
-        // organization admin can only save organization users
-        if (roleSlug.indexOf('sales') !== -1) {
-          throw new GraphQLError('operation-not-permitted')
+      if (!adminUserAuthToken) {
+        if (!sessionData?.namespaces['storefront-permissions']?.organization) {
+          throw new GraphQLError('organization-data-not-found')
         }
-      } else {
-        // check the role of the user being added
-        const roleSlug: string = await graphQLServer
-          .query(
-            QUERIES.getRole,
-            { id: roleId },
-            {
-              persistedQuery: {
-                provider: 'vtex.storefront-permissions@1.x',
-                sender: 'vtex.b2b-organizations@0.x',
-              },
-            }
-          )
-          .then((result: any) => {
-            return result?.data?.getRole?.slug ?? ''
-          })
-          .catch((error: any) => {
-            logger.warn({
-              message: 'saveUser-getRoleError',
-              error,
+
+        let permitted = false
+
+        let roleSlug = ''
+
+        if (clId) {
+          // check the role of the user to be saved
+          roleSlug = await getUserRoleSlug(clId, ctx)
+        } else {
+          // check the role of the user being added
+          roleSlug = await graphQLServer
+            .query(
+              QUERIES.getRole,
+              { id: roleId },
+              {
+                persistedQuery: {
+                  provider: 'vtex.storefront-permissions@1.x',
+                  sender: 'vtex.b2b-organizations@0.x',
+                },
+              }
+            )
+            .then((result: any) => {
+              return result?.data?.getRole?.slug ?? ''
             })
+            .catch((error: any) => {
+              logger.warn({
+                message: 'saveUser-getRoleError',
+                error,
+              })
 
-            return ''
-          })
+              return ''
+            })
+        }
 
-        // organization admin can only add organization users
-        if (roleSlug.indexOf('sales') !== -1) {
+        if (
+          storefrontPermissions?.permissions?.includes(
+            'add-users-organization'
+          ) &&
+          sessionData.namespaces['storefront-permissions'].organization ===
+            orgId
+        ) {
+          // organization admin can only add or save organization users
+          if (!roleSlug.includes('sales')) {
+            permitted = true
+          }
+        }
+
+        if (
+          storefrontPermissions?.permissions?.includes('add-sales-users-all')
+        ) {
+          // sales admin can only add or save sales users
+          if (roleSlug.includes('sales')) {
+            permitted = true
+          }
+        }
+
+        if (!permitted) {
           throw new GraphQLError('operation-not-permitted')
         }
       }
@@ -1124,7 +1058,7 @@ export const resolvers = {
       return addUserResult
     },
     removeUser: async (
-      _: any,
+      _: void,
       { id, userId, email, clId }: UserArgs,
       ctx: Context
     ) => {
@@ -1138,33 +1072,41 @@ export const resolvers = {
         throw new GraphQLError('user-information-not-provided')
       }
 
-      // create schema if it doesn't exist
-      await checkConfig(ctx)
-
       const { sessionData, storefrontPermissions } = vtex as any
 
-      if (
-        !adminUserAuthToken &&
-        !sessionData?.namespaces['storefront-permissions']?.organization
-      ) {
-        throw new GraphQLError('organization-data-not-found')
-      }
+      if (!adminUserAuthToken) {
+        if (!sessionData?.namespaces['storefront-permissions']?.organization) {
+          throw new GraphQLError('organization-data-not-found')
+        }
 
-      if (
-        !adminUserAuthToken &&
-        !storefrontPermissions?.permissions?.includes(
-          'remove-users-organization'
-        )
-      ) {
-        throw new GraphQLError('operation-not-permitted')
-      }
+        let permitted = false
 
-      // check the role of the user to be removed
-      const roleSlug = await getUserRoleSlug(clId, ctx)
+        // check the role of the user to be removed
+        const roleSlug = await getUserRoleSlug(clId, ctx)
 
-      // organization admin can only remove organization users
-      if (roleSlug.indexOf('sales') !== -1) {
-        throw new GraphQLError('operation-not-permitted')
+        if (
+          storefrontPermissions?.permissions?.includes(
+            'remove-users-organization'
+          )
+        ) {
+          // organization admin can only remove organization users
+          if (!roleSlug.includes('sales')) {
+            permitted = true
+          }
+        }
+
+        if (
+          storefrontPermissions?.permissions?.includes('remove-sales-users-all')
+        ) {
+          // sales admin can only remove sales users
+          if (roleSlug.includes('sales')) {
+            permitted = true
+          }
+        }
+
+        if (!permitted) {
+          throw new GraphQLError('operation-not-permitted')
+        }
       }
 
       const deleteUserResult = await graphQLServer
@@ -1187,6 +1129,109 @@ export const resolvers = {
 
       return deleteUserResult
     },
+    impersonateUser: async (
+      _: void,
+      { clId, userId }: UserArgs,
+      ctx: Context
+    ) => {
+      const {
+        clients: { graphQLServer },
+        vtex,
+        vtex: { adminUserAuthToken, logger },
+      } = ctx
+
+      const { sessionData, storefrontPermissions } = vtex as any
+
+      if (!adminUserAuthToken && userId && clId) {
+        if (!sessionData?.namespaces['storefront-permissions']?.organization) {
+          throw new GraphQLError('organization-data-not-found')
+        }
+
+        let permitted = false
+
+        // check the role of the user to be impersonated
+        const roleSlug = await getUserRoleSlug(clId, ctx)
+
+        if (!roleSlug.includes('sales')) {
+          const userInfo = await graphQLServer
+            .query(
+              QUERIES.getUser,
+              { id: clId },
+              {
+                persistedQuery: {
+                  provider: 'vtex.storefront-permissions@1.x',
+                  sender: 'vtex.b2b-organizations@0.x',
+                },
+              }
+            )
+            .then((result: any) => {
+              return result?.data?.getUser ?? {}
+            })
+            .catch((error: any) => {
+              logger.warn({
+                message: 'impersonateUser-getUserError',
+                error,
+              })
+
+              return null
+            })
+
+          if (
+            storefrontPermissions?.permissions?.includes(
+              'impersonate-users-costcenter'
+            )
+          ) {
+            if (
+              !roleSlug.includes('admin') &&
+              userInfo?.costId ===
+                sessionData?.namespaces['storefront-permissions']?.costcenter
+            ) {
+              permitted = true
+            }
+          }
+
+          if (
+            storefrontPermissions?.permissions?.includes(
+              'impersonate-users-organization'
+            )
+          ) {
+            if (
+              userInfo?.orgId ===
+              sessionData?.namespaces['storefront-permissions']?.organization
+            ) {
+              permitted = true
+            }
+          }
+
+          if (
+            storefrontPermissions?.permissions?.includes(
+              'impersonate-users-all'
+            )
+          ) {
+            permitted = true
+          }
+        }
+
+        if (!permitted) {
+          throw new GraphQLError('operation-not-permitted')
+        }
+      }
+
+      const impersonateUserResult = await graphQLServer
+        .mutation(MUTATIONS.impersonateUser, {
+          userId,
+        })
+        .catch((error: any) => {
+          logger.error({
+            message: 'impersonateUser-impersonateUserError',
+            error,
+          })
+
+          return { status: 'error', message: error }
+        })
+
+      return impersonateUserResult
+    },
     saveAppSettings: async (_: any, __: any, ctx: Context) => {
       const {
         clients: { apps },
@@ -1207,7 +1252,7 @@ export const resolvers = {
   },
   Query: {
     getOrganizationRequests: async (
-      _: any,
+      _: void,
       {
         status,
         search,
@@ -1280,7 +1325,7 @@ export const resolvers = {
       }
     },
     getOrganizationRequestById: async (
-      _: any,
+      _: void,
       { id }: { id: string },
       ctx: Context
     ) => {
@@ -1310,7 +1355,7 @@ export const resolvers = {
       }
     },
     getOrganizations: async (
-      _: any,
+      _: void,
       {
         status,
         search,
@@ -1383,7 +1428,7 @@ export const resolvers = {
       }
     },
     getOrganizationById: async (
-      _: any,
+      _: void,
       { id }: { id: string },
       ctx: Context
     ) => {
@@ -1413,7 +1458,7 @@ export const resolvers = {
       }
     },
     getOrganizationByIdStorefront: async (
-      _: any,
+      _: void,
       { id }: { id: string },
       ctx: Context
     ) => {
@@ -1463,7 +1508,7 @@ export const resolvers = {
       }
     },
     getCostCenters: async (
-      _: any,
+      _: void,
       {
         search,
         page,
@@ -1519,7 +1564,7 @@ export const resolvers = {
       }
     },
     getCostCentersByOrganizationId: async (
-      _: any,
+      _: void,
       {
         id,
         search,
@@ -1572,7 +1617,7 @@ export const resolvers = {
       }
     },
     getCostCentersByOrganizationIdStorefront: async (
-      _: any,
+      _: void,
       {
         id,
         search,
@@ -1644,7 +1689,11 @@ export const resolvers = {
         }
       }
     },
-    getCostCenterById: async (_: any, { id }: { id: string }, ctx: Context) => {
+    getCostCenterById: async (
+      _: void,
+      { id }: { id: string },
+      ctx: Context
+    ) => {
       const {
         clients: { masterdata },
       } = ctx
@@ -1671,7 +1720,7 @@ export const resolvers = {
       }
     },
     getCostCenterByIdStorefront: async (
-      _: any,
+      _: void,
       { id }: { id: string },
       ctx: Context
     ) => {
@@ -1721,7 +1770,7 @@ export const resolvers = {
         }
       }
     },
-    getPaymentTerms: async (_: any, __: any, ctx: Context) => {
+    getPaymentTerms: async (_: void, __: void, ctx: Context) => {
       const {
         clients: { payments },
       } = ctx
@@ -1745,7 +1794,7 @@ export const resolvers = {
       }
     },
     getUsers: async (
-      _: any,
+      _: void,
       {
         organizationId,
         costCenterId,
@@ -1754,27 +1803,29 @@ export const resolvers = {
     ) => {
       const {
         clients: { graphQLServer },
-        vtex: { logger },
+        vtex: { adminUserAuthToken, logger },
         vtex,
       } = ctx
 
       const { sessionData } = vtex as any
 
-      if (!sessionData?.namespaces['storefront-permissions']) {
-        throw new GraphQLError('organization-data-not-found')
-      }
+      if (!adminUserAuthToken) {
+        if (!sessionData?.namespaces['storefront-permissions']) {
+          throw new GraphQLError('organization-data-not-found')
+        }
 
-      const {
-        organization: { value: userOrganizationId },
-      } = sessionData.namespaces['storefront-permissions']
+        const {
+          organization: { value: userOrganizationId },
+        } = sessionData?.namespaces['storefront-permissions']
 
-      if (!organizationId) {
-        // get user's organization from session
-        organizationId = userOrganizationId
-      }
+        if (!organizationId) {
+          // get user's organization from session
+          organizationId = userOrganizationId
+        }
 
-      if (organizationId !== userOrganizationId) {
-        throw new GraphQLError('operation-not-permitted')
+        if (organizationId !== userOrganizationId) {
+          throw new GraphQLError('operation-not-permitted')
+        }
       }
 
       const variables = {
@@ -1808,7 +1859,7 @@ export const resolvers = {
 
       return users
     },
-    getAppSettings: async (_: any, __: any, ctx: Context) => {
+    getAppSettings: async (_: void, __: void, ctx: Context) => {
       const {
         clients: { apps, masterdata },
       } = ctx

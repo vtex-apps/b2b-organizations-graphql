@@ -22,7 +22,6 @@ type Query {
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getOrganizationByIdStorefront(id: ID): Organization
     @withSession
-    @withPermissions
     @cacheControl(scope: PRIVATE)
   getCostCenters(
     search: String
@@ -46,19 +45,14 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): CostCenterResult
-    @withSession
-    @withPermissions
-    @cacheControl(scope: PRIVATE)
+  ): CostCenterResult @withSession @cacheControl(scope: PRIVATE)
   getCostCenterById(id: ID!): CostCenter
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
-    @withPermissions
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getUsers(organizationId: ID, costCenterId: ID): [B2BUser]
     @withSession
-    @withPermissions
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
@@ -102,6 +96,9 @@ type Mutation {
     email: String!
   ): MutationResponse @withSession @withPermissions
   removeUser(id: ID!, userId: ID, email: String!, clId: ID!): MutationResponse
+    @withSession
+    @withPermissions
+  impersonateUser(clId: ID, userId: ID): MutationResponse
     @withSession
     @withPermissions
 }
