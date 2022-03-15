@@ -5,7 +5,8 @@
   "scripts": {
     "lint": "eslint --ext js,jsx,ts,tsx .",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json}\"",
-    "test": "cd ./node && yarn test"
+    "test": "cd ./node && yarn test",
+    "cy-r": "cd ./cy-runner && node cy-runner"
   },
   "husky": {
     "hooks": {
