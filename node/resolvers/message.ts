@@ -1,27 +1,17 @@
 /* eslint-disable max-params */
 import type { Logger } from '@vtex/api'
 
-import { QUERIES } from '../constants'
 import type MailClient from '../clients/email'
-import type { GraphQLServer } from '../clients/graphqlServer'
+import type StorefrontPermissions from '../clients/storefrontPermissions'
 
 const getUsers = async (
-  graphQLServer: GraphQLServer,
+  storefrontPermissions: StorefrontPermissions,
   roleSlug: string,
   organizationId?: string
 ) => {
   const {
     data: { listRoles },
-  }: any = await graphQLServer.query(
-    QUERIES.listRoles,
-    {},
-    {
-      persistedQuery: {
-        provider: 'vtex.storefront-permissions@1.x',
-        sender: 'vtex.b2b-organizations@0.x',
-      },
-    }
-  )
+  }: any = await storefrontPermissions.listRoles()
 
   const role = listRoles.find((r: any) => r.slug === roleSlug)
 
@@ -29,29 +19,20 @@ const getUsers = async (
 
   const {
     data: { listUsers },
-  }: any = await graphQLServer.query(
-    QUERIES.listUsers,
-    {
-      roleId: role.id,
-      ...(organizationId && { organizationId }),
-    },
-    {
-      persistedQuery: {
-        provider: 'vtex.storefront-permissions@1.x',
-        sender: 'vtex.b2b-organizations@0.x',
-      },
-    }
-  )
+  }: any = await storefrontPermissions.listUsers({
+    roleId: role.id,
+    ...(organizationId && { organizationId }),
+  })
 
   return listUsers
 }
 
 const message = ({
-  graphQLServer,
+  storefrontPermissions,
   logger,
   mail,
 }: {
-  graphQLServer: GraphQLServer
+  storefrontPermissions: StorefrontPermissions
   logger: Logger
   mail: MailClient
 }) => {
@@ -59,7 +40,7 @@ const message = ({
     let users = []
 
     try {
-      users = await getUsers(graphQLServer, 'sales-admin')
+      users = await getUsers(storefrontPermissions, 'sales-admin')
     } catch (err) {
       logger.error(err)
     }
@@ -113,7 +94,7 @@ const message = ({
     let users = []
 
     try {
-      users = await getUsers(graphQLServer, 'customer-admin', id)
+      users = await getUsers(storefrontPermissions, 'customer-admin', id)
     } catch (err) {
       logger.error(err)
     }
