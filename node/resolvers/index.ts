@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ForbiddenError } from '@vtex/api'
 
-import { CONNECTOR } from '../constants'
+// import { CONNECTOR } from '../constants'
 import {
   schemas,
   ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -270,7 +270,7 @@ export const resolvers = {
       const {
         data: { checkUserPermission },
       }: any = await storefrontPermissions
-        .checkUserPermission()
+        .checkUserPermission('vtex.b2b-orders-history@0.x')
         .catch((error: any) => {
           logger.error({
             message: 'checkUserPermission-error',
@@ -1760,11 +1760,55 @@ export const resolvers = {
       try {
         const paymentRules = await payments.rules()
 
-        const promissoryConnectors = paymentRules.filter(
-          rule => rule.connector.implementation === CONNECTOR.PROMISSORY
+        const enabledConnectors = paymentRules.filter(
+          rule => rule.enabled === true
         )
 
-        return promissoryConnectors.map(connector => connector.paymentSystem)
+        const enabledPaymentSystems = enabledConnectors.map(
+          connector => connector.paymentSystem
+        )
+
+        const uniquePaymentSystems = enabledPaymentSystems.filter(
+          (value, index, self) => {
+            return (
+              index ===
+              self.findIndex(t => t.id === value.id && t.name === value.name)
+            )
+          }
+        )
+
+        const uniquePaymentSystemsWithoutCreditCards = uniquePaymentSystems.filter(
+          value => {
+            const creditCards = [
+              'Visa',
+              'Mastercard',
+              'Diners',
+              'American Express',
+              'Hipercard',
+              'Discover',
+              'Aura',
+              'Elo',
+              'Banricompras',
+              'JCB',
+              'Cabal',
+              'Nativa',
+              'Naranja',
+              'Nevada',
+              'Shopping',
+              'Credz',
+            ]
+
+            return !creditCards.includes(value.name)
+          }
+        )
+
+        uniquePaymentSystemsWithoutCreditCards.unshift({
+          name: 'Credit card',
+          id: 999999,
+          implementation: null,
+        })
+
+        return uniquePaymentSystemsWithoutCreditCards
       } catch (e) {
         if (e.message) {
           throw new GraphQLError(e.message)

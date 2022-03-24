@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Adjust `getPaymentTerms` query so that it now returns all enabled payment methods, not just promissories
+
+### Fixed
+
+- In the `orders` route handler, request the user's permissions for `vtex.b2b-orders-history` instead of `vtex.b2b-organizations`
+
 ## [0.11.0] - 2022-03-24
 
 ### Fixed
