@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ForbiddenError } from '@vtex/api'
 
-// import { CONNECTOR } from '../constants'
 import {
   schemas,
   ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -20,6 +19,7 @@ import GraphQLError from '../utils/GraphQLError'
 import { organizationName, costCenterName, role } from './fieldResolvers'
 import message from './message'
 import templates from '../templates'
+import { CREDIT_CARDS } from '../constants'
 
 interface Settings {
   schemaHash: string | null
@@ -1779,26 +1779,7 @@ export const resolvers = {
 
         const uniquePaymentSystemsWithoutCreditCards = uniquePaymentSystems.filter(
           value => {
-            const creditCards = [
-              'Visa',
-              'Mastercard',
-              'Diners',
-              'American Express',
-              'Hipercard',
-              'Discover',
-              'Aura',
-              'Elo',
-              'Banricompras',
-              'JCB',
-              'Cabal',
-              'Nativa',
-              'Naranja',
-              'Nevada',
-              'Shopping',
-              'Credz',
-            ]
-
-            return !creditCards.includes(value.name)
+            return !CREDIT_CARDS.includes(value.name)
           }
         )
 
