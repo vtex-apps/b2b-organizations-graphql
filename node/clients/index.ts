@@ -4,7 +4,7 @@ import VtexId from './vtexId'
 import PaymentsClient from './payments'
 import MailClient from './email'
 import { OMSClient } from './Oms'
-import { GraphQLServer } from './graphqlServer'
+import StorefrontPermissions from './storefrontPermissions'
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
@@ -24,7 +24,7 @@ export class Clients extends IOClients {
     return this.getOrSet('oms', OMSClient)
   }
 
-  public get graphQLServer() {
-    return this.getOrSet('graphQLServer', GraphQLServer)
+  public get storefrontPermissions() {
+    return this.getOrSet('storefrontPermissions', StorefrontPermissions)
   }
 }

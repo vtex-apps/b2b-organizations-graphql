@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ForbiddenError } from '@vtex/api'
 
-import { QUERIES, MUTATIONS, CONNECTOR } from '../constants'
+import { CONNECTOR } from '../constants'
 import {
   schemas,
   ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -133,35 +133,17 @@ const getUserRoleSlug: (id: string, ctx: Context) => Promise<string> = async (
   ctx
 ) => {
   const {
-    clients: { graphQLServer },
+    clients: { storefrontPermissions },
     vtex: { logger },
   } = ctx
 
-  return graphQLServer
-    .query(
-      QUERIES.getUser,
-      { id },
-      {
-        persistedQuery: {
-          provider: 'vtex.storefront-permissions@1.x',
-          sender: 'vtex.b2b-organizations@0.x',
-        },
-      }
-    )
+  return storefrontPermissions
+    .getUser(id)
     .then((result: any) => {
       return result.data.getUser
     })
     .then((userData: any) => {
-      return graphQLServer.query(
-        QUERIES.getRole,
-        { id: userData.roleId },
-        {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: 'vtex.b2b-organizations@0.x',
-          },
-        }
-      )
+      return storefrontPermissions.getRole(userData.roleId)
     })
     .then((result: any) => {
       return result?.data?.getRole?.slug ?? ''
@@ -244,7 +226,7 @@ export const resolvers = {
     orders: async (ctx: Context) => {
       const {
         vtex: { storeUserAuthToken, sessionToken, logger },
-        clients: { vtexId, session, graphQLServer, oms },
+        clients: { vtexId, session, oms, storefrontPermissions },
       } = ctx
 
       const token: any = storeUserAuthToken
@@ -287,17 +269,8 @@ export const resolvers = {
 
       const {
         data: { checkUserPermission },
-      }: any = await graphQLServer
-        .query(
-          QUERIES.getPermission,
-          {},
-          {
-            persistedQuery: {
-              provider: 'vtex.storefront-permissions@1.x',
-              sender: 'vtex.b2b-orders-history@0.x',
-            },
-          }
-        )
+      }: any = await storefrontPermissions
+        .checkUserPermission()
         .catch((error: any) => {
           logger.error({
             message: 'checkUserPermission-error',
@@ -410,7 +383,7 @@ export const resolvers = {
       ctx: Context
     ) => {
       const {
-        clients: { masterdata, mail, graphQLServer },
+        clients: { masterdata, mail, storefrontPermissions },
         vtex: { logger },
       } = ctx
 
@@ -491,17 +464,8 @@ export const resolvers = {
           })
 
           // get roleId of org admin
-          const roles = await graphQLServer
-            .query(
-              QUERIES.listRoles,
-              {},
-              {
-                persistedQuery: {
-                  provider: 'vtex.storefront-permissions@1.x',
-                  sender: 'vtex.b2b-organizations@0.x',
-                },
-              }
-            )
+          const roles = await storefrontPermissions
+            .listRoles()
             .then((result: any) => {
               return result.data.listRoles
             })
@@ -529,17 +493,8 @@ export const resolvers = {
 
           // check if user already exists in storefront-permissions
           if (clId) {
-            await graphQLServer
-              .query(
-                QUERIES.getUser,
-                { id: clId },
-                {
-                  persistedQuery: {
-                    provider: 'vtex.storefront-permissions@1.x',
-                    sender: 'vtex.b2b-organizations@0.x',
-                  },
-                }
-              )
+            await storefrontPermissions
+              .getUser(clId)
               .then((result: any) => {
                 existingUser = result?.data?.getUser ?? {}
               })
@@ -547,13 +502,12 @@ export const resolvers = {
           }
 
           // grant user org admin role, assign org and cost center
-          const addUserResult = await graphQLServer
-            .mutation(MUTATIONS.saveUser, {
+          const addUserResult = await storefrontPermissions
+            .saveUser({
               ...existingUser,
               roleId,
               orgId: organizationId,
               costId: createCostCenterResult.DocumentId,
-              canImpersonate: existingUser?.canImpersonate ?? false,
               name: existingUser?.name || firstName,
               email,
             })
@@ -568,7 +522,11 @@ export const resolvers = {
             })
 
           if (addUserResult?.status === 'success') {
-            message({ graphQLServer, logger, mail }).organizationApproved(
+            message({
+              storefrontPermissions,
+              logger,
+              mail,
+            }).organizationApproved(
               organizationRequest.name,
               firstName,
               email,
@@ -577,7 +535,7 @@ export const resolvers = {
           }
 
           // notify sales admin
-          message({ graphQLServer, logger, mail }).organizationCreated(
+          message({ storefrontPermissions, logger, mail }).organizationCreated(
             organizationRequest.name
           )
 
@@ -606,7 +564,7 @@ export const resolvers = {
           fields: { status, notes },
         })
 
-        message({ graphQLServer, logger, mail }).organizationDeclined(
+        message({ storefrontPermissions, logger, mail }).organizationDeclined(
           organizationRequest.name,
           firstName,
           email,
@@ -656,7 +614,7 @@ export const resolvers = {
       ctx: Context
     ) => {
       const {
-        clients: { masterdata, graphQLServer, mail },
+        clients: { masterdata, storefrontPermissions, mail },
         vtex: { logger },
       } = ctx
 
@@ -698,7 +656,9 @@ export const resolvers = {
           schema: COST_CENTER_SCHEMA_VERSION,
         })
 
-        message({ graphQLServer, logger, mail }).organizationCreated(name)
+        message({ storefrontPermissions, logger, mail }).organizationCreated(
+          name
+        )
 
         return {
           href: createOrganizationResult.Href,
@@ -801,7 +761,7 @@ export const resolvers = {
       ctx: Context
     ) => {
       const {
-        clients: { graphQLServer, mail, masterdata },
+        clients: { storefrontPermissions, mail, masterdata },
         vtex: { logger },
       } = ctx
 
@@ -817,7 +777,7 @@ export const resolvers = {
 
         if (currentData.status !== status) {
           await message({
-            graphQLServer,
+            storefrontPermissions,
             logger,
             mail,
           }).organizationStatusChanged(name, id, status)
@@ -945,21 +905,14 @@ export const resolvers = {
     },
     saveUser: async (
       _: void,
-      {
-        id,
-        roleId,
-        userId,
-        orgId,
-        costId,
-        clId,
-        canImpersonate = false,
-        name,
-        email,
-      }: UserArgs,
+      { id, roleId, userId, orgId, costId, clId, name, email }: UserArgs,
       ctx: Context
     ) => {
       const {
-        clients: { graphQLServer },
+        clients: {
+          masterdata,
+          storefrontPermissions: storefrontPermissionsClient,
+        },
         vtex,
         vtex: { adminUserAuthToken, logger },
       } = ctx
@@ -980,17 +933,8 @@ export const resolvers = {
           roleSlug = await getUserRoleSlug(clId, ctx)
         } else {
           // check the role of the user being added
-          roleSlug = await graphQLServer
-            .query(
-              QUERIES.getRole,
-              { id: roleId },
-              {
-                persistedQuery: {
-                  provider: 'vtex.storefront-permissions@1.x',
-                  sender: 'vtex.b2b-organizations@0.x',
-                },
-              }
-            )
+          roleSlug = await storefrontPermissionsClient
+            .getRole(roleId)
             .then((result: any) => {
               return result?.data?.getRole?.slug ?? ''
             })
@@ -1031,15 +975,29 @@ export const resolvers = {
         }
       }
 
-      const addUserResult = await graphQLServer
-        .mutation(MUTATIONS.saveUser, {
+      if (clId && !userId) {
+        const userIdFromCl = await masterdata
+          .getDocument({
+            dataEntity: 'CL',
+            id: clId,
+            fields: ['userId'],
+          })
+          .then((res: any) => {
+            return res?.userId ?? undefined
+          })
+          .catch(() => undefined)
+
+        if (userIdFromCl) userId = userIdFromCl
+      }
+
+      const addUserResult = await storefrontPermissionsClient
+        .saveUser({
           id,
           roleId,
           userId,
           orgId,
           costId,
           clId,
-          canImpersonate,
           name,
           email,
         })
@@ -1063,7 +1021,7 @@ export const resolvers = {
       ctx: Context
     ) => {
       const {
-        clients: { graphQLServer },
+        clients: { storefrontPermissions: storefrontPermissionsClient },
         vtex,
         vtex: { adminUserAuthToken, logger },
       } = ctx
@@ -1109,8 +1067,8 @@ export const resolvers = {
         }
       }
 
-      const deleteUserResult = await graphQLServer
-        .mutation(MUTATIONS.deleteUser, {
+      const deleteUserResult = await storefrontPermissionsClient
+        .deleteUser({
           id,
           userId,
           email,
@@ -1135,14 +1093,17 @@ export const resolvers = {
       ctx: Context
     ) => {
       const {
-        clients: { graphQLServer },
+        clients: {
+          masterdata,
+          storefrontPermissions: storefrontPermissionsClient,
+        },
         vtex,
         vtex: { adminUserAuthToken, logger },
       } = ctx
 
       const { sessionData, storefrontPermissions } = vtex as any
 
-      if (!adminUserAuthToken && userId && clId) {
+      if (!adminUserAuthToken && clId) {
         if (!sessionData?.namespaces['storefront-permissions']?.organization) {
           throw new GraphQLError('organization-data-not-found')
         }
@@ -1153,17 +1114,8 @@ export const resolvers = {
         const roleSlug = await getUserRoleSlug(clId, ctx)
 
         if (!roleSlug.includes('sales')) {
-          const userInfo = await graphQLServer
-            .query(
-              QUERIES.getUser,
-              { id: clId },
-              {
-                persistedQuery: {
-                  provider: 'vtex.storefront-permissions@1.x',
-                  sender: 'vtex.b2b-organizations@0.x',
-                },
-              }
-            )
+          const userInfo = await storefrontPermissionsClient
+            .getUser(clId)
             .then((result: any) => {
               return result?.data?.getUser ?? {}
             })
@@ -1217,10 +1169,40 @@ export const resolvers = {
         }
       }
 
-      const impersonateUserResult = await graphQLServer
-        .mutation(MUTATIONS.impersonateUser, {
-          userId,
-        })
+      if (!userId && clId) {
+        const userIdFromCl = await masterdata
+          .getDocument({
+            dataEntity: 'CL',
+            id: clId,
+            fields: ['userId'],
+          })
+          .then((res: any) => {
+            return res?.userId ?? undefined
+          })
+          .catch(() => undefined)
+
+        if (!userIdFromCl)
+          return { status: 'error', message: 'userId not found in CL' }
+
+        userId = userIdFromCl
+
+        const userData = await storefrontPermissionsClient
+          .getUser(clId)
+          .then(res => {
+            return res?.data?.getUser
+          })
+          .catch(() => undefined)
+
+        if (userData && !userData.userId) {
+          await storefrontPermissionsClient.saveUser({
+            ...userData,
+            userId,
+          })
+        }
+      }
+
+      const impersonateUserResult = await storefrontPermissionsClient
+        .impersonateUser({ userId })
         .catch((error: any) => {
           logger.error({
             message: 'impersonateUser-impersonateUserError',
@@ -1802,7 +1784,7 @@ export const resolvers = {
       ctx: Context
     ) => {
       const {
-        clients: { graphQLServer },
+        clients: { storefrontPermissions },
         vtex: { adminUserAuthToken, logger },
         vtex,
       } = ctx
@@ -1833,13 +1815,8 @@ export const resolvers = {
         ...(costCenterId && { costCenterId }),
       }
 
-      const users = await graphQLServer
-        .query(QUERIES.listUsers, variables, {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: 'vtex.b2b-organizations@0.x',
-          },
-        })
+      const users = await storefrontPermissions
+        .listUsers(variables)
         .then((result: any) => {
           return result.data.listUsers
         })

@@ -4,40 +4,25 @@ import type { GraphQLField } from 'graphql'
 import { defaultFieldResolver } from 'graphql'
 import { SchemaDirectiveVisitor } from 'graphql-tools'
 
-const QUERIES = {
-  getPermission: `query permissions {
-    checkUserPermission @context(provider: "vtex.storefront-permissions"){
-      role {
-        id
-        name
-        slug
-      }
-      permissions
-    }
-  }`,
-}
-
 export class WithPermissions extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
     const { resolve = defaultFieldResolver } = field
 
-    field.resolve = async (root: any, args: any, context: any, info: any) => {
+    field.resolve = async (
+      root: any,
+      args: any,
+      context: Context,
+      info: any
+    ) => {
       const {
-        clients: { graphQLServer },
+        clients: { storefrontPermissions },
         vtex: { adminUserAuthToken, logger },
       } = context
 
-      context.vtex.storefrontPermissions = await graphQLServer
-        .query(
-          QUERIES.getPermission,
-          {},
-          {
-            persistedQuery: {
-              provider: 'vtex.storefront-permissions@1.x',
-              sender: 'vtex.b2b-organizations@0.x',
-            },
-          }
-        )
+      const appClients = context.vtex as any
+
+      appClients.storefrontPermissions = await storefrontPermissions
+        .checkUserPermission()
         .then((result: any) => {
           return result?.data?.checkUserPermission ?? null
         })

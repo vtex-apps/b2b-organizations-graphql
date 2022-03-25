@@ -1,7 +1,7 @@
 {
   "name": "b2b-organizations-graphql",
   "vendor": "vtex",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "title": "B2B Organizations",
   "description": "App to create and manage B2B Organizations and Cost Centers",
   "mustUpdateAt": "2022-08-28",
@@ -14,7 +14,7 @@
     "graphql": "1.x"
   },
   "dependencies": {
-    "vtex.graphql-server": "1.x"
+    "vtex.storefront-permissions": "1.x"
   },
   "policies": [
     {
@@ -34,6 +34,9 @@
     },
     {
       "name": "read-workspace-apps"
+    },
+    {
+      "name": "vtex.storefront-permissions:resolve-graphql"
     },
     {
       "name": "vtex.graphql-server:resolve-graphql"
