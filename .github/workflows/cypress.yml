@@ -20,7 +20,10 @@ on:
       - docs/**
       - README.md     
       - CHANGELOG.md
-      
+  push:
+    branches:
+      - feature/cy-runner-parallel
+
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
