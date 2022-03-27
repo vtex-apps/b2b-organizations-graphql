@@ -20,9 +20,6 @@ on:
       - docs/**
       - README.md     
       - CHANGELOG.md
-  push:
-    branches:
-      - feature/cy-runner-parallel
 
 concurrency:
   group: ${{ github.workflow }}
@@ -56,6 +53,7 @@ jobs:
       - name: Install Cypress
         run: |
           yarn install --frozen-lockfile
+          git checkout feature/add-parallelization
           rm -rf .git
         working-directory: ./cy-runner
 
