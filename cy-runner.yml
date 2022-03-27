@@ -31,8 +31,8 @@ base:
     runHeaded: false
     getCookies: true
     maxJobs: 4
-    projectId: xyza
-    quiet: true
+    projectId: hymmzm
+    quiet: false
     video: false
     videoCompression: false
     videoUploadOnPasses: false

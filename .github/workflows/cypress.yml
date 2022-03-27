@@ -51,7 +51,9 @@ jobs:
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
 
       - name: Install Cypress
-        run: yarn install --frozen-lockfile
+        run: |
+          yarn install --frozen-lockfile
+          rm -rf .git
         working-directory: ./cy-runner
 
       - name: Run Cypress Runner
@@ -59,7 +61,6 @@ jobs:
         env:
           VTEX_QE: ${{ secrets.VTEX_QE }}
           NODE_NO_WARNINGS: 1
-          
 
       - name: Save results
         uses: actions/upload-artifact@master
