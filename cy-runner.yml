@@ -30,10 +30,10 @@ base:
     devMode: false
     runHeaded: false
     getCookies: true
-    maxJobs: 2
+    maxJobs: 4
     projectId: hymmzm
     quiet: true
-    video: true
+    video: false
     videoCompression: 32
     videoUploadOnPasses: false
     screenshotOnRunFailure: true
@@ -44,7 +44,7 @@ base:
     requestTimeout: 25000
     watchForFileChanges: false
     pageLoadTimeout: 45000
-    browser: chrome
+    browser: electron
     chromeWebSecurity: false
 #    internalEnv: development
   stateFiles:
