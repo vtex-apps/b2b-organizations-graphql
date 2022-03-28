@@ -33,7 +33,7 @@ base:
     maxJobs: 4
     projectId: hymmzm
     quiet: true
-    video: false
+    video: true
     videoCompression: 32
     videoUploadOnPasses: false
     screenshotOnRunFailure: true
@@ -44,7 +44,7 @@ base:
     requestTimeout: 25000
     watchForFileChanges: false
     pageLoadTimeout: 45000
-    browser: electron
+    browser: chrome
     chromeWebSecurity: false
 #    internalEnv: development
   stateFiles:
