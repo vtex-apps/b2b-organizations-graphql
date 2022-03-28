@@ -61,7 +61,7 @@ jobs:
         run: yarn cy-r
         env:
           VTEX_QE: ${{ secrets.VTEX_QE }}
-          DEBUG="cypress:*"
+          DEBUG: "cypress:*"
           NODE_NO_WARNINGS: 1
 
       - name: Save results
