@@ -61,8 +61,8 @@ jobs:
         run: yarn cy-r
         env:
           VTEX_QE: ${{ secrets.VTEX_QE }}
-          # DEBUG="cypress:*"
-          # NODE_NO_WARNINGS: 1
+          DEBUG="cypress:*"
+          NODE_NO_WARNINGS: 1
 
       - name: Save results
         uses: actions/upload-artifact@master
