@@ -30,10 +30,10 @@ base:
     devMode: false
     runHeaded: false
     getCookies: true
-    maxJobs: 4
+    maxJobs: 2
     projectId: hymmzm
     quiet: true
-    video: true
+    video: false
     videoCompression: 32
     videoUploadOnPasses: false
     screenshotOnRunFailure: true
