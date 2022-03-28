@@ -32,9 +32,9 @@ base:
     getCookies: true
     maxJobs: 2
     projectId: hymmzm
-    quiet: false
-    video: false
-    videoCompression: false
+    quiet: true
+    video: true
+    videoCompression: 32
     videoUploadOnPasses: false
     screenshotOnRunFailure: true
     trashAssetsBeforeRuns: false
@@ -85,7 +85,7 @@ workspace:
     enabled: true
 
 strategy:
-  Orgs:
+  orgs:
     enabled: true
     sendDashboard: true
     hardTries: 1
