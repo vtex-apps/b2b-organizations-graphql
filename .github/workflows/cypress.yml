@@ -30,10 +30,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Chrome
-        uses: browser-actions/setup-chrome@99.0
+        uses: browser-actions/setup-chrome@latest
 
-      - name: Check Chrome version
-        run: chrome --version
+      - name: Check system resources and Chrome version
+        run: |
+          nproc
+          free -m
+          chrome --version
 
       - name: Checkout App
         uses: actions/checkout@v2
