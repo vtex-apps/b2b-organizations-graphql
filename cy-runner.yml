@@ -30,7 +30,7 @@ base:
     devMode: false
     runHeaded: false
     getCookies: true
-    maxJobs: 2
+    maxJobs: 1
     projectId: hymmzm
     quiet: true
     video: false
