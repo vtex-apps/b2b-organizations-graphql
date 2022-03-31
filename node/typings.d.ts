@@ -53,12 +53,14 @@ interface B2BCustomerInput {
 interface DefaultCostCenterInput {
   name: string
   address: AddressInput
+  businessDocument?: string
 }
 
 interface CostCenterInput {
   name: string
-  addresses: AddressInput[]
-  paymentTerms: PaymentTerm[]
+  addresses?: AddressInput[]
+  paymentTerms?: PaymentTerm[]
+  businessDocument?: string
 }
 
 interface AddressInput {
@@ -99,6 +101,7 @@ interface CostCenter {
   organization: string
   addresses: any[]
   paymentTerms: PaymentTerm[]
+  businessDocument?: string
 }
 
 interface UserArgs {

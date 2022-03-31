@@ -147,6 +147,7 @@ type B2BUserSimple {
 type DefaultCostCenter {
   name: String
   address: Address
+  businessDocument: String
 }
 
 type Organization {
@@ -176,6 +177,7 @@ type CostCenter {
   organization: ID
   addresses: [Address]
   paymentTerms: [PaymentTerm]
+  businessDocument: String
 }
 
 type Address {
@@ -244,12 +246,14 @@ input B2BUserInput {
 input DefaultCostCenterInput {
   name: String
   address: AddressInput
+  businessDocument: String
 }
 
 input CostCenterInput {
   name: String
   addresses: [AddressInput]
   paymentTerms: [PaymentTermInput]
+  businessDocument: String
 }
 
 input AddressInput {
