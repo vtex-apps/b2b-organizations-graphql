@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Optional `businessDocument` field for cost centers
+
 ## [0.12.0] - 2022-03-25
 
 ### Changed
