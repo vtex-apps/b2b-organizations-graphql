@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+Added 2 mutations to handle the cost center addresses
+- updateCostCenterAddress
+- createCostCenterAddress
+see schema/schema.graphql for more details
+
+
 ## [0.13.0] - 2022-03-31
 
 ### Added
