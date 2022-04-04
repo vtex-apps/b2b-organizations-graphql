@@ -82,6 +82,14 @@ type Mutation {
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
     @withPermissions
+  createCostCenterAddress(
+    costCenterId: ID
+    address: AddressInput
+  ): MutationResponse @withSession @withPermissions
+  updateCostCenterAddress(
+    costCenterId: ID
+    address: AddressInput
+  ): MutationResponse @withSession @withPermissions
   deleteOrganization(id: ID!): MutationResponse
   deleteCostCenter(id: ID!): MutationResponse @withSession @withPermissions
   saveUser(

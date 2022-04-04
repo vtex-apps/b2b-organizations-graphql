@@ -862,6 +862,112 @@ export const resolvers = {
         }
       }
     },
+    createCostCenterAddress: async (
+      _: void,
+      {
+        costCenterId,
+        address,
+      }: { costCenterId: string; address: AddressInput },
+      ctx: Context
+    ) => {
+      const {
+        clients: { masterdata },
+        vtex: { logger },
+      } = ctx
+
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
+      const costCenter = (await masterdata.getDocument({
+        dataEntity: COST_CENTER_DATA_ENTITY,
+        fields: ['addresses'],
+        id: costCenterId,
+      })) as CostCenterInput
+
+      const addresses = costCenter.addresses ?? []
+
+      addresses.push(address)
+
+      try {
+        await masterdata.updatePartialDocument({
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: {
+            addresses,
+          },
+          id: costCenterId,
+        })
+
+        return { status: 'success', message: '' }
+      } catch (e) {
+        logger.error({
+          message: 'createCostCenterAddress-error',
+          error: e,
+        })
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    },
+    updateCostCenterAddress: async (
+      _: void,
+      {
+        costCenterId,
+        address,
+      }: { costCenterId: string; address: AddressInput },
+      ctx: Context
+    ) => {
+      const {
+        clients: { masterdata },
+        vtex: { logger },
+      } = ctx
+
+      // create schema if it doesn't exist
+      await checkConfig(ctx)
+
+      const costCenter = (await masterdata.getDocument({
+        dataEntity: COST_CENTER_DATA_ENTITY,
+        fields: ['addresses'],
+        id: costCenterId,
+      })) as CostCenterInput
+
+      let addresses = costCenter.addresses ?? []
+
+      addresses = addresses.map((current: AddressInput) => {
+        if (address.addressId === current.addressId) {
+          return address
+        }
+
+        return current
+      })
+
+      try {
+        await masterdata.updatePartialDocument({
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: {
+            addresses,
+          },
+          id: costCenterId,
+        })
+
+        return { status: 'success', message: '' }
+      } catch (e) {
+        logger.error({
+          message: 'updateCostCenterAddress-error',
+          error: e,
+        })
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    },
     deleteOrganization: async (
       _: void,
       { id }: { id: string },
