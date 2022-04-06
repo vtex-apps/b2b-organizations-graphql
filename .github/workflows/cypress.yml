@@ -64,8 +64,9 @@ jobs:
         run: yarn cy-r
         env:
           VTEX_QE: ${{ secrets.VTEX_QE }}
-          NODE_NO_WARNINGS: 1
-          ELECTRON_RUN_AS_NODE: 1
+          DEBUG: cypress:server:util:process_profiler
+          #NODE_NO_WARNINGS: 1          
+          #ELECTRON_RUN_AS_NODE: 1
 
       - name: Save results
         uses: actions/upload-artifact@master
