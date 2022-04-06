@@ -455,6 +455,10 @@ export const resolvers = {
             name: organizationRequest.defaultCostCenter.name,
             addresses: [organizationRequest.defaultCostCenter.address],
             organization: organizationId,
+            ...(organizationRequest.defaultCostCenter.businessDocument && {
+              businessDocument:
+                organizationRequest.defaultCostCenter.businessDocument,
+            }),
           }
 
           const createCostCenterResult = await masterdata.createDocument({
@@ -648,6 +652,9 @@ export const resolvers = {
           name: defaultCostCenter.name,
           addresses: [defaultCostCenter.address],
           organization: organizationId,
+          ...(defaultCostCenter.businessDocument && {
+            businessDocument: defaultCostCenter.businessDocument,
+          }),
         }
 
         await masterdata.createDocument({
@@ -682,7 +689,7 @@ export const resolvers = {
       _: void,
       {
         organizationId,
-        input: { name, addresses },
+        input: { name, addresses, businessDocument },
       }: { organizationId: string; input: CostCenterInput },
       ctx: Context
     ) => {
@@ -715,6 +722,7 @@ export const resolvers = {
           name,
           addresses,
           organization: organizationId,
+          ...(businessDocument && { businessDocument }),
         }
 
         const createCostCenterResult = await masterdata.createDocument({
@@ -815,7 +823,7 @@ export const resolvers = {
       _: void,
       {
         id,
-        input: { name, addresses, paymentTerms },
+        input: { name, addresses, paymentTerms, businessDocument },
       }: { id: string; input: CostCenterInput },
       ctx: Context
     ) => {
@@ -833,8 +841,9 @@ export const resolvers = {
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: {
             name,
-            addresses,
-            ...(paymentTerms ? { paymentTerms } : {}),
+            ...(addresses?.length && { addresses }),
+            ...(paymentTerms && { paymentTerms }),
+            ...(businessDocument && { businessDocument }),
           },
         })
 
