@@ -23,13 +23,11 @@ const Organizations = {
     await checkConfig(ctx)
 
     try {
-      const organization = await masterdata.getDocument({
+      return await masterdata.getDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
         fields: ORGANIZATION_FIELDS,
         id,
       })
-
-      return organization
     } catch (e) {
       if (e.message) {
         throw new GraphQLError(e.message)
@@ -88,7 +86,7 @@ const Organizations = {
     const where = whereArray.join(' AND ')
 
     try {
-      const organizations = await masterdata.searchDocumentsWithPaginationInfo({
+      return await masterdata.searchDocumentsWithPaginationInfo({
         dataEntity: ORGANIZATION_DATA_ENTITY,
         fields: ORGANIZATION_FIELDS,
         pagination: { page, pageSize },
@@ -96,8 +94,6 @@ const Organizations = {
         sort: `${sortedBy} ${sortOrder}`,
         ...(where && { where }),
       })
-
-      return organizations
     } catch (e) {
       logger.error({
         error: e,
@@ -146,13 +142,11 @@ const Organizations = {
     }
 
     try {
-      const organization = await masterdata.getDocument({
+      return await masterdata.getDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
         fields: ORGANIZATION_FIELDS,
         id,
       })
-
-      return organization
     } catch (e) {
       if (e.message) {
         throw new GraphQLError(e.message)
@@ -177,13 +171,11 @@ const Organizations = {
     await checkConfig(ctx)
 
     try {
-      const organizationRequest = await masterdata.getDocument({
+      return await masterdata.getDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         fields: ORGANIZATION_REQUEST_FIELDS,
         id,
       })
-
-      return organizationRequest
     } catch (e) {
       if (e.message) {
         throw new GraphQLError(e.message)
@@ -242,18 +234,14 @@ const Organizations = {
     const where = whereArray.join(' AND ')
 
     try {
-      const organizationRequests = await masterdata.searchDocumentsWithPaginationInfo(
-        {
-          dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
-          fields: ORGANIZATION_REQUEST_FIELDS,
-          schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
-          pagination: { page, pageSize },
-          sort: `${sortedBy} ${sortOrder}`,
-          ...(where && { where }),
-        }
-      )
-
-      return organizationRequests
+      return await masterdata.searchDocumentsWithPaginationInfo({
+        dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
+        fields: ORGANIZATION_REQUEST_FIELDS,
+        schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
+        pagination: { page, pageSize },
+        sort: `${sortedBy} ${sortOrder}`,
+        ...(where && { where }),
+      })
     } catch (e) {
       logger.error({
         message: 'getOrganizationRequests-error',
