@@ -51,6 +51,12 @@ export const schemas = [
         b2bCustomerAdmin: {
           type: 'object',
           title: 'B2B Customer Admin',
+          properties: {
+            email: {
+              type: 'string',
+            },
+          },
+          'v-indexed': ['email'],
         },
         status: {
           type: 'string',
@@ -66,7 +72,7 @@ export const schemas = [
           format: 'date-time',
         },
       },
-      'v-indexed': ['name', 'status', 'created'],
+      'v-indexed': ['name', 'b2bCustomerAdmin', 'status', 'created'],
       'v-immediate-indexing': true,
       'v-cache': false,
     },

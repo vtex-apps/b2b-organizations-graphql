@@ -228,7 +228,15 @@ const Organizations = {
     }
 
     if (search) {
-      whereArray.push(`name="*${search}*"`)
+      if (
+        search.match(
+          /^([a-zA-Z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)$/gm
+        )
+      ) {
+        whereArray.push(`b2bCustomerAdmin.email=${search}`)
+      } else {
+        whereArray.push(`name="*${search}*"`)
+      }
     }
 
     const where = whereArray.join(' AND ')
