@@ -9,6 +9,23 @@ import {
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
 
+const getWhereByStatus = ({ status }: { status: string[] }) => {
+  const whereArray = []
+
+  if (status?.length) {
+    const statusArray = [] as string[]
+
+    status.forEach(stat => {
+      statusArray.push(`status=${stat}`)
+    })
+    const statuses = `(${statusArray.join(' OR ')})`
+
+    whereArray.push(statuses)
+  }
+
+  return whereArray
+}
+
 const Organizations = {
   getOrganizationById: async (
     _: void,
@@ -66,18 +83,7 @@ const Organizations = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    const whereArray = []
-
-    if (status?.length) {
-      const statusArray = [] as string[]
-
-      status.forEach(stat => {
-        statusArray.push(`status=${stat}`)
-      })
-      const statuses = `(${statusArray.join(' OR ')})`
-
-      whereArray.push(statuses)
-    }
+    const whereArray = getWhereByStatus({ status })
 
     if (search) {
       whereArray.push(`name="*${search}*"`)
@@ -116,13 +122,11 @@ const Organizations = {
   ) => {
     const {
       clients: { masterdata },
-      vtex,
-    } = ctx
+      vtex: { sessionData },
+    } = ctx as any
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-    const { sessionData } = vtex as any
 
     if (!sessionData?.namespaces['storefront-permissions']) {
       throw new GraphQLError('organization-data-not-found')
@@ -213,19 +217,7 @@ const Organizations = {
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-    const whereArray = []
-
-    if (status?.length) {
-      const statusArray = [] as string[]
-
-      status.forEach(stat => {
-        statusArray.push(`status=${stat}`)
-      })
-      const statuses = `(${statusArray.join(' OR ')})`
-
-      whereArray.push(statuses)
-    }
+    const whereArray = getWhereByStatus({ status })
 
     if (search) {
       if (

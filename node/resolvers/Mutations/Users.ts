@@ -84,6 +84,43 @@ const getUser = async ({ masterdata, logger, userId, clId }: any) =>
       return error
     })) ?? userId
 
+const checkUserIsAllowed = async ({
+  adminUserAuthToken,
+  clId,
+  ctx,
+  logger,
+  orgId,
+  roleId,
+  sessionData,
+  storefrontPermissionsClient,
+  storefrontPermissions,
+}: any) => {
+  if (!adminUserAuthToken) {
+    if (!sessionData?.namespaces['storefront-permissions']?.organization) {
+      throw new GraphQLError('organization-data-not-found')
+    }
+
+    const roleSlug = await getRoleSlug({
+      clId,
+      ctx,
+      logger,
+      roleId,
+      storefrontPermissionsClient,
+    })
+
+    const permitted = isUserPermitted({
+      orgId,
+      roleSlug,
+      sessionData,
+      storefrontPermissions,
+    })
+
+    if (!permitted) {
+      throw new GraphQLError('operation-not-permitted')
+    }
+  }
+}
+
 const Users = {
   /**
    *
@@ -284,29 +321,24 @@ const Users = {
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as any
 
-    if (!adminUserAuthToken) {
-      if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
-      }
-
-      const roleSlug = await getRoleSlug({
+    try {
+      await checkUserIsAllowed({
+        adminUserAuthToken,
         clId,
         ctx,
         logger,
-        roleId,
-        storefrontPermissionsClient,
-      })
-
-      const permitted = isUserPermitted({
         orgId,
-        roleSlug,
+        roleId,
         sessionData,
         storefrontPermissions,
+        storefrontPermissionsClient,
       })
-
-      if (!permitted) {
-        throw new GraphQLError('operation-not-permitted')
-      }
+    } catch (e) {
+      logger.error({
+        error: e,
+        message: 'addUser-checkUserIsAllowedError',
+      })
+      throw e
     }
 
     return storefrontPermissionsClient
@@ -345,29 +377,24 @@ const Users = {
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as any
 
-    if (!adminUserAuthToken) {
-      if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
-      }
-
-      const roleSlug = await getRoleSlug({
+    try {
+      await checkUserIsAllowed({
+        adminUserAuthToken,
         clId,
         ctx,
         logger,
-        roleId,
-        storefrontPermissionsClient,
-      })
-
-      const permitted = isUserPermitted({
         orgId,
-        roleSlug,
+        roleId,
         sessionData,
         storefrontPermissions,
+        storefrontPermissionsClient,
       })
-
-      if (!permitted) {
-        throw new GraphQLError('operation-not-permitted')
-      }
+    } catch (e) {
+      logger.error({
+        error: e,
+        message: 'addUser-checkUserIsAllowedError',
+      })
+      throw e
     }
 
     if (clId && !userId) {
@@ -431,29 +458,24 @@ const Users = {
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as any
 
-    if (!adminUserAuthToken) {
-      if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
-      }
-
-      const roleSlug = await getRoleSlug({
+    try {
+      await checkUserIsAllowed({
+        adminUserAuthToken,
         clId,
         ctx,
         logger,
-        roleId,
-        storefrontPermissionsClient,
-      })
-
-      const permitted = isUserPermitted({
         orgId,
-        roleSlug,
+        roleId,
         sessionData,
         storefrontPermissions,
+        storefrontPermissionsClient,
       })
-
-      if (!permitted) {
-        throw new GraphQLError('operation-not-permitted')
-      }
+    } catch (e) {
+      logger.error({
+        error: e,
+        message: 'addUser-checkUserIsAllowedError',
+      })
+      throw e
     }
 
     if (clId && !userId) {
