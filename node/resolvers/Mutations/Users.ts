@@ -352,7 +352,7 @@ const Users = {
         userId,
       })
       .then((result: any) => {
-        return result.data.saveUser
+        return result.data.addUser
       })
       .catch((error: any) => {
         logger.error({
@@ -416,7 +416,7 @@ const Users = {
         userId,
       })
       .then((result: any) => {
-        return result.data.saveUser
+        return result.data.updateUser
       })
       .catch((error: any) => {
         logger.error({

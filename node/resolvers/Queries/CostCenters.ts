@@ -16,7 +16,8 @@ const getCostCenters = async ({
   sortOrder,
   sortedBy,
 }: any) => {
-  const where = `organization=${id}${search ? ` AND name="*${search}*"` : ''}`
+  const searchClause = search ? ` AND name="*${search}*"` : ''
+  const where = `organization=${id}${searchClause}`
 
   try {
     return await masterdata.searchDocumentsWithPaginationInfo({

@@ -69,9 +69,7 @@ export const MUTATIONS = {
       id
     }
   }`,
-  /**
-   * @deprecated
-   */
+
   saveUser: `mutation saveUser($id: ID, $roleId: ID!, $userId: ID, $orgId: ID, $costId: ID, $clId: ID, $canImpersonate: Boolean, $name: String!, $email: String!) {
     saveUser(id: $id, roleId: $roleId, userId: $userId, orgId: $orgId, costId: $costId, clId: $clId, canImpersonate: $canImpersonate, name: $name, email: $email) {
       id
@@ -276,19 +274,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     })
   }
 
-  /**
-   *
-   * @deprecated
-   *
-   * @param id
-   * @param roleId
-   * @param userId
-   * @param orgId
-   * @param costId
-   * @param clId
-   * @param name
-   * @param email
-   */
+  // deprecated
   public saveUser = async ({
     id,
     roleId,
