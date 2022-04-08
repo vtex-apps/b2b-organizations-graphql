@@ -95,6 +95,26 @@ type Mutation {
     name: String!
     email: String!
   ): MutationResponse @withSession @withPermissions
+  addUser(
+    id: ID
+    roleId: ID!
+    userId: ID
+    orgId: ID
+    costId: ID
+    clId: ID
+    canImpersonate: Boolean = false
+    name: String!
+    email: String!
+  ): MutationResponse @withSession @withPermissions
+  updateUser(
+    id: ID
+    roleId: ID!
+    userId: ID
+    orgId: ID
+    costId: ID
+    clId: ID
+    canImpersonate: Boolean = false
+  ): MutationResponse @withSession @withPermissions
   removeUser(id: ID!, userId: ID, email: String!, clId: ID!): MutationResponse
     @withSession
     @withPermissions
