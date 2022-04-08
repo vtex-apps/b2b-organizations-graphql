@@ -86,11 +86,11 @@ const CostCenters = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    const costCenter = (await masterdata.getDocument({
+    const costCenter: CostCenterInput = await masterdata.getDocument({
       dataEntity: COST_CENTER_DATA_ENTITY,
       fields: ['addresses'],
       id: costCenterId,
-    })) as CostCenterInput
+    })
 
     const addresses = costCenter.addresses ?? []
 
@@ -146,8 +146,6 @@ const CostCenters = {
     const {
       clients: { masterdata },
     } = ctx
-
-    // TODO: also delete organization's cost centers?
 
     try {
       await masterdata.deleteDocument({
@@ -224,11 +222,11 @@ const CostCenters = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    const costCenter = (await masterdata.getDocument({
+    const costCenter: CostCenterInput = await masterdata.getDocument({
       dataEntity: COST_CENTER_DATA_ENTITY,
       fields: ['addresses'],
       id: costCenterId,
-    })) as CostCenterInput
+    })
 
     let addresses = costCenter.addresses ?? []
 

@@ -104,7 +104,7 @@ const Index = {
       ...(costCenterId && { costCenterId }),
     }
 
-    const users = await storefrontPermissions
+    return storefrontPermissions
       .listUsers(variables)
       .then((result: any) => {
         return result.data.listUsers
@@ -122,8 +122,6 @@ const Index = {
           throw new GraphQLError(error)
         }
       })
-
-    return users
   },
 }
 

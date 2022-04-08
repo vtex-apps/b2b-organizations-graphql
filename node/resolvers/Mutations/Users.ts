@@ -421,7 +421,7 @@ const Users = {
       .catch((error: any) => {
         logger.error({
           error,
-          message: 'addUser-error',
+          message: 'updateUser-error',
         })
 
         return { status: 'error', message: error }

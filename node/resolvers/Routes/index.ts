@@ -25,8 +25,8 @@ const Index = {
         })
         .catch((error: any) => {
           logger.error({
-            message: 'getSession-error',
             error,
+            message: 'checkout-getSession-error',
           })
 
           return null
@@ -104,8 +104,8 @@ const Index = {
       })
       .catch((error: any) => {
         logger.error({
-          message: 'getSession-error',
           error,
+          message: 'orders-getSession-error',
         })
 
         return null
