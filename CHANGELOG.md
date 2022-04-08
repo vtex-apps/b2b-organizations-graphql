@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.15.0] - 2022-04-08
+
 ### Added
 
 - add subfield `email` of the `b2bCustomerAdmin` field to check duplicate requests by email
