@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- the structure of the components has been improved;
+- Added 2 mutations in order to follow the mutations from storefront permissions (updateUser and addUser);
+
+### Fixed
+- Remove a couple of conditionals nested;
+- Remove unnecessary variables, some changes to inline returns;
+
 ## [0.14.0] - 2022-04-04
 
 ### Added
