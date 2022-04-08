@@ -7,6 +7,37 @@ import {
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
 
+const getCostCenters = async ({
+  id,
+  masterdata,
+  page,
+  pageSize,
+  search,
+  sortOrder,
+  sortedBy,
+}: any) => {
+  const where = `organization=${id}${search ? ` AND name="*${search}*"` : ''}`
+
+  try {
+    return await masterdata.searchDocumentsWithPaginationInfo({
+      dataEntity: COST_CENTER_DATA_ENTITY,
+      fields: COST_CENTER_FIELDS,
+      pagination: { page, pageSize },
+      schema: COST_CENTER_SCHEMA_VERSION,
+      sort: `${sortedBy} ${sortOrder}`,
+      ...(where && { where }),
+    })
+  } catch (e) {
+    if (e.message) {
+      throw new GraphQLError(e.message)
+    } else if (e.response?.data?.message) {
+      throw new GraphQLError(e.response.data.message)
+    } else {
+      throw new GraphQLError(e)
+    }
+  }
+}
+
 const costCenters = {
   getCostCenterById: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
@@ -210,34 +241,28 @@ const costCenters = {
   ) => {
     const {
       clients: { masterdata },
+      vtex: { logger },
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    let where = `organization=${id}`
-
-    if (search) {
-      where += ` AND name="*${search}*"`
-    }
-
     try {
-      return await masterdata.searchDocumentsWithPaginationInfo({
-        dataEntity: COST_CENTER_DATA_ENTITY,
-        fields: COST_CENTER_FIELDS,
-        schema: COST_CENTER_SCHEMA_VERSION,
-        pagination: { page, pageSize },
-        sort: `${sortedBy} ${sortOrder}`,
-        ...(where && { where }),
+      return await getCostCenters({
+        id,
+        masterdata,
+        page,
+        pageSize,
+        search,
+        sortOrder,
+        sortedBy,
       })
     } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      logger.error({
+        message: 'getCostCentersByOrganizationId-error',
+        e,
+      })
+      throw e
     }
   },
 
@@ -262,13 +287,11 @@ const costCenters = {
   ) => {
     const {
       clients: { masterdata },
-      vtex,
-    } = ctx
+      vtex: { logger, sessionData },
+    } = ctx as any
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-    const { sessionData } = vtex as any
 
     if (!sessionData?.namespaces['storefront-permissions']) {
       throw new GraphQLError('organization-data-not-found')
@@ -287,29 +310,22 @@ const costCenters = {
       throw new GraphQLError('operation-not-permitted')
     }
 
-    let where = `organization=${id}`
-
-    if (search) {
-      where += ` AND name="*${search}*"`
-    }
-
     try {
-      return await masterdata.searchDocumentsWithPaginationInfo({
-        dataEntity: COST_CENTER_DATA_ENTITY,
-        fields: COST_CENTER_FIELDS,
-        schema: COST_CENTER_SCHEMA_VERSION,
-        pagination: { page, pageSize },
-        sort: `${sortedBy} ${sortOrder}`,
-        ...(where && { where }),
+      return await getCostCenters({
+        id,
+        masterdata,
+        page,
+        pageSize,
+        search,
+        sortOrder,
+        sortedBy,
       })
     } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      logger.error({
+        message: 'getCostCentersByOrganizationId-error',
+        e,
+      })
+      throw e
     }
   },
 }
