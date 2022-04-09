@@ -64,7 +64,7 @@ export const QUERIES = {
 }
 
 export const MUTATIONS = {
-  addUser: `mutation ($id: ID $userId: ID! $roleId: ID! $orgId: ID! $costId: ID! $name: String! $canImpersonate: Boolean! $email: String!) {
+  addUser: `mutation ($id: ID $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $name: String! $canImpersonate: Boolean! $email: String!) {
     addUser (id:$id, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, name: $name, canImpersonate: $canImpersonate, email: $email) {
       id
     }
@@ -78,7 +78,7 @@ export const MUTATIONS = {
     }
   }`,
 
-  updateUser: `mutation ($id: ID $clId: ID! $userId: ID! $roleId: ID! $orgId: ID! $costId: ID! $canImpersonate: Boolean!) {
+  updateUser: `mutation ($id: ID $clId: ID! $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $canImpersonate: Boolean!) {
     updateUser (id:$id, clId: $clId, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, canImpersonate: $canImpersonate) {
       id
     }
@@ -261,7 +261,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     email: string
   }): Promise<any> => {
     return this.graphql.mutate({
-      mutate: MUTATIONS.saveUser,
+      mutate: MUTATIONS.updateUser,
       variables: {
         canImpersonate: false,
         clId,
