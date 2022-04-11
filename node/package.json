@@ -28,8 +28,7 @@
     "tslint-config-vtex": "^2.1.0",
     "typescript": "3.9.7",
     "vtex.b2b-organizations-graphql": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.b2b-organizations-graphql@0.14.0/public/@types/vtex.b2b-organizations-graphql",
-    "vtex.storefront-permissions": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.17.1/public/@types/vtex.storefront-permissions",
-    "vtex.graphql-server": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.graphql-server@1.66.9/public/_types/react"
+    "vtex.storefront-permissions": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.17.1/public/@types/vtex.storefront-permissions"
   },
   "scripts": {
     "lint": "tsc --noEmit && tslint -c tslint.json './**/*.ts'"
