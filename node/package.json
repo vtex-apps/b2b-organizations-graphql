@@ -15,7 +15,6 @@
     "@types/atob": "^2.1.2",
     "@types/bluebird": "^3.5.25",
     "@types/co-body": "0.0.3",
-    "@types/graphql": "^14.5.0",
     "@types/jest": "^27.0.2",
     "@types/jsonwebtoken": "^8.5.0",
     "@types/node": "^12.0.0",
