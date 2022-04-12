@@ -67,6 +67,8 @@ export const MUTATIONS = {
   addUser: `mutation ($id: ID $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $name: String! $canImpersonate: Boolean! $email: String!) {
     addUser (id:$id, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, name: $name, canImpersonate: $canImpersonate, email: $email) {
       id
+      status
+      message
     }
   }`,
 
@@ -81,6 +83,8 @@ export const MUTATIONS = {
   updateUser: `mutation ($id: ID $clId: ID! $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $canImpersonate: Boolean!) {
     updateUser (id:$id, clId: $clId, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, canImpersonate: $canImpersonate) {
       id
+      status
+      message
     }
   }`,
 
