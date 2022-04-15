@@ -2,7 +2,7 @@
   "name": "vtex.b2b-organizations",
   "version": "0.15.0",
   "dependencies": {
-    "@vtex/api": "6.45.10",
+    "@vtex/api": "6.45.11-beta",
     "atob": "^2.1.2",
     "co-body": "^6.0.0",
     "graphql": "^14.5.0",
@@ -15,20 +15,19 @@
     "@types/atob": "^2.1.2",
     "@types/bluebird": "^3.5.25",
     "@types/co-body": "0.0.3",
-    "@types/graphql": "^14.5.0",
     "@types/jest": "^27.0.2",
     "@types/jsonwebtoken": "^8.5.0",
     "@types/node": "^12.0.0",
     "@types/ramda": "types/npm-ramda#dist",
-    "@vtex/api": "6.45.10",
+    "@vtex/api": "6.45.11-beta",
     "@vtex/prettier-config": "^0.3.1",
     "@vtex/tsconfig": "^0.6.0",
     "tslint": "^5.12.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-config-vtex": "^2.1.0",
     "typescript": "3.9.7",
-    "vtex.b2b-organizations-graphql": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.b2b-organizations-graphql@0.0.3/public/@types/vtex.b2b-organizations-graphql",
-    "vtex.graphql-server": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.graphql-server@1.66.9/public/_types/react"
+    "vtex.b2b-organizations-graphql": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.b2b-organizations-graphql@0.14.0/public/@types/vtex.b2b-organizations-graphql",
+    "vtex.storefront-permissions": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.17.1/public/@types/vtex.storefront-permissions"
   },
   "scripts": {
     "lint": "tsc --noEmit && tslint -c tslint.json './**/*.ts'"
