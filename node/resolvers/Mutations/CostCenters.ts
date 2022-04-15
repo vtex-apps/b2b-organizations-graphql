@@ -58,6 +58,7 @@ const CostCenters = {
       return {
         href: createCostCenterResult.Href,
         id: createCostCenterResult.DocumentId,
+        status: '',
       }
     } catch (e) {
       logger.error({
