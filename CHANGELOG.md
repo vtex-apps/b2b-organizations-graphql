@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.16.0] - 2022-04-15
+
+### Added
+- the structure of the components has been improved;
+- Added 2 mutations in order to follow the mutations from storefront permissions (updateUser and addUser);
+
+### Fixed
+- Remove a couple of conditionals nested;
+- Remove unnecessary variables, some changes to inline returns;
+
+## [0.15.0] - 2022-04-08
+
+### Added
+
+- add subfield `email` of the `b2bCustomerAdmin` field to check duplicate requests by email
+
+## [0.14.0] - 2022-04-04
+
+### Added
+
+Added 2 mutations to handle the cost center addresses
+- updateCostCenterAddress
+- createCostCenterAddress
+see schema/schema.graphql for more details
+
+
 ## [0.13.0] - 2022-03-31
 
 ### Added

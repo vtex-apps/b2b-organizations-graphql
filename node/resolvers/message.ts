@@ -45,15 +45,30 @@ const message = ({
       logger.error(err)
     }
 
+    const promises = []
+
     for (const user of users) {
-      mail.sendMail({
-        templateName: 'organization-created',
-        jsonData: {
-          message: { to: user.email },
-          organization: { name, admin: user.name },
-        },
-      })
+      promises.push(
+        mail
+          .sendMail({
+            jsonData: {
+              message: { to: user.email },
+              organization: { name, admin: user.name },
+            },
+            templateName: 'organization-created',
+          })
+          .catch(err =>
+            logger.error({
+              message: {
+                error: err,
+                message: 'Error sending organization created email',
+              },
+            })
+          )
+      )
     }
+
+    return Promise.all(promises)
   }
 
   const organizationApproved = async (
@@ -62,13 +77,22 @@ const message = ({
     email: string,
     note: string
   ) => {
-    mail.sendMail({
-      templateName: 'organization-approved',
-      jsonData: {
-        message: { to: email },
-        organization: { name, admin, note },
-      },
-    })
+    return mail
+      .sendMail({
+        jsonData: {
+          message: { to: email },
+          organization: { name, admin, note },
+        },
+        templateName: 'organization-approved',
+      })
+      .catch(err =>
+        logger.error({
+          message: {
+            error: err,
+            message: 'Error sending organization approved email',
+          },
+        })
+      )
   }
 
   const organizationDeclined = async (
@@ -77,13 +101,22 @@ const message = ({
     email: string,
     note: string
   ) => {
-    mail.sendMail({
-      templateName: 'organization-declined',
-      jsonData: {
-        message: { to: email },
-        organization: { name, admin, note },
-      },
-    })
+    return mail
+      .sendMail({
+        jsonData: {
+          message: { to: email },
+          organization: { name, admin, note },
+        },
+        templateName: 'organization-declined',
+      })
+      .catch(err =>
+        logger.error({
+          message: {
+            error: err,
+            message: 'Error sending organization declined email',
+          },
+        })
+      )
   }
 
   const organizationStatusChanged = async (
@@ -99,20 +132,35 @@ const message = ({
       logger.error(err)
     }
 
+    const promises = []
+
     for (const user of users) {
-      mail.sendMail({
-        templateName: 'organization-status-changed',
-        jsonData: {
-          message: { to: user.email },
-          organization: { name, admin: user.name, status },
-        },
-      })
+      promises.push(
+        mail
+          .sendMail({
+            jsonData: {
+              message: { to: user.email },
+              organization: { name, admin: user.name, status },
+            },
+            templateName: 'organization-status-changed',
+          })
+          .catch(err =>
+            logger.error({
+              message: {
+                error: err,
+                message: 'Error sending organization status changed email',
+              },
+            })
+          )
+      )
     }
+
+    return Promise.all(promises)
   }
 
   return {
-    organizationCreated,
     organizationApproved,
+    organizationCreated,
     organizationDeclined,
     organizationStatusChanged,
   }

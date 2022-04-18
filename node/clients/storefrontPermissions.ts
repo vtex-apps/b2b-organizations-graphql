@@ -64,6 +64,14 @@ export const QUERIES = {
 }
 
 export const MUTATIONS = {
+  addUser: `mutation ($id: ID $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $name: String! $canImpersonate: Boolean! $email: String!) {
+    addUser (id:$id, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, name: $name, canImpersonate: $canImpersonate, email: $email) {
+      id
+      status
+      message
+    }
+  }`,
+
   saveUser: `mutation saveUser($id: ID, $roleId: ID!, $userId: ID, $orgId: ID, $costId: ID, $clId: ID, $canImpersonate: Boolean, $name: String!, $email: String!) {
     saveUser(id: $id, roleId: $roleId, userId: $userId, orgId: $orgId, costId: $costId, clId: $clId, canImpersonate: $canImpersonate, name: $name, email: $email) {
       id
@@ -71,6 +79,15 @@ export const MUTATIONS = {
       message
     }
   }`,
+
+  updateUser: `mutation ($id: ID $clId: ID! $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $canImpersonate: Boolean!) {
+    updateUser (id:$id, clId: $clId, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, canImpersonate: $canImpersonate) {
+      id
+      status
+      message
+    }
+  }`,
+
   deleteUser: `mutation deleteUser($id: ID!, $userId: ID, $email: String!) {
     deleteUser(id: $id, userId: $userId, email: $email) {
       id
@@ -197,6 +214,71 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     )
   }
 
+  public addUser = async ({
+    id,
+    roleId,
+    userId,
+    orgId,
+    costId,
+    name,
+    email,
+  }: {
+    id?: string
+    roleId: string
+    userId?: string
+    orgId?: string
+    costId?: string
+    clId?: string
+    name: string
+    email: string
+  }): Promise<any> => {
+    return this.graphql.mutate({
+      mutate: MUTATIONS.addUser,
+      variables: {
+        canImpersonate: false,
+        costId,
+        email,
+        id,
+        name,
+        orgId,
+        roleId,
+        userId,
+      },
+    })
+  }
+
+  public updateUser = async ({
+    id,
+    roleId,
+    userId,
+    orgId,
+    costId,
+    clId,
+  }: {
+    id?: string
+    roleId: string
+    userId?: string
+    orgId?: string
+    costId?: string
+    clId?: string
+    name: string
+    email: string
+  }): Promise<any> => {
+    return this.graphql.mutate({
+      mutate: MUTATIONS.updateUser,
+      variables: {
+        canImpersonate: false,
+        clId,
+        costId,
+        id,
+        orgId,
+        roleId,
+        userId,
+      },
+    })
+  }
+
+  // deprecated
   public saveUser = async ({
     id,
     roleId,

@@ -82,6 +82,14 @@ type Mutation {
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
     @withPermissions
+  createCostCenterAddress(
+    costCenterId: ID
+    address: AddressInput
+  ): MutationResponse @withSession @withPermissions
+  updateCostCenterAddress(
+    costCenterId: ID
+    address: AddressInput
+  ): MutationResponse @withSession @withPermissions
   deleteOrganization(id: ID!): MutationResponse
   deleteCostCenter(id: ID!): MutationResponse @withSession @withPermissions
   saveUser(
@@ -94,6 +102,26 @@ type Mutation {
     canImpersonate: Boolean = false
     name: String!
     email: String!
+  ): MutationResponse @withSession @withPermissions
+  addUser(
+    id: ID
+    roleId: ID!
+    userId: ID
+    orgId: ID
+    costId: ID
+    clId: ID
+    canImpersonate: Boolean = false
+    name: String!
+    email: String!
+  ): MutationResponse @withSession @withPermissions
+  updateUser(
+    id: ID
+    roleId: ID!
+    userId: ID
+    orgId: ID
+    costId: ID
+    clId: ID
+    canImpersonate: Boolean = false
   ): MutationResponse @withSession @withPermissions
   removeUser(id: ID!, userId: ID, email: String!, clId: ID!): MutationResponse
     @withSession
