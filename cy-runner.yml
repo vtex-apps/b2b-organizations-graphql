@@ -32,7 +32,7 @@ base:
     getCookies: true
     maxJobs: 3
     quiet: true
-    projectId: xyza
+    projectId: hymmzm
     video: true
     videoCompression: false
     videoUploadOnPasses: false
