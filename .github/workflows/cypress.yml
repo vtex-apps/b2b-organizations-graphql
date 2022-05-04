@@ -1,18 +1,21 @@
 name: '[QE] Cypress Runner'
 
 on:
+  schedule:
+    # 7:30 AM UTC = 3:30 AM EDT
+    - cron: '30 7 * * MON-FRI'
   pull_request:
     branches:
       - master
       - main
-    types: 
+    types:
       - opened
       - synchronize
       - reopened
       - ready_for_review
-    paths-ignore: 
+    paths-ignore:
       - docs/**
-      - README.md     
+      - README.md
       - CHANGELOG.md
 
 concurrency:
@@ -23,6 +26,7 @@ jobs:
   Cypress:
     runs-on: ubuntu-18.04
     timeout-minutes: 30
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout App
         uses: actions/checkout@v2
@@ -49,7 +53,6 @@ jobs:
         env:
           VTEX_QE: ${{ secrets.VTEX_QE }}
           DEBUG: cypress:server:util:process_profiler
-          NO_COLOR: 1
           NODE_NO_WARNINGS: 1          
 
       - name: Save results
@@ -58,3 +61,4 @@ jobs:
         with:
           name: cy-runner-logs
           path: cy-runner/logs
+          retention-days: 3

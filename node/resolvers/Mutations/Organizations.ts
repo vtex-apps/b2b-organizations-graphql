@@ -68,6 +68,7 @@ const Organizations = {
       return {
         href: createOrganizationResult.Href,
         id: createOrganizationResult.DocumentId,
+        status: '',
       }
     } catch (e) {
       logger.error({
@@ -98,6 +99,25 @@ const Organizations = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
+    const duplicate = await masterdata
+      .searchDocumentsWithPaginationInfo({
+        dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
+        fields: ORGANIZATION_REQUEST_FIELDS,
+        schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
+        sort: `created DESC`,
+        where: `b2bCustomerAdmin.email=${b2bCustomerAdmin.email}`,
+        pagination: {
+          page: 1,
+          pageSize: 1,
+        },
+      })
+      .then((res: any) => {
+        return res.data[0]?.status ?? ''
+      })
+      .catch(() => '')
+
+    if (duplicate !== '') return { href: '', id: '', status: duplicate }
+
     const now = new Date()
 
     const organizationRequest = {
@@ -116,7 +136,7 @@ const Organizations = {
         schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
       })
 
-      return { href: result.Href, id: result.DocumentId }
+      return { href: result.Href, id: result.DocumentId, status: duplicate }
     } catch (e) {
       logger.error({
         message: 'createOrganizationRequest-error',
