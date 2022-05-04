@@ -1,25 +1,19 @@
 name: '[QE] Cypress Runner'
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Choose another branch to test'
-        required: true
-        default: master
-#   pull_request:
-#     branches:
-#       - master
-#       - main
-#     types: 
-#       - opened
-#       - synchronize
-#       - reopened
-#       - ready_for_review
-#     paths-ignore: 
-#       - docs/**
-#       - README.md     
-#       - CHANGELOG.md
+   pull_request:
+     branches:
+       - master
+       - main
+     types: 
+       - opened
+       - synchronize
+       - reopened
+       - ready_for_review
+     paths-ignore: 
+       - docs/**
+       - README.md     
+       - CHANGELOG.md
 
 concurrency:
   group: ${{ github.workflow }}
@@ -27,22 +21,13 @@ concurrency:
 
 jobs:
   Cypress:
-    runs-on: macos-latest
+    runs-on: ubuntu-18.04
+    timeout-minutes: 30
     steps:
-#       - name: Install Chrome
-#         uses: browser-actions/setup-chrome@latest
-
-#       - name: Check system resources and Chrome version
-#         run: |
-#           nproc
-#           free -m
-#           chrome --version
-
       - name: Checkout App
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Get Cypress Runner
         run: git clone https://github.com/vtex-apps/cy-runner.git
@@ -55,9 +40,8 @@ jobs:
 
       - name: Install Cypress
         run: |
-          yarn install --frozen-lockfile
-          git checkout feature/add-parallelization
           rm -rf .git
+          yarn install --frozen-lockfile
         working-directory: ./cy-runner
 
       - name: Run Cypress Runner
@@ -66,8 +50,7 @@ jobs:
           VTEX_QE: ${{ secrets.VTEX_QE }}
           DEBUG: cypress:server:util:process_profiler
           NO_COLOR: 1
-          #NODE_NO_WARNINGS: 1          
-          #ELECTRON_RUN_AS_NODE: 1
+          NODE_NO_WARNINGS: 1          
 
       - name: Save results
         uses: actions/upload-artifact@master
