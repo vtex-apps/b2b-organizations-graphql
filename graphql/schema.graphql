@@ -45,15 +45,22 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
+    isSalesAdmin: Boolean = false
   ): CostCenterResult @withSession @cacheControl(scope: PRIVATE)
   getCostCenterById(id: ID!): CostCenter
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-  getUsers(organizationId: ID, costCenterId: ID): [B2BUser]
-    @withSession
-    @cacheControl(scope: PRIVATE, maxAge: SHORT)
+  getUsers(
+    organizationId: ID
+    costCenterId: ID
+    page: Int
+    pageSize: Int
+    search: String
+    sortOrder: String
+    sortedBy: String
+  ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
@@ -235,6 +242,11 @@ type MutationResponse {
   id: String
   status: String
   message: String
+}
+
+type B2BUserPagination {
+  data: [B2BUser]
+  pagination: Pagination
 }
 
 type B2BUser {

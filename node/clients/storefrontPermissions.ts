@@ -12,17 +12,22 @@ export const QUERIES = {
       permissions
     }
   }`,
-  listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID) {
-    listUsers(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId) {
-      id
-      roleId
-      userId
-      clId
-      orgId
-      costId
-      name
-      email
-      canImpersonate
+  listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID, $page: Int, $pageSize: Int, $search: String, $sortOrder: String, $sortedBy: String) {
+    listUsers(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId, page: $page, pageSize: $pageSize, search: $search, sortOrder: $sortOrder, sortedBy: $sortedBy) {
+      data {
+        id
+        roleId
+        userId
+        clId
+        orgId
+        costId
+        name
+        email
+        canImpersonate
+      }
+      pagination {
+        total
+      }
     }
   }`,
   listRoles: `query roles {
@@ -161,16 +166,31 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     roleId,
     organizationId,
     costCenterId,
+    search = '',
+    page = 1,
+    pageSize = 25,
+    sortOrder = 'asc',
+    sortedBy = 'email',
   }: {
     roleId?: string
     organizationId?: string
     costCenterId?: string
+    search?: string
+    page?: number
+    pageSize?: number
+    sortOrder?: string
+    sortedBy?: string
   }): Promise<any> => {
     return this.graphql.query(
       {
         query: QUERIES.listUsers,
         variables: {
           roleId,
+          page,
+          pageSize,
+          search,
+          sortOrder,
+          sortedBy,
           ...(organizationId && { organizationId }),
           ...(costCenterId && { costCenterId }),
         },

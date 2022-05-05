@@ -276,6 +276,7 @@ const costCenters = {
       pageSize,
       sortOrder,
       sortedBy,
+      isSalesAdmin,
     }: {
       id: string
       search: string
@@ -283,6 +284,7 @@ const costCenters = {
       pageSize: number
       sortOrder: string
       sortedBy: string
+      isSalesAdmin: boolean
     },
     ctx: Context
   ) => {
@@ -294,21 +296,23 @@ const costCenters = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    if (!sessionData?.namespaces['storefront-permissions']) {
-      throw new GraphQLError('organization-data-not-found')
-    }
+    if (!isSalesAdmin) {
+      if (!sessionData?.namespaces['storefront-permissions']) {
+        throw new GraphQLError('organization-data-not-found')
+      }
 
-    const {
-      organization: { value: userOrganizationId },
-    } = sessionData.namespaces['storefront-permissions']
+      const {
+        organization: { value: userOrganizationId },
+      } = sessionData.namespaces['storefront-permissions']
 
-    if (!id) {
-      // get user's organization from session
-      id = userOrganizationId
-    }
+      if (!id) {
+        // get user's organization from session
+        id = userOrganizationId
+      }
 
-    if (id !== userOrganizationId) {
-      throw new GraphQLError('operation-not-permitted')
+      if (id !== userOrganizationId) {
+        throw new GraphQLError('operation-not-permitted')
+      }
     }
 
     try {
