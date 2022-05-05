@@ -69,7 +69,20 @@ const Index = {
     {
       organizationId,
       costCenterId,
-    }: { organizationId: string; costCenterId: string },
+      search = '',
+      page = 1,
+      pageSize = 25,
+      sortOrder = 'asc',
+      sortedBy = 'email',
+    }: {
+      organizationId: string
+      costCenterId: string
+      search: string
+      page: number
+      pageSize: number
+      sortOrder: string
+      sortedBy: string
+    },
     ctx: Context
   ) => {
     const {
@@ -102,6 +115,11 @@ const Index = {
     const variables = {
       ...(organizationId && { organizationId }),
       ...(costCenterId && { costCenterId }),
+      page,
+      pageSize,
+      search,
+      sortOrder,
+      sortedBy,
     }
 
     return storefrontPermissions
