@@ -125,7 +125,7 @@ const Index = {
     return storefrontPermissions
       .listUsers(variables)
       .then((result: any) => {
-        return result.data.listUsers
+        return result.data.listUsersPaginated
       })
       .catch(error => {
         logger.error({

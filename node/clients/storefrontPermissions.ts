@@ -13,7 +13,7 @@ export const QUERIES = {
     }
   }`,
   listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID, $page: Int, $pageSize: Int, $search: String, $sortOrder: String, $sortedBy: String) {
-    listUsers(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId, page: $page, pageSize: $pageSize, search: $search, sortOrder: $sortOrder, sortedBy: $sortedBy) {
+    listUsersPaginated(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId, page: $page, pageSize: $pageSize, search: $search, sortOrder: $sortOrder, sortedBy: $sortedBy) {
       data {
         id
         roleId
