@@ -55,7 +55,6 @@ jobs:
           VTEX_QE: ${{ secrets.VTEX_QE }}
           NODE_NO_WARNINGS: 1
           NO_COLOR: 1
-          ELECTRON_RUN_AS_NODE: 1
 
       - name: Save results
         uses: actions/upload-artifact@master
