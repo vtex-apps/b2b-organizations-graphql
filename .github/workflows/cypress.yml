@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   Cypress:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     if: github.event.pull_request.draft == false
     steps:
@@ -44,6 +44,7 @@ jobs:
 
       - name: Install Cypress
         run: |
+          git checkout test/display
           rm -rf .git
           yarn install --frozen-lockfile
         working-directory: ./cy-runner
@@ -52,9 +53,9 @@ jobs:
         run: yarn cy-r
         env:
           VTEX_QE: ${{ secrets.VTEX_QE }}
-          NODE_NO_WARNINGS: true
-          NO_COLOR: true
-          ELECTRON_RUN_AS_NODE: true
+          NODE_NO_WARNINGS: 1
+          NO_COLOR: 1
+          ELECTRON_RUN_AS_NODE: 1
 
       - name: Save results
         uses: actions/upload-artifact@master
