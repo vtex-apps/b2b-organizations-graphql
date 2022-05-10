@@ -3,13 +3,14 @@ import { IOClients } from '@vtex/api'
 import VtexId from './vtexId'
 import PaymentsClient from './payments'
 import MailClient from './email'
-import { OMSClient } from './Oms'
+import Checkout from './checkout'
+import OMSClient from './Oms'
 import StorefrontPermissions from './storefrontPermissions'
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
-  public get vtexId() {
-    return this.getOrSet('vtexId', VtexId)
+  public get checkout() {
+    return this.getOrSet('checkout', Checkout)
   }
 
   public get payments() {
@@ -26,5 +27,9 @@ export class Clients extends IOClients {
 
   public get storefrontPermissions() {
     return this.getOrSet('storefrontPermissions', StorefrontPermissions)
+  }
+
+  public get vtexId() {
+    return this.getOrSet('vtexId', VtexId)
   }
 }
