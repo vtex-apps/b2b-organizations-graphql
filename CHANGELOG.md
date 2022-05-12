@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.16.2] - 2022-05-12
+
 ### Added
 
 - Cancellation request route to support `vtex.b2b-orders-history`
