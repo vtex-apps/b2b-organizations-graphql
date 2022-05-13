@@ -7,22 +7,39 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+<<<<<<< HEAD
 ### Added
 
 - Added the pagination to getUsers query
+=======
+## [0.16.2] - 2022-05-12
+
+### Added
+
+- Cancellation request route to support `vtex.b2b-orders-history`
+- Checkout client
+- Permission check in `order` route
+
+### Changed
+
+- Use admin OMS API to get order details, to ensure we have the user's email
+>>>>>>> master
 
 ## [0.16.1] - 2022-04-25
 
 ### Added
+
 - Added duplicate check for create organization request
 
 ## [0.16.0] - 2022-04-15
 
 ### Added
+
 - the structure of the components has been improved;
 - Added 2 mutations in order to follow the mutations from storefront permissions (updateUser and addUser);
 
 ### Fixed
+
 - Remove a couple of conditionals nested;
 - Remove unnecessary variables, some changes to inline returns;
 
@@ -37,10 +54,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 Added 2 mutations to handle the cost center addresses
+
 - updateCostCenterAddress
 - createCostCenterAddress
-see schema/schema.graphql for more details
-
+  see schema/schema.graphql for more details
 
 ## [0.13.0] - 2022-03-31
 

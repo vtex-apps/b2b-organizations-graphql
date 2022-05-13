@@ -23,6 +23,10 @@
     "order": {
       "path": "/b2b/oms/user/orders/:orderId",
       "public": true
+    },
+    "requestCancellation": {
+      "path": "/b2b/checkout/pub/orders/:orderId/user-cancel-request",
+      "public": true
     }
   }
 }

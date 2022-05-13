@@ -1,9 +1,114 @@
-import { ForbiddenError } from '@vtex/api'
+import { UserInputError, ForbiddenError } from '@vtex/api'
 
 import {
   COST_CENTER_DATA_ENTITY,
   ORGANIZATION_DATA_ENTITY,
 } from '../../mdSchema'
+
+const getUserAndPermissions = async (ctx: Context) => {
+  const {
+    vtex: { storeUserAuthToken, sessionToken, logger },
+    clients: { vtexId, session, storefrontPermissions },
+  } = ctx
+
+  const token: any = storeUserAuthToken
+
+  if (!token) {
+    throw new ForbiddenError('Access denied')
+  }
+
+  const authUser = await vtexId.getAuthenticatedUser(token)
+
+  const sessionData = await session
+    .getSession(sessionToken as string, ['*'])
+    .then((currentSession: any) => {
+      return currentSession.sessionData
+    })
+    .catch((error: any) => {
+      logger.error({
+        error,
+        message: 'orders-getSession-error',
+      })
+
+      return null
+    })
+
+  const profileEmail = sessionData?.namespaces?.profile?.email?.value
+
+  const {
+    data: { checkUserPermission },
+  }: any = await storefrontPermissions
+    .checkUserPermission('vtex.b2b-orders-history@0.x')
+    .catch((error: any) => {
+      logger.error({
+        message: 'checkUserPermission-error',
+        error,
+      })
+
+      return {
+        data: {
+          checkUserPermission: null,
+        },
+      }
+    })
+
+  const organizationId =
+    sessionData?.namespaces['storefront-permissions']?.organization?.value
+
+  const costCenterId =
+    sessionData?.namespaces['storefront-permissions']?.costcenter?.value
+
+  return {
+    authEmail: authUser?.user,
+    profileEmail,
+    permissions: checkUserPermission?.permissions,
+    organizationId,
+    costCenterId,
+  }
+}
+
+const checkPermissionAgainstOrder = ({
+  permissions,
+  authEmail,
+  profileEmail,
+  organizationId,
+  costCenterId,
+  orderData,
+}: {
+  permissions?: string[]
+  authEmail?: string
+  profileEmail: string
+  organizationId?: string
+  costCenterId?: string
+  orderData: any
+}) => {
+  if (
+    authEmail === orderData?.clientProfileData?.email ||
+    profileEmail === orderData?.clientProfileData?.email
+  ) {
+    return true
+  }
+
+  if (permissions?.includes('all-orders')) {
+    return true
+  }
+
+  if (
+    permissions?.includes('organization-orders') &&
+    organizationId === orderData?.marketingData?.utmCampaign
+  ) {
+    return true
+  }
+
+  if (
+    permissions?.includes('costcenter-orders') &&
+    costCenterId === orderData?.marketingData?.utmMedium
+  ) {
+    return true
+  }
+
+  return false
+}
 
 const Index = {
   checkout: async (ctx: Context) => {
@@ -74,7 +179,32 @@ const Index = {
       clients: { oms },
     } = ctx
 
+    if (!orderId) {
+      throw new UserInputError('Order ID is required')
+    }
+
     const order: any = await oms.order(String(orderId))
+
+    const {
+      permissions,
+      authEmail,
+      profileEmail,
+      organizationId,
+      costCenterId,
+    } = await getUserAndPermissions(ctx)
+
+    const permitted = checkPermissionAgainstOrder({
+      permissions,
+      orderData: order,
+      authEmail,
+      profileEmail,
+      organizationId,
+      costCenterId,
+    })
+
+    if (!permitted) {
+      throw new ForbiddenError('Access denied')
+    }
 
     ctx.set('Content-Type', 'application/json')
     ctx.set('Cache-Control', 'no-cache, no-store')
@@ -85,78 +215,44 @@ const Index = {
   },
   orders: async (ctx: Context) => {
     const {
-      vtex: { storeUserAuthToken, sessionToken, logger },
-      clients: { vtexId, session, oms, storefrontPermissions },
+      clients: { oms },
+      request: { querystring },
     } = ctx
 
-    const token: any = storeUserAuthToken
+    const {
+      permissions,
+      authEmail,
+      organizationId,
+      costCenterId,
+    } = await getUserAndPermissions(ctx)
 
-    if (!token) {
-      throw new ForbiddenError('Access denied')
-    }
-
-    const authUser = await vtexId.getAuthenticatedUser(token)
-
-    const sessionData = await session
-      .getSession(sessionToken as string, ['*'])
-      .then((currentSession: any) => {
-        return currentSession.sessionData
-      })
-      .catch((error: any) => {
-        logger.error({
-          error,
-          message: 'orders-getSession-error',
-        })
-
-        return null
-      })
-
-    const filterByPermission = (permissions: string[]) => {
-      if (permissions.indexOf('all-orders') !== -1) {
+    const filterByPermission = (userPermissions: string[]) => {
+      if (userPermissions.includes('all-orders')) {
         return ``
       }
 
-      if (permissions.indexOf('organization-orders') !== -1) {
-        return `&f_UtmCampaign=${sessionData.namespaces['storefront-permissions'].organization.value}`
+      if (userPermissions.includes('organization-orders')) {
+        return `&f_UtmCampaign=${organizationId}`
       }
 
-      if (permissions.indexOf('costcenter-orders') !== -1) {
-        return `&f_UtmMedium=${sessionData.namespaces['storefront-permissions'].costcenter.value}`
+      if (userPermissions.includes('costcenter-orders')) {
+        return `&f_UtmMedium=${costCenterId}`
       }
 
-      return `&clientEmail=${authUser.user}`
+      return `&clientEmail=${authEmail}`
     }
-
-    const {
-      data: { checkUserPermission },
-    }: any = await storefrontPermissions
-      .checkUserPermission('vtex.b2b-orders-history@0.x')
-      .catch((error: any) => {
-        logger.error({
-          message: 'checkUserPermission-error',
-          error,
-        })
-
-        return {
-          data: {
-            checkUserPermission: null,
-          },
-        }
-      })
 
     const pastYear: any = new Date()
 
     pastYear.setDate(pastYear.getDate() - 365)
 
     const now = new Date().toISOString()
-    let query = `f_creationDate=creationDate:[${pastYear.toISOString()} TO ${now}]&${
-      ctx.request.querystring
-    }`
+    let query = `f_creationDate=creationDate:[${pastYear.toISOString()} TO ${now}]&${querystring}`
 
-    if (checkUserPermission?.permissions?.length) {
-      query += filterByPermission(checkUserPermission.permissions)
+    if (permissions?.length) {
+      query += filterByPermission(permissions)
     } else {
-      query += `&clientEmail=${authUser.user}`
+      query += `&clientEmail=${authEmail}`
     }
 
     const orders: any = await oms.search(query)
@@ -167,6 +263,54 @@ const Index = {
     ctx.response.body = orders
 
     ctx.response.status = 200
+  },
+  requestCancellation: async (ctx: Context) => {
+    const {
+      vtex: {
+        route: {
+          params: { orderId },
+        },
+      },
+      clients: { checkout, oms },
+    } = ctx
+
+    if (!orderId) {
+      throw new UserInputError('Order ID is required')
+    }
+
+    const order: any = await oms.order(String(orderId))
+
+    const {
+      permissions,
+      authEmail,
+      profileEmail,
+      organizationId,
+      costCenterId,
+    } = await getUserAndPermissions(ctx)
+
+    const permitted = checkPermissionAgainstOrder({
+      permissions,
+      orderData: order,
+      authEmail,
+      profileEmail,
+      organizationId,
+      costCenterId,
+    })
+
+    if (!permitted) {
+      throw new ForbiddenError('Access denied')
+    }
+
+    const requestCancellationResponse = await checkout.requestCancellation(
+      orderId as string
+    )
+
+    ctx.set('Content-Type', 'application/json')
+    ctx.set('Cache-Control', 'no-cache, no-store')
+
+    ctx.response.body = requestCancellationResponse.data
+
+    ctx.response.status = requestCancellationResponse.status
   },
 }
 

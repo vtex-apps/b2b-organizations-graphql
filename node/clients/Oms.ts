@@ -3,7 +3,7 @@ import { JanusClient } from '@vtex/api'
 
 import { statusToError } from '../utils'
 
-export class OMSClient extends JanusClient {
+export default class OMSClient extends JanusClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
     super(ctx, {
       ...options,
@@ -32,7 +32,7 @@ export class OMSClient extends JanusClient {
     const base = '/api/oms'
 
     return {
-      order: (id: string) => `${base}/pvt/orders/${id}`,
+      order: (id: string) => `${base}/pvt/admin/orders/${id}`,
       search: (query: string) => `${base}/pvt/orders?${query}`,
     }
   }
