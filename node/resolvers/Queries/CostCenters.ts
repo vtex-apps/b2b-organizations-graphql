@@ -276,7 +276,6 @@ const costCenters = {
       pageSize,
       sortOrder,
       sortedBy,
-      isSalesAdmin,
     }: {
       id: string
       search: string
@@ -284,17 +283,35 @@ const costCenters = {
       pageSize: number
       sortOrder: string
       sortedBy: string
-      isSalesAdmin: boolean
     },
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, storefrontPermissions },
       vtex: { logger, sessionData },
     } = ctx as any
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
+
+    const {
+      data: { checkUserPermission },
+    }: any = await storefrontPermissions
+      .checkUserPermission('vtex.b2b-orders-history@0.x')
+      .catch((error: any) => {
+        logger.error({
+          message: 'checkUserPermission-error',
+          error,
+        })
+
+        return {
+          data: {
+            checkUserPermission: null,
+          },
+        }
+      })
+
+    const isSalesAdmin = checkUserPermission?.role.slug.match(/sales-admin/)
 
     if (!isSalesAdmin) {
       if (!sessionData?.namespaces['storefront-permissions']) {
