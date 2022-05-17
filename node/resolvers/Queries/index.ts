@@ -93,7 +93,26 @@ const Index = {
 
     const { sessionData } = vtex as any
 
-    if (!adminUserAuthToken) {
+    const {
+      data: { checkUserPermission },
+    }: any = await storefrontPermissions
+      .checkUserPermission('vtex.b2b-organizations@1.x')
+      .catch((error: any) => {
+        logger.error({
+          error,
+          message: 'checkUserPermission-error',
+        })
+
+        return {
+          data: {
+            checkUserPermission: null,
+          },
+        }
+      })
+
+    const isSalesAdmin = checkUserPermission?.role.slug.match(/sales-admin/)
+
+    if (!adminUserAuthToken && !isSalesAdmin) {
       if (!sessionData?.namespaces['storefront-permissions']) {
         throw new GraphQLError('organization-data-not-found')
       }
