@@ -51,7 +51,10 @@ type Query {
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-  getUsers(
+  getUsers(organizationId: ID, costCenterId: ID): [B2BUser]
+    @withSession
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
+  getUsersPaginated(
     organizationId: ID
     costCenterId: ID
     page: Int
