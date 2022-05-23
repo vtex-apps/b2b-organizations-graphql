@@ -287,28 +287,49 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, storefrontPermissions },
       vtex: { logger, sessionData },
     } = ctx as any
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    if (!sessionData?.namespaces['storefront-permissions']) {
-      throw new GraphQLError('organization-data-not-found')
-    }
-
     const {
-      organization: { value: userOrganizationId },
-    } = sessionData.namespaces['storefront-permissions']
+      data: { checkUserPermission },
+    }: any = await storefrontPermissions
+      .checkUserPermission('vtex.b2b-organizations@1.x')
+      .catch((error: any) => {
+        logger.error({
+          message: 'checkUserPermission-error',
+          error,
+        })
 
-    if (!id) {
-      // get user's organization from session
-      id = userOrganizationId
-    }
+        return {
+          data: {
+            checkUserPermission: null,
+          },
+        }
+      })
 
-    if (id !== userOrganizationId) {
-      throw new GraphQLError('operation-not-permitted')
+    const isSalesAdmin = checkUserPermission?.role.slug.match(/sales-admin/)
+
+    if (!isSalesAdmin) {
+      if (!sessionData?.namespaces['storefront-permissions']) {
+        throw new GraphQLError('organization-data-not-found')
+      }
+
+      const {
+        organization: { value: userOrganizationId },
+      } = sessionData.namespaces['storefront-permissions']
+
+      if (!id) {
+        // get user's organization from session
+        id = userOrganizationId
+      }
+
+      if (id !== userOrganizationId) {
+        throw new GraphQLError('operation-not-permitted')
+      }
     }
 
     try {
