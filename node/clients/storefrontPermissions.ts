@@ -12,7 +12,20 @@ export const QUERIES = {
       permissions
     }
   }`,
-  listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID, $page: Int, $pageSize: Int, $search: String, $sortOrder: String, $sortedBy: String) {
+  listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID) {
+    listUsers(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId) {
+      id
+      roleId
+      userId
+      clId
+      orgId
+      costId
+      name
+      email
+      canImpersonate
+    }
+  }`,
+  listUsersPaginated: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID, $page: Int, $pageSize: Int, $search: String, $sortOrder: String, $sortedBy: String) {
     listUsersPaginated(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId, page: $page, pageSize: $pageSize, search: $search, sortOrder: $sortOrder, sortedBy: $sortedBy) {
       data {
         id
@@ -166,6 +179,34 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     roleId,
     organizationId,
     costCenterId,
+  }: {
+    roleId?: string
+    organizationId?: string
+    costCenterId?: string
+  }): Promise<any> => {
+    return this.graphql.query(
+      {
+        query: QUERIES.listUsers,
+        variables: {
+          roleId,
+          ...(organizationId && { organizationId }),
+          ...(costCenterId && { costCenterId }),
+        },
+        extensions: {
+          persistedQuery: {
+            provider: 'vtex.storefront-permissions@1.x',
+            sender: 'vtex.b2b-organizations@0.x',
+          },
+        },
+      },
+      {}
+    )
+  }
+
+  public listUsersPaginated = async ({
+    roleId,
+    organizationId,
+    costCenterId,
     search = '',
     page = 1,
     pageSize = 25,
@@ -183,7 +224,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.query(
       {
-        query: QUERIES.listUsers,
+        query: QUERIES.listUsersPaginated,
         variables: {
           roleId,
           page,

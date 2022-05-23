@@ -201,7 +201,7 @@ const Index = {
     }
 
     return storefrontPermissions
-      .listUsers(variables)
+      .listUsersPaginated(variables)
       .then((result: any) => {
         return result.data.listUsersPaginated
       })
