@@ -63,8 +63,67 @@ const Index = {
 
     return settings
   },
-
   getUsers: async (
+    _: void,
+    {
+      organizationId,
+      costCenterId,
+    }: { organizationId: string; costCenterId: string },
+    ctx: Context
+  ) => {
+    const {
+      clients: { storefrontPermissions },
+      vtex: { adminUserAuthToken, logger },
+      vtex,
+    } = ctx
+
+    const { sessionData } = vtex as any
+
+    if (!adminUserAuthToken) {
+      if (!sessionData?.namespaces['storefront-permissions']) {
+        throw new GraphQLError('organization-data-not-found')
+      }
+
+      const {
+        organization: { value: userOrganizationId },
+      } = sessionData?.namespaces['storefront-permissions']
+
+      if (!organizationId) {
+        // get user's organization from session
+        organizationId = userOrganizationId
+      }
+
+      if (organizationId !== userOrganizationId) {
+        throw new GraphQLError('operation-not-permitted')
+      }
+    }
+
+    const variables = {
+      ...(organizationId && { organizationId }),
+      ...(costCenterId && { costCenterId }),
+    }
+
+    return storefrontPermissions
+      .listUsers(variables)
+      .then((result: any) => {
+        return result.data.listUsers
+      })
+      .catch(error => {
+        logger.error({
+          message: 'getUsers-error',
+          error,
+        })
+        if (error.message) {
+          throw new GraphQLError(error.message)
+        } else if (error.response?.data?.message) {
+          throw new GraphQLError(error.response.data.message)
+        } else {
+          throw new GraphQLError(error)
+        }
+      })
+  },
+
+  getUsersPaginated: async (
     _: void,
     {
       organizationId,
