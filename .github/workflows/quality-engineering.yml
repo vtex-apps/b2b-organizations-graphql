@@ -12,6 +12,7 @@ jobs:
     with:
       nodeLint: true
       nodeSonar: true
+      cypress: true
     secrets:
       githubToken: ${{ secrets.GITHUB_TOKEN }}
       sonarToken: ${{ secrets.SONAR_TOKEN }}
