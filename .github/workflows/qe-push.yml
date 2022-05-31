@@ -3,7 +3,16 @@ name: '[PSH] Quality Engineering'
 on:
   push:
     branches: 
-      - actions/reusable-workflows
+      - master
+      - main
+      - bugfix/*
+      - chore/*
+      - enhancement/*
+      - feature/*
+      - fix/*
+      - hotfix/*
+      - translation/*
+      - actions/*
 
 jobs:
   quality-engineering:
