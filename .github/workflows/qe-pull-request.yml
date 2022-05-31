@@ -16,6 +16,8 @@ jobs:
       nodeLint: true
       nodeTest: true
       nodeSonar: true
+      nodeSonarProjectKey: vtex-apps_b2b-organizations-graphql
+      nodeSonarOrganization: vtex-apps
       cypress: true
     secrets:
       githubToken: ${{ secrets.GITHUB_TOKEN }}
