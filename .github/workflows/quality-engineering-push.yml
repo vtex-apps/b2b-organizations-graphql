@@ -11,6 +11,8 @@ jobs:
     uses: vtex-apps/usqa/.github/workflows/quality-engineering.yml@main
     with:
       nodeSonar: true
+      nodeLint: true
+      nodeTest: true
     secrets:
       githubToken: ${{ secrets.GITHUB_TOKEN }}
       sonarToken: ${{ secrets.SONAR_TOKEN }}
