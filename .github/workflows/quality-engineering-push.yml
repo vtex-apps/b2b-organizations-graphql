@@ -1,4 +1,4 @@
-name: [PSH] Quality Engineering
+name: '[PSH] Quality Engineering'
 
 on:
   push:
