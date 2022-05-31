@@ -1,4 +1,4 @@
-name: Quality Engineering
+name: [PSH] Quality Engineering
 
 on:
   push:
@@ -10,10 +10,7 @@ jobs:
     name: QE
     uses: vtex-apps/usqa/.github/workflows/quality-engineering.yml@main
     with:
-      nodeLint: true
       nodeSonar: true
-      cypress: true
     secrets:
       githubToken: ${{ secrets.GITHUB_TOKEN }}
       sonarToken: ${{ secrets.SONAR_TOKEN }}
-      cypressJson: ${{ secrets.VTEX_QE }}
