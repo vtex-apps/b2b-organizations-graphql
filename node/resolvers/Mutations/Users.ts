@@ -359,8 +359,12 @@ const Users = {
           error,
           message: 'addUser-error',
         })
+        const message = error.graphQLErrors[0]?.message ?? error.message
+        const status = message.includes('already exists')
+          ? 'duplicated'
+          : 'error'
 
-        return { status: 'error', message: error }
+        return { status, message }
       })
   },
 

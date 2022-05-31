@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.17.1] - 2022-05-31
+
+### Added
+
+- Added handling to the addUser mutation by showing the correct message when the user already exists.
+
 ## [0.17.0] - 2022-05-23
 
 ### Added
