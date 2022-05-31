@@ -5,6 +5,12 @@ on:
     branches: 
       - main
       - master
+  pull_request_target:
+    branches: 
+      - main
+      - master
+    types:
+      - labeled
 
 jobs:
   quality-engineering:
