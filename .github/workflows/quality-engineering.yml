@@ -1,3 +1,18 @@
 name: Quality Engineering
 
 on:
+  push:
+    branches: 
+      - actions/reusable-workflows
+
+jobs:
+  quality-engineering:
+    name: QE
+    uses: vtex-apps/usqa/.github/workflows/quality-engineering.yml@main
+    with:
+      nodeLint: true
+      nodeSonar: true
+    secrets:
+      githubToken: ${{ secrets.GITHUB_TOKEN }}
+      sonarToken: ${{ secrets.SONAR_TOKEN }}
+      cypressJson: ${{ secrets.VTEX_QE }}
