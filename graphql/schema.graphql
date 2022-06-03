@@ -18,6 +18,10 @@ type Query {
     sortOrder: String = "ASC"
     sortedBy: String = "name"
   ): OrganizationResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
+
+  getOrganizationsWithoutSalesManager: [Organization]
+    @cacheControl(scope: PRIVATE)
+
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getOrganizationByIdStorefront(id: ID): Organization

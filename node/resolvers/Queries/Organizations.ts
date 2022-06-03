@@ -237,15 +237,15 @@ const Organizations = {
       return await masterdata.searchDocumentsWithPaginationInfo({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         fields: ORGANIZATION_REQUEST_FIELDS,
-        schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
         pagination: { page, pageSize },
+        schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
         sort: `${sortedBy} ${sortOrder}`,
         ...(where && { where }),
       })
     } catch (e) {
       logger.error({
-        message: 'getOrganizationRequests-error',
         error: e,
+        message: 'getOrganizationRequests-error',
       })
       if (e.message) {
         throw new GraphQLError(e.message)
