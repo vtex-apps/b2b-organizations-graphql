@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.19.0] - 2022-06-09
+
 ### Added
 
 - Support for organization `tradeName` field and cost center `phoneNumber` field (both optional)
