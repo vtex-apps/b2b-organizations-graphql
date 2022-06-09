@@ -2,18 +2,16 @@ import {
   COST_CENTER_DATA_ENTITY,
   COST_CENTER_SCHEMA_VERSION,
   ORGANIZATION_DATA_ENTITY,
-  ORGANIZATION_FIELDS,
 } from '../../mdSchema'
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
-import message from '../message'
 
 const CostCenters = {
   createCostCenter: async (
     _: void,
     {
       organizationId,
-      input: { name, addresses, businessDocument },
+      input: { name, addresses, phoneNumber, businessDocument },
     }: { organizationId: string; input: CostCenterInput },
     ctx: Context
   ) => {
@@ -46,6 +44,7 @@ const CostCenters = {
         name,
         addresses,
         organization: organizationId,
+        ...(phoneNumber && { phoneNumber }),
         ...(businessDocument && { businessDocument }),
       }
 
@@ -170,7 +169,7 @@ const CostCenters = {
     _: void,
     {
       id,
-      input: { name, addresses, paymentTerms, businessDocument },
+      input: { name, addresses, paymentTerms, phoneNumber, businessDocument },
     }: { id: string; input: CostCenterInput },
     ctx: Context
   ) => {
@@ -190,6 +189,7 @@ const CostCenters = {
           name,
           ...(addresses?.length && { addresses }),
           ...(paymentTerms && { paymentTerms }),
+          ...(phoneNumber && { phoneNumber }),
           ...(businessDocument && { businessDocument }),
         },
       })
@@ -252,77 +252,6 @@ const CostCenters = {
     } catch (e) {
       logger.error({
         message: 'updateCostCenterAddress-error',
-        error: e,
-      })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
-    }
-  },
-
-  updateOrganization: async (
-    _: void,
-    {
-      id,
-      name,
-      status,
-      collections,
-      paymentTerms,
-      priceTables,
-    }: {
-      id: string
-      name: string
-      status: string
-      collections: any[]
-      paymentTerms: any[]
-      priceTables: any[]
-    },
-    ctx: Context
-  ) => {
-    const {
-      clients: { storefrontPermissions, mail, masterdata },
-      vtex: { logger },
-    } = ctx
-
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
-
-    try {
-      const currentData: Organization = await masterdata.getDocument({
-        dataEntity: ORGANIZATION_DATA_ENTITY,
-        id,
-        fields: ORGANIZATION_FIELDS,
-      })
-
-      if (currentData.status !== status) {
-        await message({
-          storefrontPermissions,
-          logger,
-          mail,
-        }).organizationStatusChanged(name, id, status)
-      }
-    } catch (error) {
-      logger.warn({
-        message: 'updateOrganization-emailOnStatusChangeError',
-        error,
-      })
-    }
-
-    try {
-      await masterdata.updatePartialDocument({
-        id,
-        dataEntity: ORGANIZATION_DATA_ENTITY,
-        fields: { name, status, collections, paymentTerms, priceTables },
-      })
-
-      return { status: 'success', message: '' }
-    } catch (e) {
-      logger.error({
-        message: 'updateOrganization-error',
         error: e,
       })
       if (e.message) {

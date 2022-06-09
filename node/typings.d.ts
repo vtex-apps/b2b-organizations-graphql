@@ -40,6 +40,7 @@ declare module '*.json' {
 
 interface OrganizationInput {
   name: string
+  tradeName?: string
   b2bCustomerAdmin: B2BCustomerInput
   defaultCostCenter: DefaultCostCenterInput
 }
@@ -53,6 +54,7 @@ interface B2BCustomerInput {
 interface DefaultCostCenterInput {
   name: string
   address: AddressInput
+  phoneNumber?: string
   businessDocument?: string
 }
 
@@ -60,6 +62,7 @@ interface CostCenterInput {
   name: string
   addresses?: AddressInput[]
   paymentTerms?: PaymentTerm[]
+  phoneNumber?: string
   businessDocument?: string
 }
 
@@ -80,6 +83,7 @@ interface AddressInput {
 
 interface OrganizationRequest {
   name: string
+  tradeName?: string
   defaultCostCenter: DefaultCostCenterInput
   b2bCustomerAdmin: B2BCustomerInput
   status: string
@@ -89,6 +93,7 @@ interface OrganizationRequest {
 interface Organization {
   id: string
   name: string
+  tradeName?: string
   costCenters: string[]
   paymentTerms: PaymentTerm[]
   status: string
@@ -101,6 +106,7 @@ interface CostCenter {
   organization: string
   addresses: any[]
   paymentTerms: PaymentTerm[]
+  phoneNumber?: string
   businessDocument?: string
 }
 
