@@ -172,6 +172,7 @@ type Pagination {
 type OrganizationRequest {
   id: ID
   name: String
+  tradeName: String
   defaultCostCenter: DefaultCostCenter
   b2bCustomerAdmin: B2BUserSimple
   status: String
@@ -188,12 +189,14 @@ type B2BUserSimple {
 type DefaultCostCenter {
   name: String
   address: Address
+  phoneNumber: String
   businessDocument: String
 }
 
 type Organization {
   id: ID
   name: String
+  tradeName: String
   collections: [Collection]
   paymentTerms: [PaymentTerm]
   priceTables: [String]
@@ -218,6 +221,7 @@ type CostCenter {
   organization: ID
   addresses: [Address]
   paymentTerms: [PaymentTerm]
+  phoneNumber: String
   businessDocument: String
 }
 
@@ -280,6 +284,7 @@ scalar Data
 
 input OrganizationInput {
   name: String
+  tradeName: String
   b2bCustomerAdmin: B2BUserInput
   defaultCostCenter: DefaultCostCenterInput
 }
@@ -293,6 +298,7 @@ input B2BUserInput {
 input DefaultCostCenterInput {
   name: String
   address: AddressInput
+  phoneNumber: String
   businessDocument: String
 }
 
@@ -300,6 +306,7 @@ input CostCenterInput {
   name: String
   addresses: [AddressInput]
   paymentTerms: [PaymentTermInput]
+  phoneNumber: String
   businessDocument: String
 }
 

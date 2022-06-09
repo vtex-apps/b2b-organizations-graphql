@@ -2,18 +2,20 @@ export const ORGANIZATION_REQUEST_DATA_ENTITY = 'organization_requests'
 export const ORGANIZATION_REQUEST_FIELDS = [
   'id',
   'name',
+  'tradeName',
   'defaultCostCenter',
   'b2bCustomerAdmin',
   'status',
   'notes',
   'created',
 ]
-export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.0.4'
+export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.0.5'
 
 export const ORGANIZATION_DATA_ENTITY = 'organizations'
 export const ORGANIZATION_FIELDS = [
   'id',
   'name',
+  'tradeName',
   'collections',
   'paymentTerms',
   'priceTables',
@@ -21,7 +23,7 @@ export const ORGANIZATION_FIELDS = [
   'status',
   'created',
 ]
-export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.6'
+export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.7'
 
 export const COST_CENTER_DATA_ENTITY = 'cost_centers'
 export const COST_CENTER_FIELDS = [
@@ -30,9 +32,10 @@ export const COST_CENTER_FIELDS = [
   'addresses',
   'paymentTerms',
   'organization',
+  'phoneNumber',
   'businessDocument',
 ]
-export const COST_CENTER_SCHEMA_VERSION = 'v0.0.5'
+export const COST_CENTER_SCHEMA_VERSION = 'v0.0.6'
 
 export const schemas = [
   {
@@ -43,6 +46,10 @@ export const schemas = [
         name: {
           type: 'string',
           title: 'Name',
+        },
+        tradeName: {
+          type: ['string', 'null'],
+          title: 'Trade Name',
         },
         defaultCostCenter: {
           type: 'object',
@@ -85,6 +92,10 @@ export const schemas = [
         name: {
           type: 'string',
           title: 'Name',
+        },
+        tradeName: {
+          type: ['string', 'null'],
+          title: 'Trade Name',
         },
         collections: {
           type: 'array',
@@ -140,8 +151,12 @@ export const schemas = [
           title: 'Organization',
         },
         businessDocument: {
-          type: 'string',
+          type: ['string', 'null'],
           title: 'Business Document',
+        },
+        phoneNumber: {
+          type: ['string', 'null'],
+          title: 'Phone Number',
         },
       },
       'v-indexed': ['name', 'organization', 'businessDocument'],

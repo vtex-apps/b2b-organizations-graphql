@@ -2,6 +2,7 @@ import {
   COST_CENTER_DATA_ENTITY,
   COST_CENTER_SCHEMA_VERSION,
   ORGANIZATION_DATA_ENTITY,
+  ORGANIZATION_FIELDS,
   ORGANIZATION_REQUEST_DATA_ENTITY,
   ORGANIZATION_REQUEST_FIELDS,
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
@@ -14,7 +15,9 @@ import message from '../message'
 const Organizations = {
   createOrganization: async (
     _: void,
-    { input: { name, defaultCostCenter } }: { input: OrganizationInput },
+    {
+      input: { name, tradeName, defaultCostCenter },
+    }: { input: OrganizationInput },
     ctx: Context
   ) => {
     const {
@@ -31,6 +34,7 @@ const Organizations = {
       // create organization
       const organization = {
         name,
+        ...(tradeName && { tradeName }),
         status: 'active',
         created: now,
         collections: [],
@@ -52,6 +56,9 @@ const Organizations = {
         name: defaultCostCenter.name,
         addresses: [defaultCostCenter.address],
         organization: organizationId,
+        ...(defaultCostCenter.phoneNumber && {
+          phoneNumber: defaultCostCenter.phoneNumber,
+        }),
         ...(defaultCostCenter.businessDocument && {
           businessDocument: defaultCostCenter.businessDocument,
         }),
@@ -87,7 +94,7 @@ const Organizations = {
   createOrganizationRequest: async (
     _: void,
     {
-      input: { name, b2bCustomerAdmin, defaultCostCenter },
+      input: { name, tradeName, b2bCustomerAdmin, defaultCostCenter },
     }: { input: OrganizationInput },
     ctx: Context
   ) => {
@@ -122,6 +129,7 @@ const Organizations = {
 
     const organizationRequest = {
       name,
+      ...(tradeName && { tradeName }),
       defaultCostCenter,
       b2bCustomerAdmin,
       status: 'pending',
@@ -187,6 +195,10 @@ const Organizations = {
       vtex: { logger },
     } = ctx
 
+    if (status !== 'approved' && status !== 'declined') {
+      throw new GraphQLError('Invalid status')
+    }
+
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
@@ -213,17 +225,17 @@ const Organizations = {
       }
     }
 
+    // don't allow update if status is already approved or declined
+    if (organizationRequest.status !== 'pending') {
+      throw new GraphQLError('Organization request already processed')
+    }
+
     const { email, firstName } = organizationRequest.b2bCustomerAdmin
 
     if (status === 'approved') {
-      // if status is approved:
       const now = new Date()
 
       try {
-        if (organizationRequest.status === 'approved') {
-          throw new GraphQLError('organization-already-approved')
-        }
-
         // update request status to approved
         masterdata.updatePartialDocument({
           dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -234,6 +246,9 @@ const Organizations = {
         // create organization
         const organization = {
           name: organizationRequest.name,
+          ...(organizationRequest.tradeName && {
+            tradeName: organizationRequest.tradeName,
+          }),
           status: 'active',
           created: now,
           collections: [],
@@ -255,6 +270,9 @@ const Organizations = {
           name: organizationRequest.defaultCostCenter.name,
           addresses: [organizationRequest.defaultCostCenter.address],
           organization: organizationId,
+          ...(organizationRequest.defaultCostCenter.phoneNumber && {
+            phoneNumber: organizationRequest.defaultCostCenter.phoneNumber,
+          }),
           ...(organizationRequest.defaultCostCenter.businessDocument && {
             businessDocument:
               organizationRequest.defaultCostCenter.businessDocument,
@@ -343,7 +361,7 @@ const Organizations = {
           organizationRequest.name
         )
 
-        return { status: 'success', message: '' }
+        return { status: 'success', message: '', id: organizationId }
       } catch (e) {
         logger.error({
           message: 'updateOrganizationRequest-error',
@@ -359,8 +377,8 @@ const Organizations = {
       }
     }
 
+    // if we reach this block, status is declined
     try {
-      // if status is declined:
       // update request status to declined
       await masterdata.updatePartialDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -377,6 +395,85 @@ const Organizations = {
 
       return { status: 'success', message: '' }
     } catch (e) {
+      if (e.message) {
+        throw new GraphQLError(e.message)
+      } else if (e.response?.data?.message) {
+        throw new GraphQLError(e.response.data.message)
+      } else {
+        throw new GraphQLError(e)
+      }
+    }
+  },
+  updateOrganization: async (
+    _: void,
+    {
+      id,
+      name,
+      tradeName,
+      status,
+      collections,
+      paymentTerms,
+      priceTables,
+    }: {
+      id: string
+      name: string
+      tradeName?: string
+      status: string
+      collections: any[]
+      paymentTerms: any[]
+      priceTables: any[]
+    },
+    ctx: Context
+  ) => {
+    const {
+      clients: { storefrontPermissions, mail, masterdata },
+      vtex: { logger },
+    } = ctx
+
+    // create schema if it doesn't exist
+    await checkConfig(ctx)
+
+    try {
+      const currentData: Organization = await masterdata.getDocument({
+        dataEntity: ORGANIZATION_DATA_ENTITY,
+        id,
+        fields: ORGANIZATION_FIELDS,
+      })
+
+      if (currentData.status !== status) {
+        await message({
+          storefrontPermissions,
+          logger,
+          mail,
+        }).organizationStatusChanged(name, id, status)
+      }
+    } catch (error) {
+      logger.warn({
+        message: 'updateOrganization-emailOnStatusChangeError',
+        error,
+      })
+    }
+
+    try {
+      await masterdata.updatePartialDocument({
+        id,
+        dataEntity: ORGANIZATION_DATA_ENTITY,
+        fields: {
+          name,
+          ...(tradeName && { tradeName }),
+          status,
+          collections,
+          paymentTerms,
+          priceTables,
+        },
+      })
+
+      return { status: 'success', message: '' }
+    } catch (e) {
+      logger.error({
+        message: 'updateOrganization-error',
+        error: e,
+      })
       if (e.message) {
         throw new GraphQLError(e.message)
       } else if (e.response?.data?.message) {
