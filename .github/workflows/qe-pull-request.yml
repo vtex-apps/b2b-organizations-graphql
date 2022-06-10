@@ -2,14 +2,14 @@ name: '[PRN] Quality Engineering'
 
 on:
   pull_request:
-    branches: 
+    branches:
       - main
       - master
     types:
       - opened
       - reopened
       - synchronize
-      - ready_for_review        
+      - ready_for_review
 
 jobs:
   quality-engineering:
@@ -19,7 +19,7 @@ jobs:
       danger: true
       dangerRequireChangelog: false
       nodeLint: true
-      nodeTest: true
+      nodeTest: false
       nodeSonar: true
       nodeSonarProjectKey: vtex-apps_b2b-organizations-graphql
       nodeSonarOrganization: vtex-apps
