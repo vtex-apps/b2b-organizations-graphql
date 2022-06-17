@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Add optional `tradeName` argument to `updateOrganization` mutation
+
 ### Added
 
 - Github Action to trigger manual tests by dispatch
