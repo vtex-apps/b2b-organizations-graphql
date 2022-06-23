@@ -188,9 +188,11 @@ const CostCenters = {
         fields: {
           name,
           ...(addresses?.length && { addresses }),
-          ...(paymentTerms && { paymentTerms }),
-          ...(phoneNumber && { phoneNumber }),
-          ...(businessDocument && { businessDocument }),
+          ...(paymentTerms?.length && { paymentTerms }),
+          ...((phoneNumber || phoneNumber === '') && { phoneNumber }),
+          ...((businessDocument || businessDocument === '') && {
+            businessDocument,
+          }),
         },
       })
 

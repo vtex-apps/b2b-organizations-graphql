@@ -460,7 +460,7 @@ const Organizations = {
         dataEntity: ORGANIZATION_DATA_ENTITY,
         fields: {
           name,
-          ...(tradeName && { tradeName }),
+          ...((tradeName || tradeName === '') && { tradeName }),
           status,
           collections,
           paymentTerms,
