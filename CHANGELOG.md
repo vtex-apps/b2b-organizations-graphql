@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Allow `tradeName` and `phoneNumber` fields to be emptied when organization or cost center are updated
+
 ## [0.19.1] - 2022-06-17
 
 ### Fixed
