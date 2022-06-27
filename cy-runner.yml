@@ -90,11 +90,10 @@ strategy:
   # The strategies must be in order, with dependent tests last
   organizationA:
     enabled: true
-    sendDashboard: true
+    sendDashboard: false
     hardTries: 1
     stopOnFail: false
     parallel: true
-    runInOrder: true
     specs:
       - cypress-shared/integration/b2b/2.1.1*
       - cypress-shared/integration/b2b/2.1.2*
@@ -120,9 +119,9 @@ strategy:
       - cypress-shared/integration/b2b/2.3*
     dependency:
       - cypress-shared/integration/b2b/2.1.1*
-      # Once multiOrgRequests fixed -> Replace 2.1.2 to 2.1.4 
+      # Once multiOrgRequests fixed -> Replace 2.1.2 to 2.1.4
       - cypress-shared/integration/b2b/2.1.2*
-  addSalesUsers: 
+  addSalesUsers:
     enabled: true
     sendDashboard: true
     hardTries: 1
