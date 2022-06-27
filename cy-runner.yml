@@ -90,7 +90,7 @@ strategy:
   # The strategies must be in order, with dependent tests last
   organizationA:
     enabled: true
-    sendDashboard: false
+    sendDashboard: true
     hardTries: 1
     stopOnFail: false
     parallel: true
