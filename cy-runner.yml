@@ -35,7 +35,7 @@ base:
     maxJobs: 3
     quiet: true
     projectId: hymmzm
-    video: false
+    video: true
     videoCompression: false
     videoUploadOnPasses: false
     screenshotOnRunFailure: true
