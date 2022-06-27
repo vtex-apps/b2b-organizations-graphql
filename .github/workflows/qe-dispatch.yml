@@ -13,7 +13,7 @@ jobs:
     uses: vtex-apps/usqa/.github/workflows/quality-engineering.yml@main
     with:
       cypress: true
-      cyRunnerBranch: ${{ inputs.cyRunnerBranch }}
+      cyRunnerBranch: ${{ github.event.inputs.cyRunnerBranch }}
     secrets:
       githubToken: ${{ secrets.GITHUB_TOKEN }}
       cypressJson: ${{ secrets.VTEX_QE }}
