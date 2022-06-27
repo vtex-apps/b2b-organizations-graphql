@@ -19,10 +19,12 @@ base:
   twilio:
     enabled: true
   jira:
-    enabled: false
-    account: config-dev
-    board: jira-key
-    issueType: task
+    enabled: true
+    account: vtex-dev
+    board: B2BORG
+    issueType: Bug
+    priority: High
+    testing: true
   slack:
     enabled: false
     channel: some-channel
@@ -159,6 +161,6 @@ strategy:
       - cypress-shared/integration/b2b/2.13*
       - cypress-shared/integration/b2b/2.14*
     dependency:
-        - cypress-shared/integration/b2b/2.4*
-        - cypress-shared/integration/b2b/2.5*
-        - cypress-shared/integration/b2b/2.9*
+      - cypress-shared/integration/b2b/2.4*
+      - cypress-shared/integration/b2b/2.5*
+      - cypress-shared/integration/b2b/2.9*
