@@ -17,7 +17,7 @@ jobs:
     with:
       cypress: true
       cyRunnerBranch: ${{ github.event.inputs.cyRunnerBranch }}
-      cyRunnerTimeOut: ${{ github.event.inputs.cyRunnerTimeOut }}
+      cyRunnerTimeOut: ${{ fromJSON(github.event.inputs.cyRunnerTimeOut) }}
     secrets:
       githubToken: ${{ secrets.GITHUB_TOKEN }}
       cypressJson: ${{ secrets.VTEX_QE }}
