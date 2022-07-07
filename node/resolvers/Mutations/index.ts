@@ -2,11 +2,14 @@ import { getAppId } from '../config'
 import CostCenters from './CostCenters'
 import Organizations from './Organizations'
 import Users from './Users'
+import Settings from './Settings'
+
 
 const Index = {
   ...CostCenters,
   ...Organizations,
   ...Users,
+  ...Settings,
   saveAppSettings: async (_: any, __: any, ctx: Context) => {
     const {
       clients: { apps },
