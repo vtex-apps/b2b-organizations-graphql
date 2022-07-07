@@ -9,6 +9,7 @@ import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import { getAppId } from '../config'
 import CostCenters from './CostCenters'
 import Organizations from './Organizations'
+import Settings from './Settings'
 
 const SCROLL_AWAIT_TIME = 100
 const SLEEP_ADD_PERCENTAGE = 0.1
@@ -102,7 +103,7 @@ const sleep = (ms: number) => {
 const Index = {
   ...CostCenters,
   ...Organizations,
-
+  ...Settings,
   getAppSettings: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { apps, masterdata },

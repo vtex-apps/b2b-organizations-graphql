@@ -68,6 +68,7 @@ type Query {
     sortedBy: String
   ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getB2BSettings: B2BSetting @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
 type Mutation {
@@ -182,6 +183,9 @@ type Mutation {
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)
+  saveB2BSettings(input: B2BSettingsInput): MutationResponse
+    @withSession
+    @withPermissions
 }
 
 type SettingsResponse {
@@ -263,6 +267,12 @@ type CostCenter {
   paymentTerms: [PaymentTerm]
   phoneNumber: String
   businessDocument: String
+}
+
+type B2BSetting {
+  autoApprove: Boolean
+  defaultPaymentTerms: [PaymentTerm]
+  defaultPriceTables: [String]
 }
 
 type Address {
@@ -382,4 +392,10 @@ input CollectionInput {
 input PaymentTermInput {
   id: ID
   name: String
+}
+
+input B2BSettingsInput {
+  autoApprove: Boolean
+  defaultPaymentTerms: [PaymentTermInput]
+  defaultPriceTables: [String]
 }
