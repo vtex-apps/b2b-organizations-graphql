@@ -44,7 +44,7 @@ export const B2B_SETTINGS_FIELDS = [
   'defaultPaymentTerms',
   'defaultPriceTables'
 ]
-export const B2B_SETTINGS_SCHEMA_VERSION = 'v0.0.6'
+export const B2B_SETTINGS_SCHEMA_VERSION = 'v0.0.8'
 
 export const schemas = [
   {
@@ -175,7 +175,7 @@ export const schemas = [
   },
   {
     name: B2B_SETTINGS_DATA_ENTITY,
-    version: B2B_SETTINGS_FIELDS,
+    version: B2B_SETTINGS_SCHEMA_VERSION,
     body: {
       properties: {
         autoApprove: {
