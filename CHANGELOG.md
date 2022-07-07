@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+ - Allow users to set auto approval for new organization with a new setting fields
+
 ## [0.24.0] - 2022-10-25
 
 ### Changed
