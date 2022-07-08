@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.19.4] - 2022-07-08
+
 ### Fixed
 
 - Allow emails associated with declined requests to request new organization
