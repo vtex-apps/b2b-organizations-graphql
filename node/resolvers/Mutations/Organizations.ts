@@ -106,7 +106,7 @@ const Organizations = {
         fields: ORGANIZATION_REQUEST_FIELDS,
         schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
         sort: `created DESC`,
-        where: `b2bCustomerAdmin.email=${b2bCustomerAdmin.email}`,
+        where: `b2bCustomerAdmin.email=${b2bCustomerAdmin.email} AND (status=pending OR status=approved)`,
         pagination: {
           page: 1,
           pageSize: 1,
