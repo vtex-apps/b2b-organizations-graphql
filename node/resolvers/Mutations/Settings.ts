@@ -16,27 +16,26 @@ import {
     ) => {
       const {
         clients: { masterdata },
-        vtex,
         vtex: { logger },
       } = ctx
   
       // create schema if it doesn't exist
       await checkConfig(ctx)
+  console.log(organizationId)
+    //   if (!organizationId) {
+    //     // get user's organization from session
+    //     const { sessionData } = vtex as any
   
-      if (!organizationId) {
-        // get user's organization from session
-        const { sessionData } = vtex as any
+    //     if (!sessionData?.namespaces['storefront-permissions']) {
+    //       throw new GraphQLError('organization-data-not-found')
+    //     }
   
-        if (!sessionData?.namespaces['storefront-permissions']) {
-          throw new GraphQLError('organization-data-not-found')
-        }
+    //     const {
+    //       organization: { value: userOrganizationId },
+    //     } = sessionData.namespaces['storefront-permissions']
   
-        const {
-          organization: { value: userOrganizationId },
-        } = sessionData.namespaces['storefront-permissions']
-  
-        organizationId = userOrganizationId
-      }
+    //     organizationId = userOrganizationId
+    //   }
   
       try {
         const b2bSettings = {
@@ -44,7 +43,14 @@ import {
             defaultPaymentTerms, 
             defaultPriceTables
         }
-  
+        // const saveB2BSettingDocumentResult = await masterdata.getDocument({
+        //     dataEntity: B2B_SETTINGS_DATA_ENTITY,
+        //     fields: ['id'],
+        //     id: organizationId,
+        //   })
+        // if (saveB2BSettingDocumentResult) {
+
+        // }
         const saveB2BSettingResult = await masterdata.createDocument({
           dataEntity: B2B_SETTINGS_DATA_ENTITY,
           fields: b2bSettings,
@@ -53,7 +59,7 @@ import {
   
         return {
           id: saveB2BSettingResult.Id,
-          status: '',
+          status: 'success',
         }
       } catch (e) {
         logger.error({

@@ -68,6 +68,11 @@ type Query {
     sortedBy: String
   ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getB2BSettings(
+    status: [String]
+    page: Int = 1
+    pageSize: Int = 25
+  ): B2BSettingsResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
 type Mutation {
@@ -144,8 +149,6 @@ type Mutation {
     @withSession
     @withPermissions
   saveB2BSettings(userId: ID, input: B2BSettingsInput ): MutationResponse
-    @withSession
-    @withPermissions
 }
 
 type SettingsResponse {
@@ -229,6 +232,12 @@ type CostCenter {
   businessDocument: String
 }
 
+type B2BSetting {
+  autoApprove: Boolean
+  defaultPaymentTerms: [PaymentTerm]
+  defaultPriceTables: [String]
+}
+
 type Address {
   addressId: String
   addressType: String
@@ -282,6 +291,11 @@ type SimpleRole {
   id: ID
   name: String!
   slug: String
+}
+
+type B2BSettingsResult {
+  data: [B2BSetting]
+  pagination: Pagination
 }
 
 scalar Data
@@ -343,6 +357,6 @@ input PaymentTermInput {
 
 input B2BSettingsInput {
   autoApprove: Boolean
-  defaultPaymentTerms: [PaymentTermInput]
+  defaultPaymentTerms: String
   defaultPriceTables: [String]
 }
