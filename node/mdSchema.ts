@@ -40,6 +40,8 @@ export const COST_CENTER_SCHEMA_VERSION = 'v0.0.6'
 export const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
 export const B2B_SETTINGS_FIELDS = [
   'id',
+  'accountName',
+  'accountId',
   'autoApprove',
   'defaultPaymentTerms',
   'defaultPriceTables'

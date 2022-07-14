@@ -148,7 +148,9 @@ type Mutation {
   impersonateUser(clId: ID, userId: ID): MutationResponse
     @withSession
     @withPermissions
-  saveB2BSettings(userId: ID, input: B2BSettingsInput ): MutationResponse
+  saveB2BSettings(userId: ID, input: B2BSettingsInput ): MutationResponse 
+    @withSession
+    @withPermissions
 }
 
 type SettingsResponse {
@@ -357,6 +359,6 @@ input PaymentTermInput {
 
 input B2BSettingsInput {
   autoApprove: Boolean
-  defaultPaymentTerms: String
+  defaultPaymentTerms: [String]
   defaultPriceTables: [String]
 }

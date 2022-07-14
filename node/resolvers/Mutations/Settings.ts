@@ -1,6 +1,6 @@
 import {
     B2B_SETTINGS_DATA_ENTITY,
-    B2B_SETTINGS_SCHEMA_VERSION
+    B2B_SETTINGS_SCHEMA_VERSION,
   } from '../../mdSchema'
   import GraphQLError from '../../utils/GraphQLError'
   import checkConfig from '../config'
@@ -9,9 +9,8 @@ import {
     saveB2BSettings: async (
       _: void,
       {
-        organizationId,
         input: { autoApprove, defaultPaymentTerms, defaultPriceTables },
-      }: { organizationId: string; input: B2BSettingsInput },
+      }: { input: B2BSettingsInput },
       ctx: Context
     ) => {
       const {
@@ -21,21 +20,6 @@ import {
   
       // create schema if it doesn't exist
       await checkConfig(ctx)
-  console.log(organizationId)
-    //   if (!organizationId) {
-    //     // get user's organization from session
-    //     const { sessionData } = vtex as any
-  
-    //     if (!sessionData?.namespaces['storefront-permissions']) {
-    //       throw new GraphQLError('organization-data-not-found')
-    //     }
-  
-    //     const {
-    //       organization: { value: userOrganizationId },
-    //     } = sessionData.namespaces['storefront-permissions']
-  
-    //     organizationId = userOrganizationId
-    //   }
   
       try {
         const b2bSettings = {
@@ -43,21 +27,15 @@ import {
             defaultPaymentTerms, 
             defaultPriceTables
         }
-        // const saveB2BSettingDocumentResult = await masterdata.getDocument({
-        //     dataEntity: B2B_SETTINGS_DATA_ENTITY,
-        //     fields: ['id'],
-        //     id: organizationId,
-        //   })
-        // if (saveB2BSettingDocumentResult) {
 
-        // }
         const saveB2BSettingResult = await masterdata.createDocument({
           dataEntity: B2B_SETTINGS_DATA_ENTITY,
           fields: b2bSettings,
-          schema: B2B_SETTINGS_SCHEMA_VERSION,
+          schema: B2B_SETTINGS_SCHEMA_VERSION
         })
-  
+
         return {
+          href: saveB2BSettingResult.Href,
           id: saveB2BSettingResult.Id,
           status: 'success',
         }
