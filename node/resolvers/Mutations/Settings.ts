@@ -28,6 +28,7 @@ import {
             defaultPriceTables
         }
 
+       
         const saveB2BSettingResult = await masterdata.createDocument({
           dataEntity: B2B_SETTINGS_DATA_ENTITY,
           fields: b2bSettings,
