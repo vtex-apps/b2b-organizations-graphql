@@ -1,7 +1,7 @@
 {
   "name": "b2b-organizations-graphql",
   "vendor": "hppardis",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "title": "B2B Organizations",
   "description": "App to create and manage B2B Organizations and Cost Centers",
   "mustUpdateAt": "2022-08-28",
