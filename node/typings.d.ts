@@ -49,6 +49,8 @@ interface B2BCustomerInput {
   firstName: string
   lastName: string
   email: string
+  cpf?: string
+  telephone?: string
 }
 
 interface DefaultCostCenterInput {
@@ -56,6 +58,13 @@ interface DefaultCostCenterInput {
   address: AddressInput
   phoneNumber?: string
   businessDocument?: string
+  type?: string
+  organizationPublic?: string
+  ie?: string
+  icms?: boolean
+  area?: string
+  phone?: string
+  newsletter?: boolean
 }
 
 interface CostCenterInput {
@@ -64,6 +73,13 @@ interface CostCenterInput {
   paymentTerms?: PaymentTerm[]
   phoneNumber?: string
   businessDocument?: string
+  type?: string
+  organizationPublic?: string
+  ie?: string
+  icms?: boolean
+  area?: string
+  phone?: string
+  newsletter?: boolean
 }
 
 interface AddressInput {
@@ -108,6 +124,13 @@ interface CostCenter {
   paymentTerms: PaymentTerm[]
   phoneNumber?: string
   businessDocument?: string
+  type?: string
+  organizationPublic?: string
+  ie?: string
+  icms?: boolean
+  area?: string
+  phone?: string
+  newsletter?: boolean
 }
 
 interface UserArgs {

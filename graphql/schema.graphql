@@ -192,6 +192,13 @@ type DefaultCostCenter {
   address: Address
   phoneNumber: String
   businessDocument: String
+  type: String
+  organizationPublic: String
+  ie: String
+  icms: Boolean
+  area: String
+  phone: String
+  newsletter: Boolean
 }
 
 type Organization {
@@ -224,6 +231,13 @@ type CostCenter {
   paymentTerms: [PaymentTerm]
   phoneNumber: String
   businessDocument: String
+  type: String
+  organizationPublic: String
+  ie: String
+  icms: Boolean
+  area: String
+  phone: String
+  newsletter: Boolean
 }
 
 type Address {
@@ -294,6 +308,8 @@ input B2BUserInput {
   firstName: String
   lastName: String
   email: String
+  cpf: String
+  telephone: String
 }
 
 input DefaultCostCenterInput {
@@ -301,16 +317,28 @@ input DefaultCostCenterInput {
   address: AddressInput
   phoneNumber: String
   businessDocument: String
+  type: String
+  organizationPublic: String
+  ie: String
+  icms: Boolean
+  area: String
+  phone: String
+  newsletter: Boolean
 }
-
 input CostCenterInput {
   name: String
   addresses: [AddressInput]
   paymentTerms: [PaymentTermInput]
   phoneNumber: String
   businessDocument: String
+  type: String
+  organizationPublic: String
+  ie: String
+  icms: Boolean
+  area: String
+  phone: String
+  newsletter: Boolean
 }
-
 input AddressInput {
   addressId: String
   addressType: String

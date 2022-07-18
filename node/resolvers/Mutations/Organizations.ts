@@ -62,6 +62,24 @@ const Organizations = {
         ...(defaultCostCenter.businessDocument && {
           businessDocument: defaultCostCenter.businessDocument,
         }),
+        ...(defaultCostCenter.type && {
+          type: defaultCostCenter.type,
+        }),
+        ...(defaultCostCenter.organizationPublic && {
+          organizationPublic: defaultCostCenter.organizationPublic,
+        }),
+        ...(defaultCostCenter.ie && {
+          ie: defaultCostCenter.ie,
+        }),
+        ...(defaultCostCenter.icms && {
+          icms: defaultCostCenter.icms,
+        }),
+        ...(defaultCostCenter.area && {
+          area: defaultCostCenter.area,
+        }),
+        ...(defaultCostCenter.phone && {
+          phone: defaultCostCenter.phone,
+        }),
       }
 
       await masterdata.createDocument({
@@ -252,6 +270,25 @@ const Organizations = {
           ...(organizationRequest.defaultCostCenter.businessDocument && {
             businessDocument:
               organizationRequest.defaultCostCenter.businessDocument,
+          }),
+          ...(organizationRequest.defaultCostCenter.type && {
+            type: organizationRequest.defaultCostCenter.type,
+          }),
+          ...(organizationRequest.defaultCostCenter.organizationPublic && {
+            organizationPublic:
+              organizationRequest.defaultCostCenter.organizationPublic,
+          }),
+          ...(organizationRequest.defaultCostCenter.ie && {
+            ie: organizationRequest.defaultCostCenter.ie,
+          }),
+          ...(organizationRequest.defaultCostCenter.icms && {
+            icms: organizationRequest.defaultCostCenter.icms,
+          }),
+          ...(organizationRequest.defaultCostCenter.area && {
+            area: organizationRequest.defaultCostCenter.area,
+          }),
+          ...(organizationRequest.defaultCostCenter.phone && {
+            phone: organizationRequest.defaultCostCenter.phone,
           }),
         }
 
