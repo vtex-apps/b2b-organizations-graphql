@@ -6,7 +6,7 @@ import {
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
-import GraphQLError from '../../utils/GraphQLError'
+import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 
 const getWhereByStatus = ({ status }: { status: string[] }) => {
@@ -34,6 +34,7 @@ const Organizations = {
   ) => {
     const {
       clients: { masterdata },
+      vtex: { logger },
     } = ctx
 
     // create schema if it doesn't exist
@@ -45,14 +46,9 @@ const Organizations = {
         fields: ORGANIZATION_FIELDS,
         id,
       })
-    } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+    } catch (error) {
+      logger.error({ error, message: 'getOrganizationById-error' })
+      throw new GraphQLError(getErrorMessage(error))
     }
   },
 
@@ -100,18 +96,12 @@ const Organizations = {
         sort: `${sortedBy} ${sortOrder}`,
         ...(where && { where }),
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        error: e,
+        error,
         message: 'getOrganizations-error',
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(error))
     }
   },
 
@@ -122,7 +112,7 @@ const Organizations = {
   ) => {
     const {
       clients: { masterdata },
-      vtex: { sessionData },
+      vtex: { sessionData, logger },
     } = ctx as any
 
     // create schema if it doesn't exist
@@ -151,14 +141,12 @@ const Organizations = {
         fields: ORGANIZATION_FIELDS,
         id,
       })
-    } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getOrganizationByIdStorefront-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
     }
   },
 
@@ -169,6 +157,7 @@ const Organizations = {
   ) => {
     const {
       clients: { masterdata },
+      vtex: { logger },
     } = ctx
 
     // create schema if it doesn't exist
@@ -180,14 +169,12 @@ const Organizations = {
         fields: ORGANIZATION_REQUEST_FIELDS,
         id,
       })
-    } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getOrganizationRequestById-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
     }
   },
 
@@ -242,18 +229,12 @@ const Organizations = {
         sort: `${sortedBy} ${sortOrder}`,
         ...(where && { where }),
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        error: e,
+        error,
         message: 'getOrganizationRequests-error',
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(error))
     }
   },
 }

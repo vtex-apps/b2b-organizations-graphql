@@ -1,10 +1,10 @@
-import GraphQLError from '../utils/GraphQLError'
 import {
-  ORGANIZATION_DATA_ENTITY,
-  ORGANIZATION_FIELDS,
   COST_CENTER_DATA_ENTITY,
   COST_CENTER_FIELDS,
+  ORGANIZATION_DATA_ENTITY,
+  ORGANIZATION_FIELDS,
 } from '../mdSchema'
+import GraphQLError, { getErrorMessage } from '../utils/GraphQLError'
 
 export const organizationName = async (
   { orgId }: { orgId: string },
@@ -24,18 +24,12 @@ export const organizationName = async (
     })
 
     return organization.name
-  } catch (e) {
+  } catch (error) {
     logger.error({
+      error,
       message: 'getOrganizationName-error',
-      e,
     })
-    if (e.message) {
-      throw new GraphQLError(e.message)
-    } else if (e.response?.data?.message) {
-      throw new GraphQLError(e.response.data.message)
-    } else {
-      throw new GraphQLError(e)
-    }
+    throw new GraphQLError(getErrorMessage(error))
   }
 }
 
@@ -57,18 +51,12 @@ export const costCenterName = async (
     })
 
     return costCenter.name
-  } catch (e) {
+  } catch (error) {
     logger.error({
+      error,
       message: 'getCostCenterName-error',
-      e,
     })
-    if (e.message) {
-      throw new GraphQLError(e.message)
-    } else if (e.response?.data?.message) {
-      throw new GraphQLError(e.response.data.message)
-    } else {
-      throw new GraphQLError(e)
-    }
+    throw new GraphQLError(getErrorMessage(error))
   }
 }
 
@@ -82,18 +70,15 @@ export const role = async (
     vtex: { logger },
   } = ctx
 
-  const roleData = await storefrontPermissions
+  return storefrontPermissions
     .getRole(roleId)
     .then((result: any) => {
       return result.data.getRole
     })
     .catch((error: any) => {
-      console.error(error)
       logger.error({
-        message: 'getRoleError',
         error,
+        message: 'getRoleError',
       })
     })
-
-  return roleData
 }

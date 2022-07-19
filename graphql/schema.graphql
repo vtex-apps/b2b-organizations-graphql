@@ -71,7 +71,7 @@ type Query {
 }
 
 type Mutation {
-  saveAppSettings: MutationResponse
+  saveAppSettings: MutationResponse @cacheControl(scope: PRIVATE)
   createOrganizationRequest(input: OrganizationInput!): MasterDataResponse
   updateOrganizationRequest(
     id: ID!
@@ -80,10 +80,14 @@ type Mutation {
   ): MutationResponse
   deleteOrganizationRequest(id: ID!): MutationResponse
   createOrganization(input: OrganizationInput!): MasterDataResponse
+    @cacheControl(scope: PRIVATE)
   createCostCenter(
     organizationId: ID
     input: CostCenterInput!
-  ): MasterDataResponse @withSession @withPermissions
+  ): MasterDataResponse
+    @withSession
+    @withPermissions
+    @cacheControl(scope: PRIVATE)
   updateOrganization(
     id: ID!
     name: String!
@@ -93,19 +97,35 @@ type Mutation {
     paymentTerms: [PaymentTermInput]
     priceTables: [String]
   ): MutationResponse
+    @withSession
+    @withPermissions
+    @cacheControl(scope: PRIVATE)
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
     @withPermissions
+    @cacheControl(scope: PRIVATE)
   createCostCenterAddress(
     costCenterId: ID
     address: AddressInput
-  ): MutationResponse @withSession @withPermissions
+  ): MutationResponse
+    @withSession
+    @withPermissions
+    @cacheControl(scope: PRIVATE)
   updateCostCenterAddress(
     costCenterId: ID
     address: AddressInput
-  ): MutationResponse @withSession @withPermissions
+  ): MutationResponse
+    @withSession
+    @withPermissions
+    @cacheControl(scope: PRIVATE)
   deleteOrganization(id: ID!): MutationResponse
-  deleteCostCenter(id: ID!): MutationResponse @withSession @withPermissions
+    @withSession
+    @withPermissions
+    @cacheControl(scope: PRIVATE)
+  deleteCostCenter(id: ID!): MutationResponse
+    @withSession
+    @withPermissions
+    @cacheControl(scope: PRIVATE)
   saveUser(
     id: ID
     roleId: ID!
@@ -116,7 +136,10 @@ type Mutation {
     canImpersonate: Boolean = false
     name: String!
     email: String!
-  ): MutationResponse @withSession @withPermissions
+  ): MutationResponse
+    @withSession
+    @withPermissions
+    @cacheControl(scope: PRIVATE)
   addUser(
     id: ID
     roleId: ID!
@@ -127,7 +150,10 @@ type Mutation {
     canImpersonate: Boolean = false
     name: String!
     email: String!
-  ): MutationResponse @withSession @withPermissions
+  ): MutationResponse
+    @withSession
+    @withPermissions
+    @cacheControl(scope: PRIVATE)
   updateUser(
     id: ID
     roleId: ID!
@@ -138,13 +164,18 @@ type Mutation {
     canImpersonate: Boolean = false
     name: String
     email: String
-  ): MutationResponse @withSession @withPermissions
+  ): MutationResponse
+    @withSession
+    @withPermissions
+    @cacheControl(scope: PRIVATE)
   removeUser(id: ID!, userId: ID, email: String!, clId: ID!): MutationResponse
     @withSession
     @withPermissions
+    @cacheControl(scope: PRIVATE)
   impersonateUser(clId: ID, userId: ID): MutationResponse
     @withSession
     @withPermissions
+    @cacheControl(scope: PRIVATE)
 }
 
 type SettingsResponse {
