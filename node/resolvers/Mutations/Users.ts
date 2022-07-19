@@ -380,7 +380,7 @@ const Users = {
 
   updateUser: async (
     _: void,
-    { id, roleId, userId, orgId, costId, clId }: UserArgs,
+    { id, roleId, userId, orgId, costId, clId, name, email }: UserArgs,
     ctx: Context
   ) => {
     const {
@@ -424,7 +424,9 @@ const Users = {
       .updateUser({
         clId,
         costId,
+        email,
         id,
+        name,
         orgId,
         roleId,
         userId,

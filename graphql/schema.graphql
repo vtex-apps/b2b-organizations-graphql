@@ -136,6 +136,8 @@ type Mutation {
     costId: ID
     clId: ID
     canImpersonate: Boolean = false
+    name: String
+    email: String
   ): MutationResponse @withSession @withPermissions
   removeUser(id: ID!, userId: ID, email: String!, clId: ID!): MutationResponse
     @withSession
