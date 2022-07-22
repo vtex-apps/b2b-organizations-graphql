@@ -360,6 +360,6 @@ input PaymentTermInput {
 
 input B2BSettingsInput {
   autoApprove: Boolean
-  defaultPaymentTerms: [String]
+  defaultPaymentTerms: [PaymentTermInput]
   defaultPriceTables: [String]
 }

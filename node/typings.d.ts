@@ -133,8 +133,13 @@ interface PaymentTerm {
   id: string
 }
 
+interface Price {
+  name: string
+  id: string
+}
+
 interface B2BSettingsInput {
   autoApprove: boolean
   defaultPaymentTerms: PaymentTerm[]
-  defaultPriceTables: [String]
+  defaultPriceTables: Price[]
 }
