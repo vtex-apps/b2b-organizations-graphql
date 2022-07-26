@@ -80,6 +80,7 @@ type Mutation {
   ): MutationResponse
   deleteOrganizationRequest(id: ID!): MutationResponse
   createOrganization(input: OrganizationInput!): MasterDataResponse
+    @checkAdminAccess
     @cacheControl(scope: PRIVATE)
   createCostCenter(
     organizationId: ID
@@ -87,6 +88,7 @@ type Mutation {
   ): MasterDataResponse
     @withSession
     @withPermissions
+    @checkUserAccess
     @cacheControl(scope: PRIVATE)
   updateOrganization(
     id: ID!
@@ -96,13 +98,11 @@ type Mutation {
     collections: [CollectionInput]
     paymentTerms: [PaymentTermInput]
     priceTables: [String]
-  ): MutationResponse
-    @withSession
-    @withPermissions
-    @cacheControl(scope: PRIVATE)
+  ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
     @withPermissions
+    @checkUserAccess
     @cacheControl(scope: PRIVATE)
   createCostCenterAddress(
     costCenterId: ID
@@ -110,6 +110,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
+    @checkUserAccess
     @cacheControl(scope: PRIVATE)
   updateCostCenterAddress(
     costCenterId: ID
@@ -117,14 +118,15 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
+    @checkUserAccess
     @cacheControl(scope: PRIVATE)
   deleteOrganization(id: ID!): MutationResponse
-    @withSession
-    @withPermissions
+    @checkAdminAccess
     @cacheControl(scope: PRIVATE)
   deleteCostCenter(id: ID!): MutationResponse
     @withSession
     @withPermissions
+    @checkUserAccess
     @cacheControl(scope: PRIVATE)
   saveUser(
     id: ID
@@ -139,6 +141,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
+    @checkUserAccess
     @cacheControl(scope: PRIVATE)
   addUser(
     id: ID
@@ -153,6 +156,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
+    @checkUserAccess
     @cacheControl(scope: PRIVATE)
   updateUser(
     id: ID
@@ -167,10 +171,12 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
+    @checkUserAccess
     @cacheControl(scope: PRIVATE)
   removeUser(id: ID!, userId: ID, email: String!, clId: ID!): MutationResponse
     @withSession
     @withPermissions
+    @checkUserAccess
     @cacheControl(scope: PRIVATE)
   impersonateUser(clId: ID, userId: ID): MutationResponse
     @withSession
