@@ -107,8 +107,8 @@ export const MUTATIONS = {
     }
   }`,
 
-  updateUser: `mutation ($id: ID $clId: ID! $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $canImpersonate: Boolean!) {
-    updateUser (id:$id, clId: $clId, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, canImpersonate: $canImpersonate) {
+  updateUser: `mutation ($id: ID $clId: ID! $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $canImpersonate: Boolean!, $name: String, $email: String) {
+    updateUser (id:$id, clId: $clId, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, canImpersonate: $canImpersonate, name: $name, email: $email) {
       id
       status
       message
@@ -340,6 +340,8 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     orgId,
     costId,
     clId,
+    name,
+    email,
   }: {
     id?: string
     roleId: string
@@ -356,7 +358,9 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         canImpersonate: false,
         clId,
         costId,
+        email,
         id,
+        name,
         orgId,
         roleId,
         userId,

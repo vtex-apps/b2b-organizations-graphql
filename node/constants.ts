@@ -20,3 +20,14 @@ export const CREDIT_CARDS = [
   'Shopping',
   'Credz',
 ]
+
+export const enum StatusAddUserError {
+  DUPLICATED = 'duplicated',
+  DUPLICATED_ORGANIZATION = 'duplicated-organization',
+  ERROR = 'error',
+}
+
+export const enum MessageSFPUserAddError {
+  DUPLICATED = 'already exists in another organization',
+  DUPLICATED_ORGANIZATION = 'already exists in the organization',
+}

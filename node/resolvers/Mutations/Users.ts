@@ -1,4 +1,5 @@
 import GraphQLError from '../../utils/GraphQLError'
+import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
 
 export const getUserRoleSlug: (
   id: string,
@@ -359,10 +360,19 @@ const Users = {
           error,
           message: 'addUser-error',
         })
+
         const message = error.graphQLErrors[0]?.message ?? error.message
-        const status = message.includes('already exists')
-          ? 'duplicated'
-          : 'error'
+        let status = ''
+
+        if (message.includes(MessageSFPUserAddError.DUPLICATED)) {
+          status = StatusAddUserError.DUPLICATED
+        } else if (
+          message.includes(MessageSFPUserAddError.DUPLICATED_ORGANIZATION)
+        ) {
+          status = StatusAddUserError.DUPLICATED_ORGANIZATION
+        } else {
+          status = StatusAddUserError.ERROR
+        }
 
         return { status, message }
       })
@@ -370,7 +380,7 @@ const Users = {
 
   updateUser: async (
     _: void,
-    { id, roleId, userId, orgId, costId, clId }: UserArgs,
+    { id, roleId, userId, orgId, costId, clId, name, email }: UserArgs,
     ctx: Context
   ) => {
     const {
@@ -414,7 +424,9 @@ const Users = {
       .updateUser({
         clId,
         costId,
+        email,
         id,
+        name,
         orgId,
         roleId,
         userId,

@@ -3,7 +3,7 @@ import {
   COST_CENTER_SCHEMA_VERSION,
   ORGANIZATION_DATA_ENTITY,
 } from '../../mdSchema'
-import GraphQLError from '../../utils/GraphQLError'
+import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 
 const CostCenters = {
@@ -64,13 +64,7 @@ const CostCenters = {
         message: 'createCostCenter-error',
         error: e,
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
   },
   createCostCenterAddress: async (
@@ -111,13 +105,7 @@ const CostCenters = {
         message: 'createCostCenterAddress-error',
         error: e,
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
   },
   deleteCostCenter: async (_: void, { id }: { id: string }, ctx: Context) => {
@@ -133,13 +121,7 @@ const CostCenters = {
 
       return { status: 'success', message: '' }
     } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
   },
   deleteOrganization: async (_: void, { id }: { id: string }, ctx: Context) => {
@@ -155,13 +137,7 @@ const CostCenters = {
 
       return { status: 'success', message: '' }
     } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
   },
 
@@ -188,9 +164,11 @@ const CostCenters = {
         fields: {
           name,
           ...(addresses?.length && { addresses }),
-          ...(paymentTerms && { paymentTerms }),
-          ...(phoneNumber && { phoneNumber }),
-          ...(businessDocument && { businessDocument }),
+          ...(paymentTerms?.length && { paymentTerms }),
+          ...((phoneNumber || phoneNumber === '') && { phoneNumber }),
+          ...((businessDocument || businessDocument === '') && {
+            businessDocument,
+          }),
         },
       })
 
@@ -200,13 +178,7 @@ const CostCenters = {
         message: 'updateCostCenter-error',
         error: e,
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
   },
 
@@ -254,13 +226,7 @@ const CostCenters = {
         message: 'updateCostCenterAddress-error',
         error: e,
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
   },
 }

@@ -8,7 +8,7 @@ import {
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
-import GraphQLError from '../../utils/GraphQLError'
+import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import message from '../message'
 
@@ -82,13 +82,7 @@ const Organizations = {
         message: 'createOrganization-error',
         error: e,
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
   },
   createOrganizationRequest: async (
@@ -112,7 +106,7 @@ const Organizations = {
         fields: ORGANIZATION_REQUEST_FIELDS,
         schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
         sort: `created DESC`,
-        where: `b2bCustomerAdmin.email=${b2bCustomerAdmin.email}`,
+        where: `b2bCustomerAdmin.email=${b2bCustomerAdmin.email} AND (status=pending OR status=approved)`,
         pagination: {
           page: 1,
           pageSize: 1,
@@ -150,13 +144,7 @@ const Organizations = {
         message: 'createOrganizationRequest-error',
         error: e,
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
   },
   deleteOrganizationRequest: async (
@@ -176,13 +164,7 @@ const Organizations = {
 
       return { status: 'success', message: '' }
     } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
   },
   updateOrganizationRequest: async (
@@ -216,13 +198,7 @@ const Organizations = {
         message: 'getOrganizationRequest-error',
         error: e,
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
 
     // don't allow update if status is already approved or declined
@@ -309,7 +285,7 @@ const Organizations = {
             },
           })
           .then((res: any) => {
-            return res[0]?.id ?? undefined
+            return res[0]?.id
           })
           .catch(() => undefined)
 
@@ -367,13 +343,7 @@ const Organizations = {
           message: 'updateOrganizationRequest-error',
           error: e,
         })
-        if (e.message) {
-          throw new GraphQLError(e.message)
-        } else if (e.response?.data?.message) {
-          throw new GraphQLError(e.response.data.message)
-        } else {
-          throw new GraphQLError(e)
-        }
+        throw new GraphQLError(getErrorMessage(e))
       }
     }
 
@@ -395,13 +365,7 @@ const Organizations = {
 
       return { status: 'success', message: '' }
     } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
   },
   updateOrganization: async (
@@ -460,7 +424,7 @@ const Organizations = {
         dataEntity: ORGANIZATION_DATA_ENTITY,
         fields: {
           name,
-          ...(tradeName && { tradeName }),
+          ...((tradeName || tradeName === '') && { tradeName }),
           status,
           collections,
           paymentTerms,
@@ -474,13 +438,7 @@ const Organizations = {
         message: 'updateOrganization-error',
         error: e,
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(e))
     }
   },
 }

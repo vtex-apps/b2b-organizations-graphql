@@ -6,3 +6,7 @@ export default class GraphQLError extends Error {
     this.extensions = { message, ...details }
   }
 }
+
+export const getErrorMessage = (e: any) => {
+  return e.message ?? e.response?.data?.message ?? e
+}

@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.19.5] - 2022-07-19
+
+### Fixed
+
+- Fixed on update the user data, and it disappeared from the list
+
+## [0.19.4] - 2022-07-08
+
+### Fixed
+
+- Allow emails associated with declined requests to request new organization
+
+## [0.19.3] - 2022-06-28
+
+### Added
+
+- Add error messages improvement
+
+## [0.19.2] - 2022-06-23
+
+### Fixed
+
+- Allow `tradeName` and `phoneNumber` fields to be emptied when organization or cost center are updated
+
 ## [0.19.1] - 2022-06-17
 
 ### Fixed
