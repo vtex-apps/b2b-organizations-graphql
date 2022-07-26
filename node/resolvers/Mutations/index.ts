@@ -10,6 +10,7 @@ const Index = {
   saveAppSettings: async (_: any, __: any, ctx: Context) => {
     const {
       clients: { apps },
+      vtex: { logger },
     } = ctx
 
     const app: string = getAppId()
@@ -20,8 +21,13 @@ const Index = {
       await apps.saveAppSettings(app, newSettings)
 
       return { status: 'success', message: '' }
-    } catch (e) {
-      return { status: 'error', message: e }
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'saveAppSettings-error',
+      })
+
+      return { status: 'error', message: error }
     }
   },
 }

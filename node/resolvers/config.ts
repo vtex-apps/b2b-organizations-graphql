@@ -46,15 +46,15 @@ const checkConfig = async (ctx: Context) => {
         masterdata
           .createOrUpdateSchema({
             dataEntity: schema.name,
-            schemaName: schema.version,
             schemaBody: schema.body,
+            schemaName: schema.version,
           })
           .then(() => true)
-          .catch((e: any) => {
-            if (e.response.status !== 304) {
+          .catch((error: any) => {
+            if (error?.response?.status !== 304) {
               logger.error({
+                error,
                 message: 'checkConfig-createOrUpdateSchemaError',
-                error: e,
               })
 
               return false
@@ -64,13 +64,19 @@ const checkConfig = async (ctx: Context) => {
           })
       )
     })
-
-    await Promise.all(updates).then(results => {
-      if (results.every(res => res === true)) {
-        settings.schemaHash = currSchemaHash
-        schemaChanged = true
-      }
-    })
+    try {
+      await Promise.all(updates).then(results => {
+        if (results.every(res => res === true)) {
+          settings.schemaHash = currSchemaHash
+          schemaChanged = true
+        }
+      })
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'checkConfig-createOrUpdateSchemaError',
+      })
+    }
   }
 
   if (!settings?.templateHash || settings.templateHash !== currTemplateHash) {
@@ -80,34 +86,48 @@ const checkConfig = async (ctx: Context) => {
       message: 'checkConfig-updatingTemplates',
     })
 
-    await Promise.all(
-      templates.map(async template => {
-        const existingData = await mail.getTemplate(template.Name)
+    try {
+      await Promise.all(
+        templates.map(async template => {
+          const existingData = await mail.getTemplate(template.Name)
 
-        if (!existingData) {
-          updates.push(mail.publishTemplate(template))
-        }
+          if (!existingData) {
+            updates.push(mail.publishTemplate(template))
+          }
 
-        return null
+          return null
+        })
+      )
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'checkConfig-updatingTemplatesError',
       })
-    )
+    }
 
     await Promise.all(updates)
       .then(() => {
         settings.templateHash = currTemplateHash
         templatesChanged = true
       })
-      .catch(e => {
+      .catch(error => {
         logger.error({
+          error,
           message: 'checkConfig-publishTemplateError',
-          error: e,
         })
-        throw new Error(e)
+        throw new Error(error)
       })
   }
 
   if (schemaChanged || templatesChanged) {
-    await vbase.saveJSON('mdSchema', 'settings', settings)
+    try {
+      await vbase.saveJSON('mdSchema', 'settings', settings)
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'checkConfig-saveSettingsError',
+      })
+    }
   }
 
   return settings

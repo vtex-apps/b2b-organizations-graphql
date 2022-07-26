@@ -1,14 +1,14 @@
 import type {
   ClientsConfig,
-  ServiceContext,
   ParamsContext,
   RecorderState,
+  ServiceContext,
 } from '@vtex/api'
 import { LRUCache, Service } from '@vtex/api'
 
 import { Clients } from './clients'
-import { schemaDirectives } from './resolvers/directives'
 import { resolvers } from './resolvers'
+import { schemaDirectives } from './resolvers/directives'
 
 const TIMEOUT_MS = 4000
 
@@ -43,9 +43,9 @@ export default new Service<Clients, RecorderState, ParamsContext>({
   clients,
   graphql: {
     resolvers: {
-      Query: resolvers.Query,
-      Mutation: resolvers.Mutation,
       B2BUser: resolvers.B2BUser,
+      Mutation: resolvers.Mutation,
+      Query: resolvers.Query,
     },
     schemaDirectives,
   },
