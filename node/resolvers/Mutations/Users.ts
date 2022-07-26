@@ -146,6 +146,25 @@ const Users = {
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as Context | any
 
+    const getUserFromStorefrontPermissions = ({
+      clId: clientId,
+    }: {
+      clId: string
+    }) =>
+      storefrontPermissionsClient
+        .getUser(clientId)
+        .then((result: any) => {
+          return result?.data?.getUser ?? {}
+        })
+        .catch((error: any) => {
+          logger.warn({
+            error,
+            message: 'impersonateUser-getUserError',
+          })
+
+          return error
+        })
+
     if (!adminUserAuthToken && clId) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
         throw new GraphQLError('organization-data-not-found')
@@ -156,19 +175,7 @@ const Users = {
       const roleSlug = await getUserRoleSlug(clId, ctx)
 
       if (!roleSlug.includes('sales')) {
-        const userInfo = await storefrontPermissionsClient
-          .getUser(clId)
-          .then((result: any) => {
-            return result?.data?.getUser ?? {}
-          })
-          .catch((error: any) => {
-            logger.warn({
-              error,
-              message: 'impersonateUser-getUserError',
-            })
-
-            return error
-          })
+        const userInfo = await getUserFromStorefrontPermissions({ clId })
 
         permitted =
           (storefrontPermissions?.permissions?.includes(
@@ -220,19 +227,7 @@ const Users = {
 
       userId = userIdFromCl
 
-      const userData = await storefrontPermissionsClient
-        .getUser(clId)
-        .then((res: any) => {
-          return res?.data?.getUser
-        })
-        .catch((error: any) => {
-          logger.warn({
-            error,
-            message: 'impersonateUser-getUserError',
-          })
-
-          return error
-        })
+      const userData = await getUserFromStorefrontPermissions({ clId })
 
       if (userData && !userData.userId) {
         await storefrontPermissionsClient.saveUser({

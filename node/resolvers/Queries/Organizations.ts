@@ -207,11 +207,7 @@ const Organizations = {
     const whereArray = getWhereByStatus({ status })
 
     if (search) {
-      if (
-        search.match(
-          /^([a-zA-Z0-9!#$%&'*+=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)$/gm
-        )
-      ) {
+      if (search.match(/[a-z\d]+@[a-z]+\.[a-z]{2,3}/gm)) {
         whereArray.push(`b2bCustomerAdmin.email=${search}`)
       } else {
         whereArray.push(`name="*${search}*"`)

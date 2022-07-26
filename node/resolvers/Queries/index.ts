@@ -61,7 +61,7 @@ const checkUserPermissions = async ({
   organizationId,
   logger,
 }: any) => {
-  const { sessionData } = vtex as any
+  const { sessionData } = vtex
   const { checkUserPermission } = await getCheckUserPermission({
     logger,
     storefrontPermissions,
@@ -186,7 +186,7 @@ const Index = {
       .catch(error => {
         logger.error({
           error,
-          message: 'getUsers-error',
+          message: 'getOrganizationsWithoutSalesManager-getUsers-error',
         })
         throw new GraphQLError(getErrorMessage(error))
       })
@@ -280,7 +280,7 @@ const Index = {
       .catch(error => {
         logger.error({
           error,
-          message: 'getUsers-error',
+          message: 'getUsers-getUsers-error',
         })
 
         throw new GraphQLError(getErrorMessage(error))

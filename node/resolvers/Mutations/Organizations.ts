@@ -11,6 +11,7 @@ import {
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import message from '../message'
+import { STATUS } from '../../utils/constants'
 
 const Organizations = {
   createOrganization: async (
@@ -44,7 +45,7 @@ const Organizations = {
         created: now,
         paymentTerms: [],
         priceTables: [],
-        status: 'active',
+        status: STATUS.ACTIVE,
       }
 
       const createOrganizationResult = await masterdata.createDocument({
@@ -68,7 +69,7 @@ const Organizations = {
         }),
       }
 
-      await masterdata.createDocument({
+      const costCenterResult = await masterdata.createDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
         fields: costCenter,
         schema: COST_CENTER_SCHEMA_VERSION,
@@ -77,6 +78,7 @@ const Organizations = {
       message({ storefrontPermissions, logger, mail }).organizationCreated(name)
 
       return {
+        costCenterId: costCenterResult.DocumentId,
         href: createOrganizationResult.Href,
         id: createOrganizationResult.DocumentId,
         status: '',
@@ -134,7 +136,7 @@ const Organizations = {
       created: now,
       defaultCostCenter,
       notes: '',
-      status: 'pending',
+      status: STATUS.PENDING,
     }
 
     try {
@@ -257,7 +259,7 @@ const Organizations = {
       vtex: { logger },
     } = ctx
 
-    if (status !== 'approved' && status !== 'declined') {
+    if (status !== STATUS.APPROVED && status !== STATUS.DECLINED) {
       throw new GraphQLError('Invalid status')
     }
 
@@ -286,11 +288,9 @@ const Organizations = {
       throw new GraphQLError('Organization request already processed')
     }
 
-    const { email, firstName } = organizationRequest.b2bCustomerAdmin
+    const { email, firstName, lastName } = organizationRequest.b2bCustomerAdmin
 
-    if (status === 'approved') {
-      const now = new Date()
-
+    if (status === STATUS.APPROVED) {
       try {
         // update request status to approved
         await masterdata.updatePartialDocument({
@@ -299,47 +299,38 @@ const Organizations = {
           id,
         })
 
-        // create organization
-        const organization = {
-          name: organizationRequest.name,
-          ...(organizationRequest.tradeName && {
-            tradeName: organizationRequest.tradeName,
-          }),
-          collections: [],
-          costCenters: [],
-          created: now,
-          paymentTerms: [],
-          priceTables: [],
-          status: 'active',
-        }
-
-        const createOrganizationResult = await masterdata.createDocument({
-          dataEntity: ORGANIZATION_DATA_ENTITY,
-          fields: organization,
-          schema: ORGANIZATION_SCHEMA_VERSION,
-        })
-
-        const organizationId = createOrganizationResult.DocumentId
-
-        // create cost center
-        const costCenter = {
-          addresses: [organizationRequest.defaultCostCenter.address],
-          name: organizationRequest.defaultCostCenter.name,
-          organization: organizationId,
-          ...(organizationRequest.defaultCostCenter.phoneNumber && {
-            phoneNumber: organizationRequest.defaultCostCenter.phoneNumber,
-          }),
-          ...(organizationRequest.defaultCostCenter.businessDocument && {
-            businessDocument:
-              organizationRequest.defaultCostCenter.businessDocument,
-          }),
-        }
-
-        const createCostCenterResult = await masterdata.createDocument({
-          dataEntity: COST_CENTER_DATA_ENTITY,
-          fields: costCenter,
-          schema: COST_CENTER_SCHEMA_VERSION,
-        })
+        const {
+          costCenterId,
+          id: organizationId,
+        } = await Organizations.createOrganization(
+          _,
+          {
+            input: {
+              name: organizationRequest.name,
+              ...(organizationRequest.tradeName && {
+                tradeName: organizationRequest.tradeName,
+              }),
+              b2bCustomerAdmin: {
+                email,
+                firstName,
+                lastName,
+              },
+              defaultCostCenter: {
+                address: organizationRequest.defaultCostCenter.address,
+                name: organizationRequest.defaultCostCenter.name,
+                ...(organizationRequest.defaultCostCenter.phoneNumber && {
+                  phoneNumber:
+                    organizationRequest.defaultCostCenter.phoneNumber,
+                }),
+                ...(organizationRequest.defaultCostCenter.businessDocument && {
+                  businessDocument:
+                    organizationRequest.defaultCostCenter.businessDocument,
+                }),
+              },
+            },
+          },
+          ctx
+        )
 
         // get roleId of org admin
         const roles = await storefrontPermissions
@@ -383,7 +374,7 @@ const Organizations = {
         const addUserResult = await storefrontPermissions
           .saveUser({
             ...existingUser,
-            costId: createCostCenterResult.DocumentId,
+            costId: costCenterId,
             email,
             name: existingUser?.name || firstName,
             orgId: organizationId,
