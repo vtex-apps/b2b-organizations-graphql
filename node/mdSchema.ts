@@ -174,7 +174,7 @@ export const schemas = [
   },
   {
     name: B2B_SETTINGS_DATA_ENTITY,
-    version: 'v0.0.8',
+    version: B2B_SETTINGS_SCHEMA_VERSION,
     body: {
       properties: {
         autoApprove: {
