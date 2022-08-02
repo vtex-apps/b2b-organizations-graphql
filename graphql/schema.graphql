@@ -69,7 +69,6 @@ type Query {
   ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getB2BSettings(
-    status: [String]
     page: Int = 1
     pageSize: Int = 25
   ): B2BSettingsResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
