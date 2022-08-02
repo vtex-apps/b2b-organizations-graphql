@@ -190,7 +190,6 @@ export const schemas = [
           title: 'Default Price Tables',
         },
       },
-      'v-indexed': ['autoApprove'],
       'v-immediate-indexing': true,
       'v-cache': false,
     },

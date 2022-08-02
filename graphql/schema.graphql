@@ -68,9 +68,7 @@ type Query {
     sortedBy: String
   ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
-  getB2BSettings(
-    page: Int = 1
-    pageSize: Int = 25
+  getB2BSettings(id: String
   ): B2BSettingsResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 

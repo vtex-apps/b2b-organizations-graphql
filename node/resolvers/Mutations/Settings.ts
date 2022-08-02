@@ -1,18 +1,17 @@
 import {
   B2B_SETTINGS_DATA_ENTITY,
   B2B_SETTINGS_SCHEMA_VERSION,
-  B2B_SETTINGS_FIELDS
 } from '../../mdSchema'
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
+
+const B2B_SETTINGS_DOCUMENT_ID = 'b2bSettings'
 
 const B2BSettings = {
   saveB2BSettings: async (
     _: void,
     {
-      input: { autoApprove, defaultPaymentTerms, defaultPriceTables }, 
-      page,
-      pageSize
+      input: { autoApprove, defaultPaymentTerms, defaultPriceTables },
     }: {
       input: B2BSettingsInput, page: number
       pageSize: number
@@ -26,6 +25,7 @@ const B2BSettings = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
+
     try {
       const b2bSettings = {
         autoApprove,
@@ -33,30 +33,8 @@ const B2BSettings = {
         defaultPriceTables
       }
       
-      const documentB2BSettingResult = await masterdata.searchDocuments({
-        dataEntity: B2B_SETTINGS_DATA_ENTITY,
-        fields: ['id', 'accountId' , ...B2B_SETTINGS_FIELDS],
-        pagination: { page, pageSize },
-        schema: B2B_SETTINGS_SCHEMA_VERSION,
-      })
-
-      if(!!documentB2BSettingResult.length) {
-        const document = documentB2BSettingResult as any 
-
-        await masterdata.updatePartialDocument({
-          id: document[0].id,
-          dataEntity: B2B_SETTINGS_DATA_ENTITY,
-          fields: b2bSettings,
-          schema: B2B_SETTINGS_SCHEMA_VERSION
-        })
-        
-        return {
-          status: 'success',
-          message: 'Document Updated'
-        }
-      }
-
-      const saveB2BSettingResult = await masterdata.createDocument({
+      const saveB2BSettingResult = await masterdata.createOrUpdateEntireDocument({
+        id: B2B_SETTINGS_DOCUMENT_ID,
         dataEntity: B2B_SETTINGS_DATA_ENTITY,
         fields: b2bSettings,
         schema: B2B_SETTINGS_SCHEMA_VERSION
