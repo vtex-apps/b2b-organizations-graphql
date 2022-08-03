@@ -144,12 +144,9 @@ type Mutation {
   impersonateUser(clId: ID, userId: ID): MutationResponse
     @withSession
     @withPermissions
-  saveB2BSettings(
-    userId: ID
-    input: B2BSettingsInput
-    page: Int = 1
-    pageSize: Int = 25
-  ): MutationResponse @withSession @withPermissions
+  saveB2BSettings(input: B2BSettingsInput): MutationResponse
+    @withSession
+    @withPermissions
 }
 
 type SettingsResponse {
