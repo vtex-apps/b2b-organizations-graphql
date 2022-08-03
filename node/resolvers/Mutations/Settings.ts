@@ -5,7 +5,7 @@ import {
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
 
-const B2B_SETTINGS_DOCUMENT_ID = 'b2bSettings'
+export const B2B_SETTINGS_DOCUMENT_ID = 'b2bSettings'
 
 const B2BSettings = {
   saveB2BSettings: async (
@@ -13,11 +13,13 @@ const B2BSettings = {
     {
       input: { autoApprove, defaultPaymentTerms, defaultPriceTables },
     }: {
-      input: B2BSettingsInput, page: number
+      input: B2BSettingsInput
+      page: number
       pageSize: number
     },
     ctx: Context
-  ) => {    const {
+  ) => {
+    const {
       clients: { masterdata },
       vtex: { logger },
     } = ctx
@@ -25,20 +27,21 @@ const B2BSettings = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-
     try {
       const b2bSettings = {
         autoApprove,
         defaultPaymentTerms,
-        defaultPriceTables
+        defaultPriceTables,
       }
-      
-      const saveB2BSettingResult = await masterdata.createOrUpdateEntireDocument({
-        id: B2B_SETTINGS_DOCUMENT_ID,
-        dataEntity: B2B_SETTINGS_DATA_ENTITY,
-        fields: b2bSettings,
-        schema: B2B_SETTINGS_SCHEMA_VERSION
-      })
+
+      const saveB2BSettingResult = await masterdata.createOrUpdateEntireDocument(
+        {
+          id: B2B_SETTINGS_DOCUMENT_ID,
+          dataEntity: B2B_SETTINGS_DATA_ENTITY,
+          fields: b2bSettings,
+          schema: B2B_SETTINGS_SCHEMA_VERSION,
+        }
+      )
 
       return {
         href: saveB2BSettingResult.Href,

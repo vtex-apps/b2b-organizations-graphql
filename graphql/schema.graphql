@@ -68,8 +68,7 @@ type Query {
     sortedBy: String
   ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
-  getB2BSettings(id: String
-  ): B2BSettingsResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getB2BSettings: B2BSetting @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
 type Mutation {
@@ -145,10 +144,12 @@ type Mutation {
   impersonateUser(clId: ID, userId: ID): MutationResponse
     @withSession
     @withPermissions
-  saveB2BSettings(userId: ID, input: B2BSettingsInput, page: Int = 1
-    pageSize: Int = 25 ): MutationResponse 
-    @withSession
-    @withPermissions
+  saveB2BSettings(
+    userId: ID
+    input: B2BSettingsInput
+    page: Int = 1
+    pageSize: Int = 25
+  ): MutationResponse @withSession @withPermissions
 }
 
 type SettingsResponse {
@@ -291,11 +292,6 @@ type SimpleRole {
   id: ID
   name: String!
   slug: String
-}
-
-type B2BSettingsResult {
-  data: [B2BSetting]
-  pagination: Pagination
 }
 
 scalar Data
