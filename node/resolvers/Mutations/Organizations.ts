@@ -8,10 +8,13 @@ import {
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
+import {
+  ORGANIZATION_REQUEST_STATUSES,
+  ORGANIZATION_STATUSES,
+} from '../../utils/constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import message from '../message'
-import { STATUS } from '../../utils/constants'
 
 const Organizations = {
   createOrganization: async (
@@ -23,12 +26,8 @@ const Organizations = {
   ) => {
     const {
       clients: { masterdata, storefrontPermissions, mail },
-      vtex: { logger, adminUserAuthToken },
+      vtex: { logger },
     } = ctx
-
-    if (!adminUserAuthToken) {
-      throw new GraphQLError('operation-not-permitted')
-    }
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
@@ -45,7 +44,7 @@ const Organizations = {
         created: now,
         paymentTerms: [],
         priceTables: [],
-        status: STATUS.ACTIVE,
+        status: ORGANIZATION_STATUSES.ACTIVE,
       }
 
       const createOrganizationResult = await masterdata.createDocument({
@@ -123,7 +122,7 @@ const Organizations = {
       })
       .catch(() => '')
 
-    if (duplicate !== '') {
+    if (duplicate) {
       return { href: '', id: '', status: duplicate }
     }
 
@@ -136,7 +135,7 @@ const Organizations = {
       created: now,
       defaultCostCenter,
       notes: '',
-      status: STATUS.PENDING,
+      status: ORGANIZATION_REQUEST_STATUSES.PENDING,
     }
 
     try {
@@ -259,7 +258,10 @@ const Organizations = {
       vtex: { logger },
     } = ctx
 
-    if (status !== STATUS.APPROVED && status !== STATUS.DECLINED) {
+    if (
+      status !== ORGANIZATION_REQUEST_STATUSES.APPROVED &&
+      status !== ORGANIZATION_REQUEST_STATUSES.DECLINED
+    ) {
       throw new GraphQLError('Invalid status')
     }
 
@@ -284,13 +286,13 @@ const Organizations = {
     }
 
     // don't allow update if status is already approved or declined
-    if (organizationRequest.status !== 'pending') {
+    if (organizationRequest.status !== ORGANIZATION_REQUEST_STATUSES.PENDING) {
       throw new GraphQLError('Organization request already processed')
     }
 
     const { email, firstName, lastName } = organizationRequest.b2bCustomerAdmin
 
-    if (status === STATUS.APPROVED) {
+    if (status === ORGANIZATION_REQUEST_STATUSES.APPROVED) {
       try {
         // update request status to approved
         await masterdata.updatePartialDocument({

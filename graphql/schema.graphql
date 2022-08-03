@@ -79,7 +79,7 @@ type Mutation {
     notes: String
   ): MutationResponse
   deleteOrganizationRequest(id: ID!): MutationResponse
-  createOrganization(input: OrganizationInput!): MasterDataResponse
+  createOrganization(input: OrganizationInput!): OrganizationCostCenterResponse
     @checkAdminAccess
     @cacheControl(scope: PRIVATE)
   createCostCenter(
@@ -284,6 +284,13 @@ type Address {
 
 type MasterDataResponse {
   id: String
+  href: String
+  status: String
+}
+
+type OrganizationCostCenterResponse {
+  id: String
+  costCenterId: String
   href: String
   status: String
 }
