@@ -144,7 +144,7 @@ const Organizations = {
       created: now,
     }
 
-    if (settings?.data[0].autoApprove) {
+    if (settings?.autoApprove) {
       organizationRequest.status = 'approved'
     }
 
@@ -155,15 +155,15 @@ const Organizations = {
         schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
       })
 
-      if (settings?.data[0].autoApprove) {
+      if (settings?.autoApprove) {
         Organizations.updateOrganization(
           undefined,
           {
             id: result.DocumentId,
             name,
             status: 'approved',
-            priceTables: settings?.data[0]?.defaultPriceTables,
-            paymentTerms: settings?.data[0]?.defaultPaymentTerms,
+            priceTables: settings?.defaultPriceTables,
+            paymentTerms: settings?.defaultPaymentTerms,
             collections: [],
           },
           ctx
