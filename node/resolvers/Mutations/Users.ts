@@ -1,5 +1,5 @@
-import GraphQLError from '../../utils/GraphQLError'
 import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
+import GraphQLError from '../../utils/GraphQLError'
 
 export const getUserRoleSlug: (
   id: string,
@@ -23,8 +23,8 @@ export const getUserRoleSlug: (
     })
     .catch((error: any) => {
       logger.warn({
-        message: 'getUserRoleSlug-error',
         error,
+        message: 'getUserRoleSlug-error',
       })
 
       return ''
@@ -146,6 +146,25 @@ const Users = {
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as Context | any
 
+    const getUserFromStorefrontPermissions = ({
+      clId: clientId,
+    }: {
+      clId: string
+    }) =>
+      storefrontPermissionsClient
+        .getUser(clientId)
+        .then((result: any) => {
+          return result?.data?.getUser ?? {}
+        })
+        .catch((error: any) => {
+          logger.warn({
+            error,
+            message: 'impersonateUser-getUserError',
+          })
+
+          return error
+        })
+
     if (!adminUserAuthToken && clId) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
         throw new GraphQLError('organization-data-not-found')
@@ -156,19 +175,7 @@ const Users = {
       const roleSlug = await getUserRoleSlug(clId, ctx)
 
       if (!roleSlug.includes('sales')) {
-        const userInfo = await storefrontPermissionsClient
-          .getUser(clId)
-          .then((result: any) => {
-            return result?.data?.getUser ?? {}
-          })
-          .catch((error: any) => {
-            logger.warn({
-              error,
-              message: 'impersonateUser-getUserError',
-            })
-
-            return error
-          })
+        const userInfo = await getUserFromStorefrontPermissions({ clId })
 
         permitted =
           (storefrontPermissions?.permissions?.includes(
@@ -201,34 +208,26 @@ const Users = {
         .then((res: any) => {
           return res?.userId ?? undefined
         })
-        .catch((e: any) => {
+        .catch((error: any) => {
           logger.warn({
-            error: e,
+            error,
             message: 'impersonateUser-getUserIdError',
           })
 
-          return e
+          return error
         })
 
       if (!userIdFromCl) {
+        logger.warn({
+          message: `userId ${userIdFromCl} not found in CL`,
+        })
+
         return { status: 'error', message: 'userId not found in CL' }
       }
 
       userId = userIdFromCl
 
-      const userData = await storefrontPermissionsClient
-        .getUser(clId)
-        .then((res: any) => {
-          return res?.data?.getUser
-        })
-        .catch((e: any) => {
-          logger.warn({
-            error: e,
-            message: 'impersonateUser-getUserError',
-          })
-
-          return e
-        })
+      const userData = await getUserFromStorefrontPermissions({ clId })
 
       if (userData && !userData.userId) {
         await storefrontPermissionsClient.saveUser({
@@ -334,12 +333,12 @@ const Users = {
         storefrontPermissions,
         storefrontPermissionsClient,
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        error: e,
+        error,
         message: 'addUser-checkUserIsAllowedError',
       })
-      throw e
+      throw error
     }
 
     return storefrontPermissionsClient
@@ -403,12 +402,12 @@ const Users = {
         storefrontPermissions,
         storefrontPermissionsClient,
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        error: e,
+        error,
         message: 'addUser-checkUserIsAllowedError',
       })
-      throw e
+      throw error
     }
 
     if (clId && !userId) {
@@ -486,12 +485,12 @@ const Users = {
         storefrontPermissions,
         storefrontPermissionsClient,
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        error: e,
+        error,
         message: 'addUser-checkUserIsAllowedError',
       })
-      throw e
+      throw error
     }
 
     if (clId && !userId) {

@@ -27,7 +27,6 @@ export class WithPermissions extends SchemaDirectiveVisitor {
           return result?.data?.checkUserPermission ?? null
         })
         .catch((error: any) => {
-          console.error(error)
           if (!adminUserAuthToken) {
             logger.error({
               message: 'getPermissionsError',
