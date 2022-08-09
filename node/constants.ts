@@ -21,7 +21,7 @@ export const CREDIT_CARDS = [
   'Credz',
 ]
 
-export const enum StatusadicionarUserError {
+export const enum StatusimpersonateError {
   DUPLICATED = 'duplicated',
   DUPLICATED_ORGANIZATION = 'duplicated-organization',
   ERROR = 'error',

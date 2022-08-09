@@ -242,7 +242,7 @@ const Users = {
       .catch((error: any) => {
         logger.error({
           error,
-          message: 'impersonateUser-xptoUserError',
+          message: 'impersonateUser-impersonateUserError',
         })
 
         return { status: 'error', message: error }
@@ -342,7 +342,7 @@ const Users = {
     }
 
     return storefrontPermissionsClient
-      .adicionarUser({
+      .impersonate({
         costId,
         email,
         id,
@@ -519,7 +519,7 @@ const Users = {
       .catch((error: any) => {
         logger.error({
           error,
-          message: 'adicionarUser-error',
+          message: 'impersonate-error',
         })
 
         return { status: 'error', message: error }

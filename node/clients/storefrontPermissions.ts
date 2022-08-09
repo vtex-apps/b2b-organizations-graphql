@@ -91,8 +91,8 @@ export const QUERIES = {
 }
 
 export const MUTATIONS = {
-  adicionarUser: `mutation ($id: ID $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $name: String! $canImpersonate: Boolean! $email: String!) {
-    adicionarUser (id:$id, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, name: $name, canImpersonate: $canImpersonate, email: $email) {
+  impersonate: `mutation ($id: ID $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $name: String! $canImpersonate: Boolean! $email: String!) {
+    impersonate (id:$id, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, name: $name, canImpersonate: $canImpersonate, email: $email) {
       id
       status
       message
@@ -300,7 +300,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     )
   }
 
-  public adicionarUser = async ({
+  public impersonate = async ({
     id,
     roleId,
     userId,
@@ -319,7 +319,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     email: string
   }): Promise<any> => {
     return this.graphql.mutate({
-      mutate: MUTATIONS.adicionarUser,
+      mutate: MUTATIONS.impersonate,
       variables: {
         canImpersonate: false,
         costId,
