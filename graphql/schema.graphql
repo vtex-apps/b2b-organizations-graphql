@@ -117,7 +117,7 @@ type Mutation {
     name: String!
     email: String!
   ): MutationResponse @withSession @withPermissions
-  addUser(
+  adicionarUser(
     id: ID
     roleId: ID!
     userId: ID
@@ -128,7 +128,7 @@ type Mutation {
     name: String!
     email: String!
   ): MutationResponse @withSession @withPermissions
-  updateUser(
+  atualizarUser(
     id: ID
     roleId: ID!
     userId: ID
@@ -136,13 +136,13 @@ type Mutation {
     costId: ID
     clId: ID
     canImpersonate: Boolean = false
+    name: String
+    email: String
   ): MutationResponse @withSession @withPermissions
   removeUser(id: ID!, userId: ID, email: String!, clId: ID!): MutationResponse
     @withSession
     @withPermissions
-  impersonateUser(clId: ID, userId: ID): MutationResponse
-    @withSession
-    @withPermissions
+  xptoUser(clId: ID, userId: ID): MutationResponse @withSession @withPermissions
 }
 
 type SettingsResponse {
@@ -236,6 +236,7 @@ type CostCenter {
   ie: String
   icms: Boolean
   area: String
+  areaOthers: String
   phone: String
   newsletter: Boolean
 }
@@ -322,23 +323,19 @@ input DefaultCostCenterInput {
   ie: String
   icms: Boolean
   area: String
+  areaOthers: String
   phone: String
   newsletter: Boolean
 }
+
 input CostCenterInput {
   name: String
   addresses: [AddressInput]
   paymentTerms: [PaymentTermInput]
   phoneNumber: String
   businessDocument: String
-  type: String
-  organizationPublic: String
-  ie: String
-  icms: Boolean
-  area: String
-  phone: String
-  newsletter: Boolean
 }
+
 input AddressInput {
   addressId: String
   addressType: String

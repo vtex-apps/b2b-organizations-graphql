@@ -1,5 +1,8 @@
 import GraphQLError from '../../utils/GraphQLError'
-import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
+import {
+  MessageSFPUserAddError,
+  StatusadicionarUserError,
+} from '../../constants'
 
 export const getUserRoleSlug: (
   id: string,
@@ -132,11 +135,7 @@ const Users = {
    * @param userId
    * @param ctx
    */
-  impersonateUser: async (
-    _: void,
-    { clId, userId }: UserArgs,
-    ctx: Context
-  ) => {
+  xptoUser: async (_: void, { clId, userId }: UserArgs, ctx: Context) => {
     const {
       clients: {
         masterdata,
@@ -164,7 +163,7 @@ const Users = {
           .catch((error: any) => {
             logger.warn({
               error,
-              message: 'impersonateUser-getUserError',
+              message: 'xptoUser-getUserError',
             })
 
             return error
@@ -204,7 +203,7 @@ const Users = {
         .catch((e: any) => {
           logger.warn({
             error: e,
-            message: 'impersonateUser-getUserIdError',
+            message: 'xptoUser-getUserIdError',
           })
 
           return e
@@ -224,7 +223,7 @@ const Users = {
         .catch((e: any) => {
           logger.warn({
             error: e,
-            message: 'impersonateUser-getUserError',
+            message: 'xptoUser-getUserError',
           })
 
           return e
@@ -239,11 +238,11 @@ const Users = {
     }
 
     return storefrontPermissionsClient
-      .impersonateUser({ userId })
+      .xptoUser({ userId })
       .catch((error: any) => {
         logger.error({
           error,
-          message: 'impersonateUser-impersonateUserError',
+          message: 'xptoUser-xptoUserError',
         })
 
         return { status: 'error', message: error }
@@ -312,7 +311,7 @@ const Users = {
       })
   },
 
-  addUser: async (
+  adicionarUser: async (
     _: void,
     { id, roleId, userId, orgId, costId, clId, name, email }: UserArgs,
     ctx: Context
@@ -337,13 +336,13 @@ const Users = {
     } catch (e) {
       logger.error({
         error: e,
-        message: 'addUser-checkUserIsAllowedError',
+        message: 'adicionarUser-checkUserIsAllowedError',
       })
       throw e
     }
 
     return storefrontPermissionsClient
-      .addUser({
+      .adicionarUser({
         costId,
         email,
         id,
@@ -353,32 +352,32 @@ const Users = {
         userId,
       })
       .then((result: any) => {
-        return result.data.addUser
+        return result.data.adicionarUser
       })
       .catch((error: any) => {
         logger.error({
           error,
-          message: 'addUser-error',
+          message: 'adicionarUser-error',
         })
 
         const message = error.graphQLErrors[0]?.message ?? error.message
         let status = ''
 
         if (message.includes(MessageSFPUserAddError.DUPLICATED)) {
-          status = StatusAddUserError.DUPLICATED
+          status = StatusadicionarUserError.DUPLICATED
         } else if (
           message.includes(MessageSFPUserAddError.DUPLICATED_ORGANIZATION)
         ) {
-          status = StatusAddUserError.DUPLICATED_ORGANIZATION
+          status = StatusadicionarUserError.DUPLICATED_ORGANIZATION
         } else {
-          status = StatusAddUserError.ERROR
+          status = StatusadicionarUserError.ERROR
         }
 
         return { status, message }
       })
   },
 
-  updateUser: async (
+  atualizarUser: async (
     _: void,
     { id, roleId, userId, orgId, costId, clId }: UserArgs,
     ctx: Context
@@ -406,7 +405,7 @@ const Users = {
     } catch (e) {
       logger.error({
         error: e,
-        message: 'addUser-checkUserIsAllowedError',
+        message: 'adicionarUser-checkUserIsAllowedError',
       })
       throw e
     }
@@ -421,7 +420,7 @@ const Users = {
     }
 
     return storefrontPermissionsClient
-      .updateUser({
+      .atualizarUser({
         clId,
         costId,
         id,
@@ -430,12 +429,12 @@ const Users = {
         userId,
       })
       .then((result: any) => {
-        return result.data.updateUser
+        return result.data.atualizarUser
       })
       .catch((error: any) => {
         logger.error({
           error,
-          message: 'updateUser-error',
+          message: 'atualizarUser-error',
         })
 
         return { status: 'error', message: error }
@@ -487,7 +486,7 @@ const Users = {
     } catch (e) {
       logger.error({
         error: e,
-        message: 'addUser-checkUserIsAllowedError',
+        message: 'adicionarUser-checkUserIsAllowedError',
       })
       throw e
     }
@@ -518,7 +517,7 @@ const Users = {
       .catch((error: any) => {
         logger.error({
           error,
-          message: 'addUser-error',
+          message: 'adicionarUser-error',
         })
 
         return { status: 'error', message: error }

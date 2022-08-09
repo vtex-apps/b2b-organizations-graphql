@@ -158,6 +158,38 @@ export const schemas = [
           type: ['string', 'null'],
           title: 'Phone Number',
         },
+        type: {
+          type: ['string', 'null'],
+          title: 'Tipo',
+        },
+        organizationPublic: {
+          type: ['string', 'null'],
+          title: 'Publico da Organização',
+        },
+        ie: {
+          type: ['string', 'null'],
+          title: 'Inscrição Estadual',
+        },
+        icms: {
+          type: ['boolean', 'null'],
+          title: 'Contribuinte ICMS',
+        },
+        area: {
+          type: ['string', 'null'],
+          title: 'Área de Atuação',
+        },
+        areaOthers: {
+          type: ['string', 'null'],
+          title: 'Área de Atuação - Outros',
+        },
+        phone: {
+          type: ['string', 'null'],
+          title: 'Phone Number',
+        },
+        newsletter: {
+          type: ['boolean', 'null'],
+          title: 'Newsletter',
+        },
       },
       'v-indexed': ['name', 'organization', 'businessDocument'],
       'v-immediate-indexing': true,

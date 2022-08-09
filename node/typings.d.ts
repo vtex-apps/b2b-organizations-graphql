@@ -63,6 +63,7 @@ interface DefaultCostCenterInput {
   ie?: string
   icms?: boolean
   area?: string
+  areaOthers?: string
   phone?: string
   newsletter?: boolean
 }
@@ -78,6 +79,7 @@ interface CostCenterInput {
   ie?: string
   icms?: boolean
   area?: string
+  areaOthers?: string
   phone?: string
   newsletter?: boolean
 }

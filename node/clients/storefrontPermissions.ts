@@ -91,8 +91,8 @@ export const QUERIES = {
 }
 
 export const MUTATIONS = {
-  addUser: `mutation ($id: ID $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $name: String! $canImpersonate: Boolean! $email: String!) {
-    addUser (id:$id, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, name: $name, canImpersonate: $canImpersonate, email: $email) {
+  adicionarUser: `mutation ($id: ID $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $name: String! $canImpersonate: Boolean! $email: String!) {
+    adicionarUser (id:$id, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, name: $name, canImpersonate: $canImpersonate, email: $email) {
       id
       status
       message
@@ -107,8 +107,8 @@ export const MUTATIONS = {
     }
   }`,
 
-  updateUser: `mutation ($id: ID $clId: ID! $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $canImpersonate: Boolean!) {
-    updateUser (id:$id, clId: $clId, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, canImpersonate: $canImpersonate) {
+  atualizarUser: `mutation ($id: ID $clId: ID! $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $canImpersonate: Boolean!) {
+    atualizarUser (id:$id, clId: $clId, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, canImpersonate: $canImpersonate) {
       id
       status
       message
@@ -122,8 +122,8 @@ export const MUTATIONS = {
       message
     }
   }`,
-  impersonateUser: `mutation impersonateUser($userId: ID) {
-      impersonateUser(userId: $userId) {
+  xptoUser: `mutation xptoUser($userId: ID) {
+      xptoUser(userId: $userId) {
           id
           status
           message
@@ -300,7 +300,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     )
   }
 
-  public addUser = async ({
+  public adicionarUser = async ({
     id,
     roleId,
     userId,
@@ -319,7 +319,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     email: string
   }): Promise<any> => {
     return this.graphql.mutate({
-      mutate: MUTATIONS.addUser,
+      mutate: MUTATIONS.adicionarUser,
       variables: {
         canImpersonate: false,
         costId,
@@ -333,7 +333,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     })
   }
 
-  public updateUser = async ({
+  public atualizarUser = async ({
     id,
     roleId,
     userId,
@@ -351,7 +351,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     email: string
   }): Promise<any> => {
     return this.graphql.mutate({
-      mutate: MUTATIONS.updateUser,
+      mutate: MUTATIONS.atualizarUser,
       variables: {
         canImpersonate: false,
         clId,
@@ -419,14 +419,10 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     })
   }
 
-  public impersonateUser = async ({
-    userId,
-  }: {
-    userId?: string
-  }): Promise<any> => {
+  public xptoUser = async ({ userId }: { userId?: string }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: MUTATIONS.impersonateUser,
+        mutate: MUTATIONS.xptoUser,
         variables: {
           userId,
         },
