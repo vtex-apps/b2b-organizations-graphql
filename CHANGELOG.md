@@ -7,21 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.25.1] - 2022-07-19
+## [0.19.6] - 2022-08-08
 
-## [0.25.0] - 2022-07-19
+### Changed
 
-## [0.24.0] - 2022-07-18
+- App Review: Added logging, fixed security issues and code cleanup
 
-## [0.23.0] - 2022-07-18
+## [0.19.5] - 2022-07-19
 
-## [0.22.0] - 2022-07-18
+### Fixed
 
-## [0.21.0] - 2022-07-18
-
-## [0.21.0] - 2022-07-18
-
-## [0.20.0] - 2022-07-18
+- Fixed on update the user data, and it disappeared from the list
 
 ## [0.19.4] - 2022-07-08
 

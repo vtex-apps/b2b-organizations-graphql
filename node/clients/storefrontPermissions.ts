@@ -107,8 +107,8 @@ export const MUTATIONS = {
     }
   }`,
 
-  atualizarUser: `mutation ($id: ID $clId: ID! $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $canImpersonate: Boolean!) {
-    atualizarUser (id:$id, clId: $clId, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, canImpersonate: $canImpersonate) {
+  updateUser: `mutation ($id: ID $clId: ID! $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $canImpersonate: Boolean!, $name: String, $email: String) {
+    updateUser (id:$id, clId: $clId, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, canImpersonate: $canImpersonate, name: $name, email: $email) {
       id
       status
       message
@@ -122,8 +122,8 @@ export const MUTATIONS = {
       message
     }
   }`,
-  xptoUser: `mutation xptoUser($userId: ID) {
-      xptoUser(userId: $userId) {
+  impersonateUser: `mutation impersonateUser($userId: ID) {
+      impersonateUser(userId: $userId) {
           id
           status
           message
@@ -333,13 +333,15 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     })
   }
 
-  public atualizarUser = async ({
+  public updateUser = async ({
     id,
     roleId,
     userId,
     orgId,
     costId,
     clId,
+    name,
+    email,
   }: {
     id?: string
     roleId: string
@@ -351,12 +353,14 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     email: string
   }): Promise<any> => {
     return this.graphql.mutate({
-      mutate: MUTATIONS.atualizarUser,
+      mutate: MUTATIONS.updateUser,
       variables: {
         canImpersonate: false,
         clId,
         costId,
+        email,
         id,
+        name,
         orgId,
         roleId,
         userId,
@@ -419,10 +423,14 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     })
   }
 
-  public xptoUser = async ({ userId }: { userId?: string }): Promise<any> => {
+  public impersonateUser = async ({
+    userId,
+  }: {
+    userId?: string
+  }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: MUTATIONS.xptoUser,
+        mutate: MUTATIONS.impersonateUser,
         variables: {
           userId,
         },

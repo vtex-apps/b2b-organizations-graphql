@@ -1,8 +1,5 @@
+import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
 import GraphQLError from '../../utils/GraphQLError'
-import {
-  MessageSFPUserAddError,
-  StatusadicionarUserError,
-} from '../../constants'
 
 export const getUserRoleSlug: (
   id: string,
@@ -26,8 +23,8 @@ export const getUserRoleSlug: (
     })
     .catch((error: any) => {
       logger.warn({
-        message: 'getUserRoleSlug-error',
         error,
+        message: 'getUserRoleSlug-error',
       })
 
       return ''
@@ -135,7 +132,11 @@ const Users = {
    * @param userId
    * @param ctx
    */
-  xptoUser: async (_: void, { clId, userId }: UserArgs, ctx: Context) => {
+  impersonateUser: async (
+    _: void,
+    { clId, userId }: UserArgs,
+    ctx: Context
+  ) => {
     const {
       clients: {
         masterdata,
@@ -144,6 +145,25 @@ const Users = {
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as Context | any
+
+    const getUserFromStorefrontPermissions = ({
+      clId: clientId,
+    }: {
+      clId: string
+    }) =>
+      storefrontPermissionsClient
+        .getUser(clientId)
+        .then((result: any) => {
+          return result?.data?.getUser ?? {}
+        })
+        .catch((error: any) => {
+          logger.warn({
+            error,
+            message: 'impersonateUser-getUserError',
+          })
+
+          return error
+        })
 
     if (!adminUserAuthToken && clId) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
@@ -155,19 +175,7 @@ const Users = {
       const roleSlug = await getUserRoleSlug(clId, ctx)
 
       if (!roleSlug.includes('sales')) {
-        const userInfo = await storefrontPermissionsClient
-          .getUser(clId)
-          .then((result: any) => {
-            return result?.data?.getUser ?? {}
-          })
-          .catch((error: any) => {
-            logger.warn({
-              error,
-              message: 'xptoUser-getUserError',
-            })
-
-            return error
-          })
+        const userInfo = await getUserFromStorefrontPermissions({ clId })
 
         permitted =
           (storefrontPermissions?.permissions?.includes(
@@ -200,34 +208,26 @@ const Users = {
         .then((res: any) => {
           return res?.userId ?? undefined
         })
-        .catch((e: any) => {
+        .catch((error: any) => {
           logger.warn({
-            error: e,
-            message: 'xptoUser-getUserIdError',
+            error,
+            message: 'impersonateUser-getUserIdError',
           })
 
-          return e
+          return error
         })
 
       if (!userIdFromCl) {
+        logger.warn({
+          message: `userId ${userIdFromCl} not found in CL`,
+        })
+
         return { status: 'error', message: 'userId not found in CL' }
       }
 
       userId = userIdFromCl
 
-      const userData = await storefrontPermissionsClient
-        .getUser(clId)
-        .then((res: any) => {
-          return res?.data?.getUser
-        })
-        .catch((e: any) => {
-          logger.warn({
-            error: e,
-            message: 'xptoUser-getUserError',
-          })
-
-          return e
-        })
+      const userData = await getUserFromStorefrontPermissions({ clId })
 
       if (userData && !userData.userId) {
         await storefrontPermissionsClient.saveUser({
@@ -238,11 +238,11 @@ const Users = {
     }
 
     return storefrontPermissionsClient
-      .xptoUser({ userId })
+      .impersonateUser({ userId })
       .catch((error: any) => {
         logger.error({
           error,
-          message: 'xptoUser-xptoUserError',
+          message: 'impersonateUser-xptoUserError',
         })
 
         return { status: 'error', message: error }
@@ -311,7 +311,7 @@ const Users = {
       })
   },
 
-  adicionarUser: async (
+  addUser: async (
     _: void,
     { id, roleId, userId, orgId, costId, clId, name, email }: UserArgs,
     ctx: Context
@@ -333,12 +333,12 @@ const Users = {
         storefrontPermissions,
         storefrontPermissionsClient,
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        error: e,
-        message: 'adicionarUser-checkUserIsAllowedError',
+        error,
+        message: 'addUser-checkUserIsAllowedError',
       })
-      throw e
+      throw error
     }
 
     return storefrontPermissionsClient
@@ -352,25 +352,25 @@ const Users = {
         userId,
       })
       .then((result: any) => {
-        return result.data.adicionarUser
+        return result.data.addUser
       })
       .catch((error: any) => {
         logger.error({
           error,
-          message: 'adicionarUser-error',
+          message: 'addUser-error',
         })
 
         const message = error.graphQLErrors[0]?.message ?? error.message
         let status = ''
 
         if (message.includes(MessageSFPUserAddError.DUPLICATED)) {
-          status = StatusadicionarUserError.DUPLICATED
+          status = StatusAddUserError.DUPLICATED
         } else if (
           message.includes(MessageSFPUserAddError.DUPLICATED_ORGANIZATION)
         ) {
-          status = StatusadicionarUserError.DUPLICATED_ORGANIZATION
+          status = StatusAddUserError.DUPLICATED_ORGANIZATION
         } else {
-          status = StatusadicionarUserError.ERROR
+          status = StatusAddUserError.ERROR
         }
 
         return { status, message }
@@ -379,7 +379,7 @@ const Users = {
 
   atualizarUser: async (
     _: void,
-    { id, roleId, userId, orgId, costId, clId }: UserArgs,
+    { id, roleId, userId, orgId, costId, clId, name, email }: UserArgs,
     ctx: Context
   ) => {
     const {
@@ -402,12 +402,12 @@ const Users = {
         storefrontPermissions,
         storefrontPermissionsClient,
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        error: e,
-        message: 'adicionarUser-checkUserIsAllowedError',
+        error,
+        message: 'addUser-checkUserIsAllowedError',
       })
-      throw e
+      throw error
     }
 
     if (clId && !userId) {
@@ -423,7 +423,9 @@ const Users = {
       .atualizarUser({
         clId,
         costId,
+        email,
         id,
+        name,
         orgId,
         roleId,
         userId,
@@ -483,12 +485,12 @@ const Users = {
         storefrontPermissions,
         storefrontPermissionsClient,
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        error: e,
-        message: 'adicionarUser-checkUserIsAllowedError',
+        error,
+        message: 'addUser-checkUserIsAllowedError',
       })
-      throw e
+      throw error
     }
 
     if (clId && !userId) {
