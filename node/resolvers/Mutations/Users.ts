@@ -342,7 +342,7 @@ const Users = {
     }
 
     return storefrontPermissionsClient
-      .impersonate({
+      .addUser({
         costId,
         email,
         id,
@@ -377,7 +377,7 @@ const Users = {
       })
   },
 
-  atualizarUser: async (
+  updateUser: async (
     _: void,
     { id, roleId, userId, orgId, costId, clId, name, email }: UserArgs,
     ctx: Context
@@ -420,7 +420,7 @@ const Users = {
     }
 
     return storefrontPermissionsClient
-      .atualizarUser({
+      .updateUser({
         clId,
         costId,
         email,
@@ -431,12 +431,12 @@ const Users = {
         userId,
       })
       .then((result: any) => {
-        return result.data.atualizarUser
+        return result.data.updateUser
       })
       .catch((error: any) => {
         logger.error({
           error,
-          message: 'atualizarUser-error',
+          message: 'updateUser-error',
         })
 
         return { status: 'error', message: error }
@@ -519,7 +519,7 @@ const Users = {
       .catch((error: any) => {
         logger.error({
           error,
-          message: 'impersonate-error',
+          message: 'addUser-error',
         })
 
         return { status: 'error', message: error }
