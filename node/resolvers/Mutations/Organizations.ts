@@ -11,6 +11,7 @@ import {
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import message from '../message'
+import B2BSettings from '../Queries/Settings'
 
 const Organizations = {
   createOrganization: async (
@@ -121,6 +122,12 @@ const Organizations = {
 
     const now = new Date()
 
+    const settings = (await B2BSettings.getB2BSettings(
+      undefined,
+      undefined,
+      ctx
+    )) as any
+
     const organizationRequest = {
       name,
       ...(tradeName && { tradeName }),
@@ -131,12 +138,31 @@ const Organizations = {
       created: now,
     }
 
+    if (settings?.autoApprove) {
+      organizationRequest.status = 'approved'
+    }
+
     try {
       const result = await masterdata.createDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         fields: organizationRequest,
         schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
       })
+
+      if (settings?.autoApprove) {
+        Organizations.updateOrganization(
+          undefined,
+          {
+            id: result.DocumentId,
+            name,
+            status: 'approved',
+            priceTables: settings?.defaultPriceTables,
+            paymentTerms: settings?.defaultPaymentTerms,
+            collections: [],
+          },
+          ctx
+        )
+      }
 
       return { href: result.Href, id: result.DocumentId, status: duplicate }
     } catch (e) {

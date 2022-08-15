@@ -37,6 +37,14 @@ export const COST_CENTER_FIELDS = [
 ]
 export const COST_CENTER_SCHEMA_VERSION = 'v0.0.6'
 
+export const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
+export const B2B_SETTINGS_FIELDS = [
+  'autoApprove',
+  'defaultPaymentTerms',
+  'defaultPriceTables'
+]
+export const B2B_SETTINGS_SCHEMA_VERSION = 'v0.0.8'
+
 export const schemas = [
   {
     name: ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -160,6 +168,28 @@ export const schemas = [
         },
       },
       'v-indexed': ['name', 'organization', 'businessDocument'],
+      'v-immediate-indexing': true,
+      'v-cache': false,
+    },
+  },
+  {
+    name: B2B_SETTINGS_DATA_ENTITY,
+    version: B2B_SETTINGS_SCHEMA_VERSION,
+    body: {
+      properties: {
+        autoApprove: {
+          type: 'boolean',
+          title: 'Auto Approve',
+        },
+        defaultPaymentTerms: {
+          type: 'array',
+          title: 'Default Payment Terms',
+        },
+        defaultPriceTables: {
+          type: 'array',
+          title: 'Default Price Tables',
+        },
+      },
       'v-immediate-indexing': true,
       'v-cache': false,
     },

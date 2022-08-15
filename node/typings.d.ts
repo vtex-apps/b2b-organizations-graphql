@@ -110,6 +110,12 @@ interface CostCenter {
   businessDocument?: string
 }
 
+interface B2BSetting {
+  autoApprove: boolean
+  defaultPaymentTerms: PaymentTerm[]
+  defaultPriceTables: [String]
+}
+
 interface UserArgs {
   id?: string
   roleId: string
@@ -125,4 +131,15 @@ interface UserArgs {
 interface PaymentTerm {
   name: string
   id: string
+}
+
+interface Price {
+  name: string
+  id: string
+}
+
+interface B2BSettingsInput {
+  autoApprove: boolean
+  defaultPaymentTerms: PaymentTerm[]
+  defaultPriceTables: Price[]
 }
