@@ -318,19 +318,31 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     name: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: MUTATIONS.addUser,
-      variables: {
-        canImpersonate: false,
-        costId,
-        email,
-        id,
-        name,
-        orgId,
-        roleId,
-        userId,
+    return this.graphql.mutate(
+      {
+        mutate: MUTATIONS.addUser,
+        variables: {
+          canImpersonate: false,
+          costId,
+          email,
+          id,
+          name,
+          orgId,
+          roleId,
+          userId,
+        },
       },
-    })
+      {
+        headers: {
+          ...(this.context.adminUserAuthToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.adminUserAuthToken}`,
+          }),
+          ...(this.context.storeUserAuthToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.storeUserAuthToken}`,
+          }),
+        },
+      }
+    )
   }
 
   public updateUser = async ({
@@ -352,20 +364,32 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     name: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: MUTATIONS.updateUser,
-      variables: {
-        canImpersonate: false,
-        clId,
-        costId,
-        email,
-        id,
-        name,
-        orgId,
-        roleId,
-        userId,
+    return this.graphql.mutate(
+      {
+        mutate: MUTATIONS.updateUser,
+        variables: {
+          canImpersonate: false,
+          clId,
+          costId,
+          email,
+          id,
+          name,
+          orgId,
+          roleId,
+          userId,
+        },
       },
-    })
+      {
+        headers: {
+          ...(this.context.adminUserAuthToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.adminUserAuthToken}`,
+          }),
+          ...(this.context.storeUserAuthToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.storeUserAuthToken}`,
+          }),
+        },
+      }
+    )
   }
 
   // deprecated
@@ -388,20 +412,32 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     name: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: MUTATIONS.saveUser,
-      variables: {
-        id,
-        roleId,
-        userId,
-        orgId,
-        costId,
-        clId,
-        name,
-        email,
-        canImpersonate: false,
+    return this.graphql.mutate(
+      {
+        mutate: MUTATIONS.saveUser,
+        variables: {
+          id,
+          roleId,
+          userId,
+          orgId,
+          costId,
+          clId,
+          name,
+          email,
+          canImpersonate: false,
+        },
       },
-    })
+      {
+        headers: {
+          ...(this.context.adminUserAuthToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.adminUserAuthToken}`,
+          }),
+          ...(this.context.storeUserAuthToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.storeUserAuthToken}`,
+          }),
+        },
+      }
+    )
   }
 
   public deleteUser = async ({
@@ -413,14 +449,26 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     userId?: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: MUTATIONS.deleteUser,
-      variables: {
-        id,
-        userId,
-        email,
+    return this.graphql.mutate(
+      {
+        mutate: MUTATIONS.deleteUser,
+        variables: {
+          email,
+          id,
+          userId,
+        },
       },
-    })
+      {
+        headers: {
+          ...(this.context.adminUserAuthToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.adminUserAuthToken}`,
+          }),
+          ...(this.context.storeUserAuthToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.storeUserAuthToken}`,
+          }),
+        },
+      }
+    )
   }
 
   public impersonateUser = async ({
