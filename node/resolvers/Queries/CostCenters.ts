@@ -33,6 +33,51 @@ const getCostCenters = async ({
   }
 }
 
+const hashCode = function hash(arg: null | string | number | number[]) {
+  const str = arg === null ? '' : arg.toString()
+
+  if (str.length === 0) {
+    return 0
+  }
+
+  return str.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0)
+}
+
+const setGUID = (address: Address) => {
+  return (
+    hashCode(address.street) +
+    hashCode(address.complement) +
+    hashCode(address.city) +
+    hashCode(address.state)
+  ).toString()
+}
+
+const addMissingAddressIds = async (costCenter: CostCenter, ctx: Context) => {
+  const {
+    clients: { masterdata },
+  } = ctx
+
+  let changed = false
+  const { addresses } = costCenter
+
+  for (const [index, address] of addresses.entries()) {
+    if (!address.addressId) {
+      addresses[index].addressId = setGUID(address)
+      changed = true
+    }
+  }
+
+  if (changed) {
+    await masterdata.createOrUpdatePartialDocument({
+      dataEntity: COST_CENTER_DATA_ENTITY,
+      fields: { addresses },
+      id: costCenter.id,
+    })
+  }
+
+  return addresses
+}
+
 const costCenters = {
   getCostCenterById: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
@@ -44,11 +89,15 @@ const costCenters = {
     await checkConfig(ctx)
 
     try {
-      return await masterdata.getDocument({
+      const result: CostCenter = await masterdata.getDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
         fields: COST_CENTER_FIELDS,
         id,
       })
+
+      result.addresses = await addMissingAddressIds(result, ctx)
+
+      return result
     } catch (error) {
       logger.error({ error, message: 'getCostCenterById-error' })
       throw new GraphQLError(getErrorMessage(error))
@@ -99,6 +148,8 @@ const costCenters = {
 
         error()
       }
+
+      costCenter.addresses = await addMissingAddressIds(costCenter, ctx)
 
       return costCenter
     } catch (error) {
