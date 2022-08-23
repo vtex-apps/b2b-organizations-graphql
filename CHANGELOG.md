@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.19.7] - 2022-08-23
+
 ### Fixed
 
 - If a cost center address is missing an `addressId`, one will be automatically generated and saved when querying a cost center by ID
