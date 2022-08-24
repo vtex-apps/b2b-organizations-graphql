@@ -334,11 +334,8 @@ export default class StorefrontPermissions extends AppGraphQLClient {
       },
       {
         headers: {
-          ...(this.context.adminUserAuthToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.adminUserAuthToken}`,
-          }),
-          ...(this.context.storeUserAuthToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.storeUserAuthToken}`,
+          ...(this.context.authToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
           }),
         },
       }
@@ -381,11 +378,8 @@ export default class StorefrontPermissions extends AppGraphQLClient {
       },
       {
         headers: {
-          ...(this.context.adminUserAuthToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.adminUserAuthToken}`,
-          }),
-          ...(this.context.storeUserAuthToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.storeUserAuthToken}`,
+          ...(this.context.authToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
           }),
         },
       }
@@ -429,11 +423,8 @@ export default class StorefrontPermissions extends AppGraphQLClient {
       },
       {
         headers: {
-          ...(this.context.adminUserAuthToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.adminUserAuthToken}`,
-          }),
-          ...(this.context.storeUserAuthToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.storeUserAuthToken}`,
+          ...(this.context.authToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
           }),
         },
       }
@@ -460,11 +451,8 @@ export default class StorefrontPermissions extends AppGraphQLClient {
       },
       {
         headers: {
-          ...(this.context.adminUserAuthToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.adminUserAuthToken}`,
-          }),
-          ...(this.context.storeUserAuthToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.storeUserAuthToken}`,
+          ...(this.context.authToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
           }),
         },
       }
