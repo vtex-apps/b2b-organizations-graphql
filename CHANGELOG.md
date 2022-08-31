@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.19.8] - 2022-08-31
+
 ### Added
 
 - Added the cookie header to storefront permissions requests passing the authentication token.
