@@ -30,7 +30,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
             sender: app ?? 'vtex.b2b-organizations@0.x',
           },
         },
-        query: getPermission.toString(),
+        query: getPermission,
         variables: {},
       },
       {}
@@ -61,7 +61,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
             sender: 'vtex.b2b-organizations@0.x',
           },
         },
-        query: listRoles.toString(),
+        query: listRoles,
         variables: {},
       },
       {}
@@ -77,7 +77,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
             sender: 'vtex.b2b-organizations@0.x',
           },
         },
-        query: getRole.toString(),
+        query: getRole,
         variables: { id: roleId },
       },
       {}
@@ -93,7 +93,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
             sender: 'vtex.b2b-organizations@0.x',
           },
         },
-        query: listAllUsers.toString(),
+        query: listAllUsers,
         variables: {},
       },
       {}
@@ -117,7 +117,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
             sender: 'vtex.b2b-organizations@0.x',
           },
         },
-        query: listUsers.toString(),
+        query: listUsers,
         variables: {
           roleId,
           ...(organizationId && { organizationId }),
@@ -155,7 +155,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
             sender: 'vtex.b2b-organizations@0.x',
           },
         },
-        query: listUsersPaginated.toString(),
+        query: listUsersPaginated,
         variables: {
           page,
           pageSize,
@@ -179,7 +179,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
           sender: 'vtex.b2b-organizations@0.x',
         },
       },
-      query: getUser.toString(),
+      query: getUser,
       variables: { id: userId },
     })
   }
@@ -193,7 +193,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
             sender: 'vtex.b2b-organizations@0.x',
           },
         },
-        query: checkImpersonation.toString(),
+        query: checkImpersonation,
         variables: {},
       },
       {}
@@ -220,7 +220,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: addUser.toString(),
+        mutate: addUser,
         variables: {
           canImpersonate: false,
           costId,
@@ -263,7 +263,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: updateUser.toString(),
+        mutate: updateUser,
         variables: {
           canImpersonate: false,
           clId,
@@ -308,7 +308,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: saveUser.toString(),
+        mutate: saveUser,
         variables: {
           canImpersonate: false,
           clId,
@@ -342,7 +342,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: deleteUser.toString(),
+        mutate: deleteUser,
         variables: {
           email,
           id,
@@ -366,7 +366,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: impersonateUser.toString(),
+        mutate: impersonateUser,
         variables: {
           userId,
         },
