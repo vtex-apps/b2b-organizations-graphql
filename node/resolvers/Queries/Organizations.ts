@@ -105,6 +105,22 @@ const Organizations = {
     }
   },
 
+  getOrganizationsByEmail: async (
+    _: void,
+    { email }: { email: string },
+    { clients: { storefrontPermissions }, vtex: { logger } }: any
+  ) => {
+    try {
+      return storefrontPermissions.getOrganizationsByEmail(email)
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getOrganizationsByEmail-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
+    }
+  },
+
   getOrganizationByIdStorefront: async (
     _: void,
     { id }: { id: string },

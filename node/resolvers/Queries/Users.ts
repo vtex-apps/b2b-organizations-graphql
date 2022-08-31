@@ -7,8 +7,6 @@ import {
 import { toHash } from '../../utils'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import { getAppId } from '../config'
-import CostCenters from './CostCenters'
-import Organizations from './Organizations'
 
 const SCROLL_AWAIT_TIME = 100
 const SLEEP_ADD_PERCENTAGE = 0.1
@@ -99,10 +97,7 @@ const sleep = (ms: number) => {
   return new Promise(resolve => setTimeout(resolve, time))
 }
 
-const Index = {
-  ...CostCenters,
-  ...Organizations,
-
+const Users = {
   getAppSettings: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { apps, masterdata },
@@ -350,4 +345,4 @@ const Index = {
   },
 }
 
-export default Index
+export default Users
