@@ -1,6 +1,7 @@
+import { print } from 'graphql'
 import gql from 'graphql-tag'
 
-export default gql`
+export default print(gql`
   mutation saveUser(
     $id: ID
     $roleId: ID!
@@ -28,4 +29,4 @@ export default gql`
       message
     }
   }
-`
+`)

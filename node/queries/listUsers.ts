@@ -1,6 +1,7 @@
+import { print } from 'graphql'
 import gql from 'graphql-tag'
 
-export default gql`
+export default print(gql`
   query users($organizationId: ID, $costCenterId: ID, $roleId: ID) {
     listUsers(
       organizationId: $organizationId
@@ -18,4 +19,4 @@ export default gql`
       canImpersonate
     }
   }
-`
+`)

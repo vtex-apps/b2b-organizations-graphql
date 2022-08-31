@@ -1,6 +1,7 @@
+import { print } from 'graphql'
 import gql from 'graphql-tag'
 
-export default gql`
+export default print(gql`
   query checkImpersonation {
     checkImpersonation {
       firstName
@@ -10,4 +11,4 @@ export default gql`
       error
     }
   }
-`
+`)

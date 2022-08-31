@@ -1,6 +1,7 @@
+import { print } from 'graphql'
 import gql from 'graphql-tag'
 
-export default gql`
+export default print(gql`
   query permissions {
     checkUserPermission {
       role {
@@ -11,4 +12,4 @@ export default gql`
       permissions
     }
   }
-`
+`)

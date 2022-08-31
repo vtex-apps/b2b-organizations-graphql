@@ -14,6 +14,7 @@ import listAllUsers from '../queries/listAllUsers'
 import listRoles from '../queries/listRoles'
 import listUsers from '../queries/listUsers'
 import listUsersPaginated from '../queries/listUsersPaginated'
+import getOrganizationsByEmail from '../queries/getOrganizationsByEmail'
 
 export default class StorefrontPermissions extends AppGraphQLClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
@@ -44,7 +45,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
           sender: 'vtex.b2b-organizations@0.x',
         },
       },
-      query: '',
+      query: getOrganizationsByEmail,
       variables: {
         email,
       },
@@ -217,17 +218,19 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     name: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: addUser.toString(),
-      variables: {
-        canImpersonate: false,
-        costId,
-        email,
-        id,
-        name,
-        orgId,
-        roleId,
-        userId,
+    return this.graphql.mutate(
+      {
+        mutate: addUser.toString(),
+        variables: {
+          canImpersonate: false,
+          costId,
+          email,
+          id,
+          name,
+          orgId,
+          roleId,
+          userId,
+        },
       },
       {
         headers: {
@@ -258,18 +261,20 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     name: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: updateUser.toString(),
-      variables: {
-        canImpersonate: false,
-        clId,
-        costId,
-        email,
-        id,
-        name,
-        orgId,
-        roleId,
-        userId,
+    return this.graphql.mutate(
+      {
+        mutate: updateUser.toString(),
+        variables: {
+          canImpersonate: false,
+          clId,
+          costId,
+          email,
+          id,
+          name,
+          orgId,
+          roleId,
+          userId,
+        },
       },
       {
         headers: {
@@ -301,18 +306,20 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     name: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: saveUser.toString(),
-      variables: {
-        canImpersonate: false,
-        clId,
-        costId,
-        email,
-        id,
-        name,
-        orgId,
-        roleId,
-        userId,
+    return this.graphql.mutate(
+      {
+        mutate: saveUser.toString(),
+        variables: {
+          canImpersonate: false,
+          clId,
+          costId,
+          email,
+          id,
+          name,
+          orgId,
+          roleId,
+          userId,
+        },
       },
       {
         headers: {
@@ -333,12 +340,14 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     userId?: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: deleteUser.toString(),
-      variables: {
-        email,
-        id,
-        userId,
+    return this.graphql.mutate(
+      {
+        mutate: deleteUser.toString(),
+        variables: {
+          email,
+          id,
+          userId,
+        },
       },
       {
         headers: {

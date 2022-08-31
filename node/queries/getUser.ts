@@ -1,6 +1,7 @@
+import { print } from 'graphql'
 import gql from 'graphql-tag'
 
-export default gql`
+export default print(gql`
   query user($id: ID!) {
     getUser(id: $id) {
       id
@@ -14,4 +15,4 @@ export default gql`
       canImpersonate
     }
   }
-`
+`)

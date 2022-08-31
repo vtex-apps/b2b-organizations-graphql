@@ -111,7 +111,8 @@ const Organizations = {
     { clients: { storefrontPermissions }, vtex: { logger } }: any
   ) => {
     try {
-      return storefrontPermissions.getOrganizationsByEmail(email)
+      return (await storefrontPermissions.getOrganizationsByEmail(email)).data
+        ?.getOrganizationsByEmail
     } catch (error) {
       logger.error({
         error,
