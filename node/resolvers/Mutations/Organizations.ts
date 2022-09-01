@@ -130,7 +130,11 @@ const Organizations = {
 
     const now = new Date()
 
-    const settings = await B2BSettings.getB2BSettings(undefined, undefined, ctx)
+    const settings = (await B2BSettings.getB2BSettings(
+      undefined,
+      undefined,
+      ctx
+    )) as B2BSettingsInput
 
     const status = settings?.autoApprove
       ? ORGANIZATION_REQUEST_STATUSES.APPROVED
@@ -167,7 +171,9 @@ const Organizations = {
           storefrontPermissions,
           logger,
           (settings?.defaultPaymentTerms as unknown) as PaymentTerm[],
-          (settings?.defaultPriceTables as unknown) as Price[]
+          (settings?.defaultPriceTables as unknown) as Price[],
+          Organizations,
+          ctx
         )
       }
 
@@ -330,7 +336,9 @@ const Organizations = {
       storefrontPermissions,
       logger,
       [],
-      []
+      [],
+      Organizations,
+      ctx
     )
 
     // if we reach this block, status is declined

@@ -1,9 +1,9 @@
 import {
-  COST_CENTER_DATA_ENTITY,
-  COST_CENTER_SCHEMA_VERSION,
-  ORGANIZATION_DATA_ENTITY,
+  // COST_CENTER_DATA_ENTITY,
+  // COST_CENTER_SCHEMA_VERSION,
+  // ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_REQUEST_DATA_ENTITY,
-  ORGANIZATION_SCHEMA_VERSION,
+  // ORGANIZATION_SCHEMA_VERSION,
 } from '../mdSchema'
 import GraphQLError from './GraphQLError'
 import message from '../resolvers/message'
@@ -20,11 +20,11 @@ export const updateOrganizationRequest = async (
   storefrontPermissions: any,
   logger: any,
   paymentTerms: PaymentTerm[],
-  priceTables: Price[]
+  priceTables: Price[],
+  Organizations: any,
+  ctx: any
 ) => {
   if (status === 'approved') {
-    const now = new Date()
-
     try {
       // update request status to approved
       masterdata.updatePartialDocument({
@@ -34,46 +34,79 @@ export const updateOrganizationRequest = async (
       })
 
       // create organization
-      const organization = {
-        name: organizationRequest.name,
-        ...(organizationRequest.tradeName && {
-          tradeName: organizationRequest.tradeName,
-        }),
-        status: 'active',
-        created: now,
-        collections: [],
-        paymentTerms,
-        priceTables,
-        costCenters: [],
-      }
+      // const organization = {
+      //   name: organizationRequest.name,
+      //   ...(organizationRequest.tradeName && {
+      //     tradeName: organizationRequest.tradeName,
+      //   }),
+      //   status: 'active',
+      //   created: now,
+      //   collections: [],
+      //   paymentTerms,
+      //   priceTables,
+      //   costCenters: [],
+      // }
 
-      const createOrganizationResult = await masterdata.createDocument({
-        dataEntity: ORGANIZATION_DATA_ENTITY,
-        fields: organization,
-        schema: ORGANIZATION_SCHEMA_VERSION,
-      })
+      // const createOrganizationResult = await masterdata.createDocument({
+      //   dataEntity: ORGANIZATION_DATA_ENTITY,
+      //   fields: organization,
+      //   schema: ORGANIZATION_SCHEMA_VERSION,
+      // })
 
-      const organizationId = createOrganizationResult.DocumentId
+      // const organizationId = createOrganizationResult.DocumentId
 
       // create cost center
-      const costCenter = {
-        name: organizationRequest.defaultCostCenter.name,
-        addresses: [organizationRequest.defaultCostCenter.address],
-        organization: organizationId,
-        ...(organizationRequest.defaultCostCenter.phoneNumber && {
-          phoneNumber: organizationRequest.defaultCostCenter.phoneNumber,
-        }),
-        ...(organizationRequest.defaultCostCenter.businessDocument && {
-          businessDocument:
-            organizationRequest.defaultCostCenter.businessDocument,
-        }),
-      }
+      // const costCenter = {
+      //   name: organizationRequest.defaultCostCenter.name,
+      //   addresses: [organizationRequest.defaultCostCenter.address],
+      //   organization: organizationId,
+      //   ...(organizationRequest.defaultCostCenter.phoneNumber && {
+      //     phoneNumber: organizationRequest.defaultCostCenter.phoneNumber,
+      //   }),
+      //   ...(organizationRequest.defaultCostCenter.businessDocument && {
+      //     businessDocument:
+      //       organizationRequest.defaultCostCenter.businessDocument,
+      //   }),
+      // }
 
-      const createCostCenterResult = await masterdata.createDocument({
-        dataEntity: COST_CENTER_DATA_ENTITY,
-        fields: costCenter,
-        schema: COST_CENTER_SCHEMA_VERSION,
-      })
+      // const createCostCenterResult = await masterdata.createDocument({
+      //   dataEntity: COST_CENTER_DATA_ENTITY,
+      //   fields: costCenter,
+      //   schema: COST_CENTER_SCHEMA_VERSION,
+      // })
+      // console.log(organizationRequest)
+      const {
+        costCenterId,
+        id: organizationId,
+      } = await Organizations.createOrganization(
+        undefined,
+        {
+          input: {
+            name: organizationRequest.name,
+            ...(organizationRequest.tradeName && {
+              tradeName: organizationRequest.tradeName,
+            }),
+            b2bCustomerAdmin: {
+              email,
+              firstName,
+            },
+            defaultCostCenter: {
+              address: organizationRequest.defaultCostCenter.address,
+              name: organizationRequest.defaultCostCenter.name,
+              ...(organizationRequest.defaultCostCenter.phoneNumber && {
+                phoneNumber: organizationRequest.defaultCostCenter.phoneNumber,
+              }),
+              ...(organizationRequest.defaultCostCenter.businessDocument && {
+                businessDocument:
+                  organizationRequest.defaultCostCenter.businessDocument,
+              }),
+            },
+            paymentTerms,
+            priceTables,
+          },
+        },
+        ctx
+      )
 
       // get roleId of org admin
       const roles = await storefrontPermissions
@@ -119,7 +152,7 @@ export const updateOrganizationRequest = async (
           ...existingUser,
           roleId,
           orgId: organizationId,
-          costId: createCostCenterResult.DocumentId,
+          costId: costCenterId,
           name: existingUser?.name || firstName,
           email,
         })
