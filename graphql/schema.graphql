@@ -328,6 +328,9 @@ type B2BOrganization {
   costId: ID
   orgId: ID
   roleId: ID
+  role: SimpleRole
+  organizationName: String
+  costCenterName: String
 }
 
 type SimpleRole {

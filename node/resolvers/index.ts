@@ -12,6 +12,11 @@ import UsersQuery from './Queries/Users'
 import Routes from './Routes'
 
 export const resolvers = {
+  B2BOrganization: {
+    costCenterName,
+    organizationName,
+    role,
+  },
   B2BUser: {
     costCenterName,
     organizationName,

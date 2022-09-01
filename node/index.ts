@@ -43,6 +43,7 @@ export default new Service<Clients, RecorderState, ParamsContext>({
   clients,
   graphql: {
     resolvers: {
+      B2BOrganization: resolvers.B2BOrganization,
       B2BUser: resolvers.B2BUser,
       Mutation: resolvers.Mutation,
       Query: resolvers.Query,
