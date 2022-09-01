@@ -269,12 +269,6 @@ type CostCenter {
   businessDocument: String
 }
 
-type B2BSetting {
-  autoApprove: Boolean
-  defaultPaymentTerms: [PaymentTerm]
-  defaultPriceTables: [String]
-}
-
 type Address {
   addressId: String
   addressType: String
