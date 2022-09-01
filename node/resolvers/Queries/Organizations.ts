@@ -108,7 +108,7 @@ const Organizations = {
   getOrganizationsByEmail: async (
     _: void,
     { email }: { email: string },
-    { clients: { storefrontPermissions }, vtex: { logger } }: any
+    { clients: { storefrontPermissions }, vtex: { logger } }: Context
   ) => {
     try {
       return (await storefrontPermissions.getOrganizationsByEmail(email)).data
