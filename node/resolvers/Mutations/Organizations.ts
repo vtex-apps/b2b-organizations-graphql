@@ -95,7 +95,7 @@ const Organizations = {
   createOrganizationRequest: async (
     _: void,
     {
-      input: { name, tradeName, b2bCustomerAdmin },
+      input: { name, tradeName, b2bCustomerAdmin, defaultCostCenter },
     }: { input: OrganizationInput },
     ctx: Context
   ) => {
@@ -146,6 +146,7 @@ const Organizations = {
       b2bCustomerAdmin,
       status,
       notes: '',
+      defaultCostCenter,
       created: now,
     }
 
