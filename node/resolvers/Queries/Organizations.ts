@@ -108,11 +108,73 @@ const Organizations = {
   getOrganizationsByEmail: async (
     _: void,
     { email }: { email: string },
-    { clients: { storefrontPermissions }, vtex: { logger } }: any
+    {
+      clients: { storefrontPermissions, session },
+      vtex: { logger, sessionToken, adminUserAuthToken },
+    }: any
   ) => {
+    const organizationFilters: string[] = []
+
+    const {
+      data: { checkUserPermission },
+    }: any = await storefrontPermissions
+      .checkUserPermission('vtex.b2b-organizations@1.x')
+      .catch((error: any) => {
+        logger.error({
+          error,
+          message: 'checkUserPermission-error',
+        })
+
+        return {
+          data: {
+            checkUserPermission: null,
+          },
+        }
+      })
+
+    if (
+      !adminUserAuthToken &&
+      !checkUserPermission?.role.slug.match(/sales-admin/)
+    ) {
+      const sessionData = await session
+        .getSession(sessionToken as string, ['*'])
+        .then((currentSession: any) => {
+          return currentSession.sessionData
+        })
+        .catch((error: any) => {
+          logger.warn({
+            error,
+            message: 'getOrganizationsByEmail-session-error',
+          })
+
+          return null
+        })
+
+      if (checkUserPermission?.role.slug.match(/customer-admin/)) {
+        const orgId =
+          sessionData?.namespaces?.['storefront-permissions']?.organization
+            ?.value
+
+        if (!orgId) {
+          throw new Error('No permission for getting the organizations')
+        }
+
+        organizationFilters.push(orgId)
+      } else {
+        email = sessionData?.namespaces?.profile?.email?.value
+      }
+    }
+
+    const organizations = (
+      await storefrontPermissions.getOrganizationsByEmail(email)
+    ).data?.getOrganizationsByEmail?.filter(({ orgId }: { orgId: string }) => {
+      return organizationFilters.length > 0
+        ? organizationFilters.find((id: string) => orgId === id)
+        : true
+    })
+
     try {
-      return (await storefrontPermissions.getOrganizationsByEmail(email)).data
-        ?.getOrganizationsByEmail
+      return organizations
     } catch (error) {
       logger.error({
         error,
