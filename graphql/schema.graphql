@@ -325,6 +325,8 @@ type B2BUser {
 }
 
 type B2BOrganization {
+  id: ID
+  clId: ID
   costId: ID
   orgId: ID
   roleId: ID

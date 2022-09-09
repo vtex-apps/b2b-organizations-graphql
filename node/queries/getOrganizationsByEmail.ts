@@ -7,6 +7,8 @@ export default print(gql`
       costId
       orgId
       roleId
+      id
+      clId
     }
   }
 `)

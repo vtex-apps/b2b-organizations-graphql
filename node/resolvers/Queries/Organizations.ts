@@ -134,7 +134,7 @@ const Organizations = {
 
     if (
       !adminUserAuthToken &&
-      !checkUserPermission?.role.slug.match(/sales-admin/)
+      !checkUserPermission?.permissions.includes('add-sales-users-all')
     ) {
       const sessionData = await session
         .getSession(sessionToken as string, ['*'])
@@ -150,7 +150,7 @@ const Organizations = {
           return null
         })
 
-      if (checkUserPermission?.role.slug.match(/customer-admin/)) {
+      if (checkUserPermission?.permissions.includes('add-users-organization')) {
         const orgId =
           sessionData?.namespaces?.['storefront-permissions']?.organization
             ?.value
