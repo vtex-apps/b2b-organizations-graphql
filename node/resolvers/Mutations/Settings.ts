@@ -1,12 +1,6 @@
 import { getAppId } from '../config'
-import CostCenters from './CostCenters'
-import Organizations from './Organizations'
-import Users from './Users'
 
-const Index = {
-  ...CostCenters,
-  ...Organizations,
-  ...Users,
+const Settings = {
   saveAppSettings: async (_: any, __: any, ctx: Context) => {
     const {
       clients: { apps },
@@ -32,4 +26,4 @@ const Index = {
   },
 }
 
-export default Index
+export default Settings

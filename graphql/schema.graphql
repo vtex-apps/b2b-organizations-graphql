@@ -68,6 +68,9 @@ type Query {
     sortedBy: String
   ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
+
+  getOrganizationsByEmail(email: String!): [B2BOrganization]
+    @cacheControl(scope: PRIVATE)
 }
 
 type Mutation {
@@ -316,6 +319,17 @@ type B2BUser {
   name: String!
   email: String!
   canImpersonate: Boolean
+  role: SimpleRole
+  organizationName: String
+  costCenterName: String
+}
+
+type B2BOrganization {
+  id: ID
+  clId: ID
+  costId: ID
+  orgId: ID
+  roleId: ID
   role: SimpleRole
   organizationName: String
   costCenterName: String

@@ -1,135 +1,20 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
 import { AppGraphQLClient } from '@vtex/api'
 
-export const QUERIES = {
-  getPermission: `query permissions {
-    checkUserPermission {
-      role {
-        id
-        name
-        slug
-      }
-      permissions
-    }
-  }`,
-  listAllUsers: `query users {
-    listAllUsers {
-      id
-      orgId
-      costId
-      name
-      email      
-    }
-  }`,
-  listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID) {
-    listUsers(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId) {
-      id
-      roleId
-      userId
-      clId
-      orgId
-      costId
-      name
-      email
-      canImpersonate
-    }
-  }`,
-  listUsersPaginated: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID, $page: Int, $pageSize: Int, $search: String, $sortOrder: String, $sortedBy: String) {
-    listUsersPaginated(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId, page: $page, pageSize: $pageSize, search: $search, sortOrder: $sortOrder, sortedBy: $sortedBy) {
-      data {
-        id
-        roleId
-        userId
-        clId
-        orgId
-        costId
-        name
-        email
-        canImpersonate
-      }
-      pagination {
-        total
-      }
-    }
-  }`,
-  listRoles: `query roles {
-    listRoles {
-      id
-      name
-      slug
-    }
-  }`,
-  getUser: `query user($id: ID!) {
-    getUser(id: $id) {
-      id
-      roleId
-      userId
-      clId
-      orgId
-      costId
-      name
-      email
-      canImpersonate
-    }
-  }`,
-  getRole: `query role($id: ID!) {
-    getRole(id: $id) {
-      id
-      name
-      slug
-    }
-  }`,
-  checkImpersonation: `query checkImpersonation {
-    checkImpersonation {
-      firstName
-      lastName
-      email
-      userId
-      error
-    }
-  }`,
-}
-
-export const MUTATIONS = {
-  addUser: `mutation ($id: ID $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $name: String! $canImpersonate: Boolean! $email: String!) {
-    addUser (id:$id, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, name: $name, canImpersonate: $canImpersonate, email: $email) {
-      id
-      status
-      message
-    }
-  }`,
-
-  saveUser: `mutation saveUser($id: ID, $roleId: ID!, $userId: ID, $orgId: ID, $costId: ID, $clId: ID, $canImpersonate: Boolean, $name: String!, $email: String!) {
-    saveUser(id: $id, roleId: $roleId, userId: $userId, orgId: $orgId, costId: $costId, clId: $clId, canImpersonate: $canImpersonate, name: $name, email: $email) {
-      id
-      status
-      message
-    }
-  }`,
-
-  updateUser: `mutation ($id: ID $clId: ID! $userId: ID $roleId: ID! $orgId: ID! $costId: ID! $canImpersonate: Boolean!, $name: String, $email: String) {
-    updateUser (id:$id, clId: $clId, userId: $userId, roleId: $roleId, orgId: $orgId, costId: $costId, canImpersonate: $canImpersonate, name: $name, email: $email) {
-      id
-      status
-      message
-    }
-  }`,
-
-  deleteUser: `mutation deleteUser($id: ID!, $userId: ID, $email: String!) {
-    deleteUser(id: $id, userId: $userId, email: $email) {
-      id
-      status
-      message
-    }
-  }`,
-  impersonateUser: `mutation impersonateUser($userId: ID) {
-      impersonateUser(userId: $userId) {
-          id
-          status
-          message
-      }
-  }`,
-}
+import addUser from '../mutations/addUser'
+import deleteUser from '../mutations/deleteUser'
+import impersonateUser from '../mutations/impersonateUser'
+import saveUser from '../mutations/saveUser'
+import updateUser from '../mutations/updateUser'
+import checkImpersonation from '../queries/checkImpersonation'
+import getPermission from '../queries/getPermission'
+import getRole from '../queries/getRole'
+import getUser from '../queries/getUser'
+import listAllUsers from '../queries/listAllUsers'
+import listRoles from '../queries/listRoles'
+import listUsers from '../queries/listUsers'
+import listUsersPaginated from '../queries/listUsersPaginated'
+import getOrganizationsByEmail from '../queries/getOrganizationsByEmail'
 
 export default class StorefrontPermissions extends AppGraphQLClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
@@ -139,30 +24,45 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   public checkUserPermission = async (app?: string): Promise<any> => {
     return this.graphql.query(
       {
-        query: QUERIES.getPermission,
-        variables: {},
         extensions: {
           persistedQuery: {
             provider: 'vtex.storefront-permissions@1.x',
             sender: app ?? 'vtex.b2b-organizations@0.x',
           },
         },
+        query: getPermission,
+        variables: {},
       },
       {}
     )
   }
 
+  public getOrganizationsByEmail = async (email: string): Promise<any> => {
+    return this.graphql.query({
+      extensions: {
+        persistedQuery: {
+          provider: 'vtex.storefront-permissions@1.x',
+          sender: 'vtex.b2b-organizations@0.x',
+        },
+      },
+      query: getOrganizationsByEmail,
+      variables: {
+        email,
+      },
+    })
+  }
+
   public listRoles = async (): Promise<any> => {
     return this.graphql.query(
       {
-        query: QUERIES.listRoles,
-        variables: {},
         extensions: {
           persistedQuery: {
             provider: 'vtex.storefront-permissions@1.x',
             sender: 'vtex.b2b-organizations@0.x',
           },
         },
+        query: listRoles,
+        variables: {},
       },
       {}
     )
@@ -171,14 +71,14 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   public getRole = async (roleId: string): Promise<any> => {
     return this.graphql.query(
       {
-        query: QUERIES.getRole,
-        variables: { id: roleId },
         extensions: {
           persistedQuery: {
             provider: 'vtex.storefront-permissions@1.x',
             sender: 'vtex.b2b-organizations@0.x',
           },
         },
+        query: getRole,
+        variables: { id: roleId },
       },
       {}
     )
@@ -187,14 +87,14 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   public listAllUsers = async (): Promise<any> => {
     return this.graphql.query(
       {
-        query: QUERIES.listAllUsers,
-        variables: {},
         extensions: {
           persistedQuery: {
             provider: 'vtex.storefront-permissions@1.x',
             sender: 'vtex.b2b-organizations@0.x',
           },
         },
+        query: listAllUsers,
+        variables: {},
       },
       {}
     )
@@ -211,17 +111,17 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.query(
       {
-        query: QUERIES.listUsers,
-        variables: {
-          roleId,
-          ...(organizationId && { organizationId }),
-          ...(costCenterId && { costCenterId }),
-        },
         extensions: {
           persistedQuery: {
             provider: 'vtex.storefront-permissions@1.x',
             sender: 'vtex.b2b-organizations@0.x',
           },
+        },
+        query: listUsers,
+        variables: {
+          roleId,
+          ...(organizationId && { organizationId }),
+          ...(costCenterId && { costCenterId }),
         },
       },
       {}
@@ -249,22 +149,22 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.query(
       {
-        query: QUERIES.listUsersPaginated,
-        variables: {
-          roleId,
-          page,
-          pageSize,
-          search,
-          sortOrder,
-          sortedBy,
-          ...(organizationId && { organizationId }),
-          ...(costCenterId && { costCenterId }),
-        },
         extensions: {
           persistedQuery: {
             provider: 'vtex.storefront-permissions@1.x',
             sender: 'vtex.b2b-organizations@0.x',
           },
+        },
+        query: listUsersPaginated,
+        variables: {
+          page,
+          pageSize,
+          roleId,
+          search,
+          sortOrder,
+          sortedBy,
+          ...(organizationId && { organizationId }),
+          ...(costCenterId && { costCenterId }),
         },
       },
       {}
@@ -273,28 +173,28 @@ export default class StorefrontPermissions extends AppGraphQLClient {
 
   public getUser = async (userId: string): Promise<any> => {
     return this.graphql.query({
-      query: QUERIES.getUser,
-      variables: { id: userId },
       extensions: {
         persistedQuery: {
           provider: 'vtex.storefront-permissions@1.x',
           sender: 'vtex.b2b-organizations@0.x',
         },
       },
+      query: getUser,
+      variables: { id: userId },
     })
   }
 
   public checkImpersonation = async (): Promise<any> => {
     return this.graphql.query(
       {
-        query: QUERIES.checkImpersonation,
-        variables: {},
         extensions: {
           persistedQuery: {
             provider: 'vtex.storefront-permissions@1.x',
             sender: 'vtex.b2b-organizations@0.x',
           },
         },
+        query: checkImpersonation,
+        variables: {},
       },
       {}
     )
@@ -320,7 +220,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: MUTATIONS.addUser,
+        mutate: addUser,
         variables: {
           canImpersonate: false,
           costId,
@@ -363,7 +263,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: MUTATIONS.updateUser,
+        mutate: updateUser,
         variables: {
           canImpersonate: false,
           clId,
@@ -408,17 +308,17 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: MUTATIONS.saveUser,
+        mutate: saveUser,
         variables: {
+          canImpersonate: false,
+          clId,
+          costId,
+          email,
           id,
+          name,
+          orgId,
           roleId,
           userId,
-          orgId,
-          costId,
-          clId,
-          name,
-          email,
-          canImpersonate: false,
         },
       },
       {
@@ -442,7 +342,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: MUTATIONS.deleteUser,
+        mutate: deleteUser,
         variables: {
           email,
           id,
@@ -466,19 +366,19 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.mutate(
       {
-        mutate: MUTATIONS.impersonateUser,
+        mutate: impersonateUser,
         variables: {
           userId,
         },
       },
       {
-        params: {
-          locale: this.context.locale,
-        },
         headers: {
           ...(this.context.sessionToken && {
             sessionToken: this.context.sessionToken,
           }),
+        },
+        params: {
+          locale: this.context.locale,
         },
       }
     )
