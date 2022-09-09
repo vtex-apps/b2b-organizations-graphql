@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.20.0] - 2022-09-09
+
 ### Added
 
 - Added a graphql query to fetch all organizations from a user by email parameter
