@@ -68,7 +68,7 @@ type Query {
     sortedBy: String
   ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
-  getB2BSettings: B2BSetting @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getB2BSettings: B2BSettings @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
 type Mutation {
@@ -329,6 +329,12 @@ type SimpleRole {
   id: ID
   name: String!
   slug: String
+}
+
+type B2BSettings {
+  autoApprove: Boolean
+  defaultPaymentTerms: PaymentTerm[]
+  defaultPriceTables: [String]
 }
 
 scalar Data
