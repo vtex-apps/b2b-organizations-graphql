@@ -333,7 +333,7 @@ type SimpleRole {
 
 type B2BSettings {
   autoApprove: Boolean
-  defaultPaymentTerms: PaymentTerm[]
+  defaultPaymentTerms: [PaymentTerm]
   defaultPriceTables: [String]
 }
 

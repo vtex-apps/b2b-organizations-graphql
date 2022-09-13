@@ -1,6 +1,7 @@
-import { B2B_SETTINGS_DATA_ENTITY } from '../../mdSchema'
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
+
+
 
 const B2BSettings = {
   getB2BSettings: async (_: void, __: void, ctx: Context) => {
@@ -8,6 +9,7 @@ const B2BSettings = {
       clients: { vbase },
     } = ctx
 
+    const B2B_SETTINGS_DATA_ENTITY = "b2b_settings"
     // create schema if it doesn't exist
     await checkConfig(ctx)
 

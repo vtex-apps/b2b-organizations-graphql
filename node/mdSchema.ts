@@ -37,12 +37,6 @@ export const COST_CENTER_FIELDS = [
 ]
 export const COST_CENTER_SCHEMA_VERSION = 'v0.0.6'
 
-export const B2B_SETTINGS_FIELDS = [
-  'autoApprove',
-  'defaultPaymentTerms',
-  'defaultPriceTables',
-]
-
 export const schemas = [
   {
     name: ORGANIZATION_REQUEST_DATA_ENTITY,
