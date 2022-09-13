@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+ - Allow users to set auto approval for new organization with a new setting fields
+## [0.19.8] - 2022-08-31
+
+### Added
+
+- Added the cookie header to storefront permissions requests passing the authentication token.
 
 ## [0.19.7] - 2022-08-23
 
