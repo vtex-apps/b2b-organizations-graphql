@@ -71,6 +71,8 @@ type Query {
 
   getOrganizationsByEmail(email: String!): [B2BOrganization]
     @cacheControl(scope: PRIVATE)
+
+  checkOrganizationIsActive(id: String): Boolean @cacheControl(scope: PRIVATE)
 }
 
 type Mutation {

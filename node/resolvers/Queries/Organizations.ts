@@ -27,6 +27,53 @@ const getWhereByStatus = ({ status }: { status: string[] }) => {
 }
 
 const Organizations = {
+  checkOrganizationIsActive: async (
+    _: void,
+    { id }: { id: string },
+    ctx: Context
+  ) => {
+    const {
+      clients: { session },
+      vtex: { logger, sessionToken },
+    } = ctx
+
+    const sessionData = await session
+      .getSession(sessionToken as string, ['*'])
+      .then((currentSession: any) => {
+        return currentSession.sessionData
+      })
+      .catch((error: any) => {
+        logger.warn({
+          error,
+          message: 'checkOrganizationIsActive-error',
+        })
+
+        return null
+      })
+
+    if (!sessionData) {
+      throw new Error('No session data for this current user')
+    }
+
+    const orgId =
+      sessionData?.namespaces?.['storefront-permissions']?.organization
+        ?.value || id
+
+    const organization = (await Organizations.getOrganizationById(
+      _,
+      { id: orgId },
+      ctx
+    )) as {
+      status: string
+    }
+
+    if (!organization) {
+      throw new Error('Organization not found')
+    }
+
+    return organization?.status === 'active'
+  },
+
   getOrganizationById: async (
     _: void,
     { id }: { id: string },
