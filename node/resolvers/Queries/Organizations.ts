@@ -34,7 +34,7 @@ const Organizations = {
   ) => {
     const {
       clients: { session },
-      vtex: { logger, sessionToken },
+      vtex: { logger, sessionToken, adminUserAuthToken },
     } = ctx
 
     const sessionData = await session
@@ -55,9 +55,12 @@ const Organizations = {
       throw new Error('No session data for this current user')
     }
 
-    const orgId =
-      sessionData?.namespaces?.['storefront-permissions']?.organization
-        ?.value || params?.id
+    let orgId =
+      sessionData?.namespaces?.['storefront-permissions']?.organization?.value
+
+    if (params?.id && adminUserAuthToken) {
+      orgId = params?.id
+    }
 
     const organization = (await Organizations.getOrganizationById(
       _,
