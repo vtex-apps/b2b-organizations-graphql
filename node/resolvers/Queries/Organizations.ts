@@ -29,7 +29,7 @@ const getWhereByStatus = ({ status }: { status: string[] }) => {
 const Organizations = {
   checkOrganizationIsActive: async (
     _: void,
-    { id }: { id: string },
+    params: { id: string } | null,
     ctx: Context
   ) => {
     const {
@@ -57,7 +57,7 @@ const Organizations = {
 
     const orgId =
       sessionData?.namespaces?.['storefront-permissions']?.organization
-        ?.value || id
+        ?.value || params?.id
 
     const organization = (await Organizations.getOrganizationById(
       _,
@@ -261,12 +261,18 @@ const Organizations = {
       throw new GraphQLError('operation-not-permitted')
     }
 
+    const organization = await masterdata.getDocument({
+      dataEntity: ORGANIZATION_DATA_ENTITY,
+      fields: ORGANIZATION_FIELDS,
+      id,
+    })
+
+    if (organization?.status !== 'active') {
+      throw new Error('This organization is not active')
+    }
+
     try {
-      return await masterdata.getDocument({
-        dataEntity: ORGANIZATION_DATA_ENTITY,
-        fields: ORGANIZATION_FIELDS,
-        id,
-      })
+      return organization
     } catch (error) {
       logger.error({
         error,
