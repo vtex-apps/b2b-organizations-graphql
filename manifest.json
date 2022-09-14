@@ -13,6 +13,10 @@
     "node": "6.x",
     "graphql": "1.x"
   },
+  "billingOptions": {
+    "type": "free",
+    "availableCountries": ["*"]
+  },
   "dependencies": {
     "vtex.storefront-permissions": "1.x"
   },
