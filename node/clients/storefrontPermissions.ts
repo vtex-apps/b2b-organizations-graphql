@@ -376,6 +376,9 @@ export default class StorefrontPermissions extends AppGraphQLClient {
           ...(this.context.sessionToken && {
             sessionToken: this.context.sessionToken,
           }),
+          ...(this.context.authToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
+          }),
         },
         params: {
           locale: this.context.locale,
