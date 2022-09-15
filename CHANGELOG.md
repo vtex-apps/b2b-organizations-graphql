@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Bug fixed on impersonation user
+
 ## [0.20.0] - 2022-09-09
 
 ### Added
