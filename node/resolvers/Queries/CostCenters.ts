@@ -6,6 +6,7 @@ import {
 } from '../../mdSchema'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
+import Organizations from './Organizations'
 
 const getCostCenters = async ({
   id,
@@ -117,6 +118,10 @@ const costCenters = {
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
+
+    if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
+      throw new Error('This organization is not active')
+    }
 
     const { sessionData } = vtex as any
 
@@ -324,6 +329,10 @@ const costCenters = {
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
+
+    if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
+      throw new Error('This organization is not active')
+    }
 
     const {
       data: { checkUserPermission },

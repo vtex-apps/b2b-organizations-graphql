@@ -27,6 +27,56 @@ const getWhereByStatus = ({ status }: { status: string[] }) => {
 }
 
 const Organizations = {
+  checkOrganizationIsActive: async (
+    _: void,
+    params: { id: string } | null,
+    ctx: Context
+  ) => {
+    const {
+      clients: { session },
+      vtex: { logger, sessionToken, adminUserAuthToken },
+    } = ctx
+
+    const sessionData = await session
+      .getSession(sessionToken as string, ['*'])
+      .then((currentSession: any) => {
+        return currentSession.sessionData
+      })
+      .catch((error: any) => {
+        logger.warn({
+          error,
+          message: 'checkOrganizationIsActive-error',
+        })
+
+        return null
+      })
+
+    if (!sessionData) {
+      throw new Error('No session data for this current user')
+    }
+
+    let orgId =
+      sessionData?.namespaces?.['storefront-permissions']?.organization?.value
+
+    if (params?.id && adminUserAuthToken) {
+      orgId = params?.id
+    }
+
+    const organization = (await Organizations.getOrganizationById(
+      _,
+      { id: orgId },
+      ctx
+    )) as {
+      status: string
+    }
+
+    if (!organization) {
+      throw new Error('Organization not found')
+    }
+
+    return organization?.status === 'active'
+  },
+
   getOrganizationById: async (
     _: void,
     { id }: { id: string },
@@ -214,12 +264,18 @@ const Organizations = {
       throw new GraphQLError('operation-not-permitted')
     }
 
+    const organization = await masterdata.getDocument({
+      dataEntity: ORGANIZATION_DATA_ENTITY,
+      fields: ORGANIZATION_FIELDS,
+      id,
+    })
+
+    if (organization?.status !== 'active') {
+      throw new Error('This organization is not active')
+    }
+
     try {
-      return await masterdata.getDocument({
-        dataEntity: ORGANIZATION_DATA_ENTITY,
-        fields: ORGANIZATION_FIELDS,
-        id,
-      })
+      return organization
     } catch (error) {
       logger.error({
         error,
