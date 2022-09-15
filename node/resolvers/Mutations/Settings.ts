@@ -24,6 +24,29 @@ const Settings = {
       return { status: 'error', message: error }
     }
   },
+  saveSalesChannels: async (
+    _: void,
+    { channels }: { channels: any[] },
+    ctx: Context
+  ) => {
+    const {
+      clients: { vbase },
+      vtex: { logger },
+    } = ctx
+
+    try {
+      await vbase.saveJSON('b2borg', 'salesChannels', channels)
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'saveSalesChannels-Error',
+      })
+
+      return { status: 'error', message: error }
+    }
+
+    return { status: 'success', message: '' }
+  },
 }
 
 export default Settings
