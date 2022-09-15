@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as crypto from 'crypto'
 
-import type { AxiosError } from 'axios'
 import { AuthenticationError, ForbiddenError, UserInputError } from '@vtex/api'
+import type { AxiosError } from 'axios'
 
 import { schemas } from '../mdSchema'
 

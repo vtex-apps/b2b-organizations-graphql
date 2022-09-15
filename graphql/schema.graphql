@@ -69,10 +69,11 @@ type Query {
   ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getB2BSettings: B2BSetting @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getB2BSettings: B2BSettings @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
 type Mutation {
-  saveAppSettings: MutationResponse
+  saveAppSettings: MutationResponse @cacheControl(scope: PRIVATE)
   createOrganizationRequest(input: OrganizationInput!): MasterDataResponse
   updateOrganizationRequest(
     id: ID!
@@ -80,11 +81,17 @@ type Mutation {
     notes: String
   ): MutationResponse
   deleteOrganizationRequest(id: ID!): MutationResponse
-  createOrganization(input: OrganizationInput!): MasterDataResponse
+  createOrganization(input: OrganizationInput!): OrganizationCostCenterResponse
+    @checkAdminAccess
+    @cacheControl(scope: PRIVATE)
   createCostCenter(
     organizationId: ID
     input: CostCenterInput!
-  ): MasterDataResponse @withSession @withPermissions
+  ): MasterDataResponse
+    @withSession
+    @withPermissions
+    @checkUserAccess
+    @cacheControl(scope: PRIVATE)
   updateOrganization(
     id: ID!
     name: String!
@@ -93,20 +100,36 @@ type Mutation {
     collections: [CollectionInput]
     paymentTerms: [PaymentTermInput]
     priceTables: [String]
-  ): MutationResponse
+  ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
     @withPermissions
+    @checkUserAccess
+    @cacheControl(scope: PRIVATE)
   createCostCenterAddress(
     costCenterId: ID
     address: AddressInput
-  ): MutationResponse @withSession @withPermissions
+  ): MutationResponse
+    @withSession
+    @withPermissions
+    @checkUserAccess
+    @cacheControl(scope: PRIVATE)
   updateCostCenterAddress(
     costCenterId: ID
     address: AddressInput
-  ): MutationResponse @withSession @withPermissions
+  ): MutationResponse
+    @withSession
+    @withPermissions
+    @checkUserAccess
+    @cacheControl(scope: PRIVATE)
   deleteOrganization(id: ID!): MutationResponse
-  deleteCostCenter(id: ID!): MutationResponse @withSession @withPermissions
+    @checkAdminAccess
+    @cacheControl(scope: PRIVATE)
+  deleteCostCenter(id: ID!): MutationResponse
+    @withSession
+    @withPermissions
+    @checkUserAccess
+    @cacheControl(scope: PRIVATE)
   saveUser(
     id: ID
     roleId: ID!
@@ -117,7 +140,11 @@ type Mutation {
     canImpersonate: Boolean = false
     name: String!
     email: String!
-  ): MutationResponse @withSession @withPermissions
+  ): MutationResponse
+    @withSession
+    @withPermissions
+    @checkUserAccess
+    @cacheControl(scope: PRIVATE)
   addUser(
     id: ID
     roleId: ID!
@@ -128,7 +155,11 @@ type Mutation {
     canImpersonate: Boolean = false
     name: String!
     email: String!
-  ): MutationResponse @withSession @withPermissions
+  ): MutationResponse
+    @withSession
+    @withPermissions
+    @checkUserAccess
+    @cacheControl(scope: PRIVATE)
   updateUser(
     id: ID
     roleId: ID!
@@ -139,13 +170,20 @@ type Mutation {
     canImpersonate: Boolean = false
     name: String
     email: String
-  ): MutationResponse @withSession @withPermissions
+  ): MutationResponse
+    @withSession
+    @withPermissions
+    @checkUserAccess
+    @cacheControl(scope: PRIVATE)
   removeUser(id: ID!, userId: ID, email: String!, clId: ID!): MutationResponse
     @withSession
     @withPermissions
+    @checkUserAccess
+    @cacheControl(scope: PRIVATE)
   impersonateUser(clId: ID, userId: ID): MutationResponse
     @withSession
     @withPermissions
+    @cacheControl(scope: PRIVATE)
   saveB2BSettings(input: B2BSettingsInput): MutationResponse
     @withSession
     @withPermissions
@@ -261,6 +299,13 @@ type MasterDataResponse {
   status: String
 }
 
+type OrganizationCostCenterResponse {
+  id: String
+  costCenterId: String
+  href: String
+  status: String
+}
+
 type MutationResponse {
   id: String
   status: String
@@ -291,6 +336,12 @@ type SimpleRole {
   id: ID
   name: String!
   slug: String
+}
+
+type B2BSettings {
+  autoApprove: Boolean
+  defaultPaymentTerms: [PaymentTerm]
+  defaultPriceTables: [String]
 }
 
 scalar Data

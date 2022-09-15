@@ -5,7 +5,7 @@ import {
   schemas,
 } from '../../mdSchema'
 import { toHash } from '../../utils'
-import GraphQLError from '../../utils/GraphQLError'
+import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import { getAppId } from '../config'
 import CostCenters from './CostCenters'
 import Organizations from './Organizations'
@@ -62,7 +62,7 @@ const checkUserPermissions = async ({
   organizationId,
   logger,
 }: any) => {
-  const { sessionData } = vtex as any
+  const { sessionData } = vtex
   const { checkUserPermission } = await getCheckUserPermission({
     logger,
     storefrontPermissions,
@@ -187,15 +187,9 @@ const Index = {
       .catch(error => {
         logger.error({
           error,
-          message: 'getUsers-error',
+          message: 'getOrganizationsWithoutSalesManager-getUsers-error',
         })
-        if (error.message) {
-          throw new GraphQLError(error.message)
-        } else if (error.response?.data?.message) {
-          throw new GraphQLError(error.response.data.message)
-        } else {
-          throw new GraphQLError(error)
-        }
+        throw new GraphQLError(getErrorMessage(error))
       })
 
     let token: string | undefined
@@ -234,12 +228,12 @@ const Index = {
 
     try {
       await scrollMasterData()
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        error: e,
+        error,
         message: 'scrollMasterData-error',
       })
-      throw new GraphQLError(e)
+      throw new GraphQLError(getErrorMessage(error))
     }
 
     return organizations.filter(organization => {
@@ -287,15 +281,10 @@ const Index = {
       .catch(error => {
         logger.error({
           error,
-          message: 'getUsers-error',
+          message: 'getUsers-getUsers-error',
         })
-        if (error.message) {
-          throw new GraphQLError(error.message)
-        } else if (error.response?.data?.message) {
-          throw new GraphQLError(error.response.data.message)
-        } else {
-          throw new GraphQLError(error)
-        }
+
+        throw new GraphQLError(getErrorMessage(error))
       })
   },
 
@@ -357,13 +346,7 @@ const Index = {
           error,
           message: 'getUsers-error',
         })
-        if (error.message) {
-          throw new GraphQLError(error.message)
-        } else if (error.response?.data?.message) {
-          throw new GraphQLError(error.response.data.message)
-        } else {
-          throw new GraphQLError(error)
-        }
+        throw new GraphQLError(getErrorMessage(error))
       })
   },
 }

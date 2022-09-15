@@ -1,7 +1,3 @@
-import {
-  B2B_SETTINGS_DATA_ENTITY,
-  B2B_SETTINGS_SCHEMA_VERSION,
-} from '../../mdSchema'
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
 
@@ -20,12 +16,14 @@ const B2BSettings = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { vbase },
       vtex: { logger },
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
+
+    const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
 
     try {
       const b2bSettings = {
@@ -34,18 +32,9 @@ const B2BSettings = {
         defaultPriceTables,
       }
 
-      const saveB2BSettingResult = await masterdata.createOrUpdateEntireDocument(
-        {
-          id: B2B_SETTINGS_DOCUMENT_ID,
-          dataEntity: B2B_SETTINGS_DATA_ENTITY,
-          fields: b2bSettings,
-          schema: B2B_SETTINGS_SCHEMA_VERSION,
-        }
-      )
+      await vbase.saveJSON(B2B_SETTINGS_DATA_ENTITY, 'settings', b2bSettings)
 
       return {
-        href: saveB2BSettingResult.Href,
-        id: saveB2BSettingResult.Id,
         status: 'success',
       }
     } catch (e) {

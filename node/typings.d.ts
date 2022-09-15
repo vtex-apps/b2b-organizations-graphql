@@ -104,16 +104,34 @@ interface CostCenter {
   id: string
   name: string
   organization: string
-  addresses: any[]
+  addresses: Address[]
   paymentTerms: PaymentTerm[]
   phoneNumber?: string
   businessDocument?: string
 }
 
+interface Address {
+  addressId: string
+  addressType: string
+  addressQuery: string
+  postalCode: string
+  country: string
+  receiverName: string
+  city: string
+  state: string
+  street: string
+  number: string
+  complement: string
+  neighborhood: string
+  geoCoordinates: number[]
+  reference: string
+  checked?: boolean
+}
+
 interface B2BSetting {
   autoApprove: boolean
   defaultPaymentTerms: PaymentTerm[]
-  defaultPriceTables: [String]
+  defaultPriceTables: [string]
 }
 
 interface UserArgs {

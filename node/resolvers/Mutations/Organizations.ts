@@ -8,10 +8,15 @@ import {
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
+import {
+  ORGANIZATION_REQUEST_STATUSES,
+  ORGANIZATION_STATUSES,
+} from '../../utils/constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import message from '../message'
 import B2BSettings from '../Queries/Settings'
+import { updateOrganizationRequest } from '../../utils/updateOrganizationRequest'
 
 const Organizations = {
   createOrganization: async (
@@ -36,12 +41,12 @@ const Organizations = {
       const organization = {
         name,
         ...(tradeName && { tradeName }),
-        status: 'active',
-        created: now,
         collections: [],
+        costCenters: [],
+        created: now,
         paymentTerms: [],
         priceTables: [],
-        costCenters: [],
+        status: ORGANIZATION_STATUSES.ACTIVE,
       }
 
       const createOrganizationResult = await masterdata.createDocument({
@@ -54,8 +59,8 @@ const Organizations = {
 
       // create cost center
       const costCenter = {
-        name: defaultCostCenter.name,
         addresses: [defaultCostCenter.address],
+        name: defaultCostCenter.name,
         organization: organizationId,
         ...(defaultCostCenter.phoneNumber && {
           phoneNumber: defaultCostCenter.phoneNumber,
@@ -65,7 +70,7 @@ const Organizations = {
         }),
       }
 
-      await masterdata.createDocument({
+      const costCenterResult = await masterdata.createDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
         fields: costCenter,
         schema: COST_CENTER_SCHEMA_VERSION,
@@ -74,16 +79,17 @@ const Organizations = {
       message({ storefrontPermissions, logger, mail }).organizationCreated(name)
 
       return {
+        costCenterId: costCenterResult.DocumentId,
         href: createOrganizationResult.Href,
         id: createOrganizationResult.DocumentId,
         status: '',
       }
-    } catch (e) {
+    } catch (error) {
       logger.error({
+        error,
         message: 'createOrganization-error',
-        error: e,
       })
-      throw new GraphQLError(getErrorMessage(e))
+      throw new GraphQLError(getErrorMessage(error))
     }
   },
   createOrganizationRequest: async (
@@ -94,7 +100,7 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, mail, storefrontPermissions },
       vtex: { logger },
     } = ctx
 
@@ -105,20 +111,22 @@ const Organizations = {
       .searchDocumentsWithPaginationInfo({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         fields: ORGANIZATION_REQUEST_FIELDS,
-        schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
-        sort: `created DESC`,
-        where: `b2bCustomerAdmin.email=${b2bCustomerAdmin.email} AND (status=pending OR status=approved)`,
         pagination: {
           page: 1,
           pageSize: 1,
         },
+        schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
+        sort: `created DESC`,
+        where: `b2bCustomerAdmin.email=${b2bCustomerAdmin.email} AND (status=pending OR status=approved)`,
       })
       .then((res: any) => {
         return res.data[0]?.status ?? ''
       })
       .catch(() => '')
 
-    if (duplicate !== '') return { href: '', id: '', status: duplicate }
+    if (duplicate) {
+      return { href: '', id: '', status: duplicate }
+    }
 
     const now = new Date()
 
@@ -126,53 +134,60 @@ const Organizations = {
       undefined,
       undefined,
       ctx
-    )) as any
+    )) as B2BSettingsInput
+
+    const status = settings?.autoApprove
+      ? ORGANIZATION_REQUEST_STATUSES.APPROVED
+      : ORGANIZATION_REQUEST_STATUSES.PENDING
 
     const organizationRequest = {
       name,
       ...(tradeName && { tradeName }),
-      defaultCostCenter,
       b2bCustomerAdmin,
-      status: 'pending',
+      status,
       notes: '',
+      defaultCostCenter,
       created: now,
     }
 
-    if (settings?.autoApprove) {
-      organizationRequest.status = 'approved'
-    }
-
     try {
-      const result = await masterdata.createDocument({
+      const result = (await masterdata.createDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         fields: organizationRequest,
         schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
-      })
+      })) as any
 
       if (settings?.autoApprove) {
-        Organizations.updateOrganization(
-          undefined,
-          {
-            id: result.DocumentId,
-            name,
-            status: 'approved',
-            priceTables: settings?.defaultPriceTables,
-            paymentTerms: settings?.defaultPaymentTerms,
-            collections: [],
-          },
+        const { email, firstName } = organizationRequest.b2bCustomerAdmin
+
+        updateOrganizationRequest(
+          organizationRequest,
+          masterdata,
+          result.DocumentId,
+          firstName,
+          email,
+          mail,
+          organizationRequest.notes,
+          status,
+          storefrontPermissions,
+          logger,
+          (settings?.defaultPaymentTerms as unknown) as PaymentTerm[],
+          (settings?.defaultPriceTables as unknown) as Price[],
+          Organizations,
           ctx
         )
       }
 
       return { href: result.Href, id: result.DocumentId, status: duplicate }
-    } catch (e) {
+    } catch (error) {
       logger.error({
+        error,
         message: 'createOrganizationRequest-error',
-        error: e,
       })
-      throw new GraphQLError(getErrorMessage(e))
+      throw new GraphQLError(getErrorMessage(error))
     }
   },
+
   deleteOrganizationRequest: async (
     _: void,
     { id }: { id: string },
@@ -184,210 +199,9 @@ const Organizations = {
 
     try {
       await masterdata.deleteDocument({
-        id,
-        dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
-      })
-
-      return { status: 'success', message: '' }
-    } catch (e) {
-      throw new GraphQLError(getErrorMessage(e))
-    }
-  },
-  updateOrganizationRequest: async (
-    _: void,
-    { id, status, notes }: { id: string; status: string; notes: string },
-    ctx: Context
-  ) => {
-    const {
-      clients: { masterdata, mail, storefrontPermissions },
-      vtex: { logger },
-    } = ctx
-
-    if (status !== 'approved' && status !== 'declined') {
-      throw new GraphQLError('Invalid status')
-    }
-
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
-
-    let organizationRequest: OrganizationRequest
-
-    try {
-      // get organization request
-      organizationRequest = await masterdata.getDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         id,
-        fields: ORGANIZATION_REQUEST_FIELDS,
       })
-    } catch (e) {
-      logger.error({
-        message: 'getOrganizationRequest-error',
-        error: e,
-      })
-      throw new GraphQLError(getErrorMessage(e))
-    }
-
-    // don't allow update if status is already approved or declined
-    if (organizationRequest.status !== 'pending') {
-      throw new GraphQLError('Organization request already processed')
-    }
-
-    const { email, firstName } = organizationRequest.b2bCustomerAdmin
-
-    if (status === 'approved') {
-      const now = new Date()
-
-      try {
-        // update request status to approved
-        masterdata.updatePartialDocument({
-          dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
-          id,
-          fields: { status },
-        })
-
-        // create organization
-        const organization = {
-          name: organizationRequest.name,
-          ...(organizationRequest.tradeName && {
-            tradeName: organizationRequest.tradeName,
-          }),
-          status: 'active',
-          created: now,
-          collections: [],
-          paymentTerms: [],
-          priceTables: [],
-          costCenters: [],
-        }
-
-        const createOrganizationResult = await masterdata.createDocument({
-          dataEntity: ORGANIZATION_DATA_ENTITY,
-          fields: organization,
-          schema: ORGANIZATION_SCHEMA_VERSION,
-        })
-
-        const organizationId = createOrganizationResult.DocumentId
-
-        // create cost center
-        const costCenter = {
-          name: organizationRequest.defaultCostCenter.name,
-          addresses: [organizationRequest.defaultCostCenter.address],
-          organization: organizationId,
-          ...(organizationRequest.defaultCostCenter.phoneNumber && {
-            phoneNumber: organizationRequest.defaultCostCenter.phoneNumber,
-          }),
-          ...(organizationRequest.defaultCostCenter.businessDocument && {
-            businessDocument:
-              organizationRequest.defaultCostCenter.businessDocument,
-          }),
-        }
-
-        const createCostCenterResult = await masterdata.createDocument({
-          dataEntity: COST_CENTER_DATA_ENTITY,
-          fields: costCenter,
-          schema: COST_CENTER_SCHEMA_VERSION,
-        })
-
-        // get roleId of org admin
-        const roles = await storefrontPermissions
-          .listRoles()
-          .then((result: any) => {
-            return result.data.listRoles
-          })
-
-        const roleId = roles.find(
-          (roleItem: any) => roleItem.slug === 'customer-admin'
-        ).id
-
-        // check if user already exists in CL
-        let existingUser = {} as any
-        const clId = await masterdata
-          .searchDocuments({
-            dataEntity: 'CL',
-            fields: ['id'],
-            where: `email=${email}`,
-            pagination: {
-              page: 1,
-              pageSize: 1,
-            },
-          })
-          .then((res: any) => {
-            return res[0]?.id
-          })
-          .catch(() => undefined)
-
-        // check if user already exists in storefront-permissions
-        if (clId) {
-          await storefrontPermissions
-            .getUser(clId)
-            .then((result: any) => {
-              existingUser = result?.data?.getUser ?? {}
-            })
-            .catch(() => null)
-        }
-
-        // grant user org admin role, assign org and cost center
-        const addUserResult = await storefrontPermissions
-          .saveUser({
-            ...existingUser,
-            roleId,
-            orgId: organizationId,
-            costId: createCostCenterResult.DocumentId,
-            name: existingUser?.name || firstName,
-            email,
-          })
-          .then((result: any) => {
-            return result.data.saveUser
-          })
-          .catch((error: any) => {
-            logger.error({
-              message: 'addUser-error',
-              error,
-            })
-          })
-
-        if (addUserResult?.status === 'success') {
-          message({
-            storefrontPermissions,
-            logger,
-            mail,
-          }).organizationApproved(
-            organizationRequest.name,
-            firstName,
-            email,
-            notes
-          )
-        }
-
-        // notify sales admin
-        message({ storefrontPermissions, logger, mail }).organizationCreated(
-          organizationRequest.name
-        )
-
-        return { status: 'success', message: '', id: organizationId }
-      } catch (e) {
-        logger.error({
-          message: 'updateOrganizationRequest-error',
-          error: e,
-        })
-        throw new GraphQLError(getErrorMessage(e))
-      }
-    }
-
-    // if we reach this block, status is declined
-    try {
-      // update request status to declined
-      await masterdata.updatePartialDocument({
-        dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
-        id,
-        fields: { status, notes },
-      })
-
-      message({ storefrontPermissions, logger, mail }).organizationDeclined(
-        organizationRequest.name,
-        firstName,
-        email,
-        notes
-      )
 
       return { status: 'success', message: '' }
     } catch (e) {
@@ -426,44 +240,126 @@ const Organizations = {
     try {
       const currentData: Organization = await masterdata.getDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
-        id,
         fields: ORGANIZATION_FIELDS,
+        id,
       })
 
       if (currentData.status !== status) {
         await message({
-          storefrontPermissions,
           logger,
           mail,
+          storefrontPermissions,
         }).organizationStatusChanged(name, id, status)
       }
     } catch (error) {
       logger.warn({
-        message: 'updateOrganization-emailOnStatusChangeError',
         error,
+        message: 'updateOrganization-emailOnStatusChangeError',
       })
     }
 
     try {
       await masterdata.updatePartialDocument({
-        id,
         dataEntity: ORGANIZATION_DATA_ENTITY,
         fields: {
           name,
           ...((tradeName || tradeName === '') && { tradeName }),
-          status,
           collections,
           paymentTerms,
           priceTables,
+          status,
         },
+        id,
       })
 
       return { status: 'success', message: '' }
-    } catch (e) {
+    } catch (error) {
       logger.error({
+        error,
         message: 'updateOrganization-error',
-        error: e,
       })
+      throw new GraphQLError(getErrorMessage(error))
+    }
+  },
+  updateOrganizationRequest: async (
+    _: void,
+    { id, status, notes }: { id: string; status: string; notes: string },
+    ctx: Context
+  ) => {
+    const {
+      clients: { masterdata, mail, storefrontPermissions },
+      vtex: { logger },
+    } = ctx
+
+    if (
+      status !== ORGANIZATION_REQUEST_STATUSES.APPROVED &&
+      status !== ORGANIZATION_REQUEST_STATUSES.DECLINED
+    ) {
+      throw new GraphQLError('Invalid status')
+    }
+
+    // create schema if it doesn't exist
+    await checkConfig(ctx)
+
+    let organizationRequest: OrganizationRequest
+
+    try {
+      // get organization request
+      organizationRequest = await masterdata.getDocument({
+        dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
+        fields: ORGANIZATION_REQUEST_FIELDS,
+        id,
+      })
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getOrganizationRequest-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
+    }
+
+    // don't allow update if status is already approved or declined
+    if (organizationRequest.status !== ORGANIZATION_REQUEST_STATUSES.PENDING) {
+      throw new GraphQLError('Organization request already processed')
+    }
+
+    const { email, firstName } = organizationRequest.b2bCustomerAdmin
+
+    updateOrganizationRequest(
+      organizationRequest,
+      masterdata,
+      id,
+      firstName,
+      email,
+      mail,
+      notes,
+      status,
+      storefrontPermissions,
+      logger,
+      [],
+      [],
+      Organizations,
+      ctx
+    )
+
+    // if we reach this block, status is declined
+    try {
+      // update request status to declined
+      await masterdata.updatePartialDocument({
+        dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
+        fields: { status, notes },
+        id,
+      })
+
+      message({ storefrontPermissions, logger, mail }).organizationDeclined(
+        organizationRequest.name,
+        firstName,
+        email,
+        notes
+      )
+
+      return { status: 'success', message: '' }
+    } catch (e) {
       throw new GraphQLError(getErrorMessage(e))
     }
   },

@@ -4,7 +4,7 @@ import {
   COST_CENTER_FIELDS,
   COST_CENTER_SCHEMA_VERSION,
 } from '../../mdSchema'
-import GraphQLError from '../../utils/GraphQLError'
+import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 
 const getCostCenters = async ({
@@ -28,40 +28,79 @@ const getCostCenters = async ({
       sort: `${sortedBy} ${sortOrder}`,
       ...(where && { where }),
     })
-  } catch (e) {
-    if (e.message) {
-      throw new GraphQLError(e.message)
-    } else if (e.response?.data?.message) {
-      throw new GraphQLError(e.response.data.message)
-    } else {
-      throw new GraphQLError(e)
+  } catch (error) {
+    throw new GraphQLError(getErrorMessage(error))
+  }
+}
+
+const hashCode = function hash(arg: null | string | number | number[]) {
+  const str = arg === null ? '' : arg.toString()
+
+  if (str.length === 0) {
+    return 0
+  }
+
+  return str.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0)
+}
+
+const setGUID = (address: Address) => {
+  return (
+    hashCode(address.street) +
+    hashCode(address.complement) +
+    hashCode(address.city) +
+    hashCode(address.state)
+  ).toString()
+}
+
+const addMissingAddressIds = async (costCenter: CostCenter, ctx: Context) => {
+  const {
+    clients: { masterdata },
+  } = ctx
+
+  let changed = false
+  const { addresses } = costCenter
+
+  for (const [index, address] of addresses.entries()) {
+    if (!address.addressId) {
+      addresses[index].addressId = setGUID(address)
+      changed = true
     }
   }
+
+  if (changed) {
+    await masterdata.createOrUpdatePartialDocument({
+      dataEntity: COST_CENTER_DATA_ENTITY,
+      fields: { addresses },
+      id: costCenter.id,
+    })
+  }
+
+  return addresses
 }
 
 const costCenters = {
   getCostCenterById: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
       clients: { masterdata },
+      vtex: { logger },
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
     try {
-      return await masterdata.getDocument({
+      const result: CostCenter = await masterdata.getDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
         fields: COST_CENTER_FIELDS,
         id,
       })
-    } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+
+      result.addresses = await addMissingAddressIds(result, ctx)
+
+      return result
+    } catch (error) {
+      logger.error({ error, message: 'getCostCenterById-error' })
+      throw new GraphQLError(getErrorMessage(error))
     }
   },
 
@@ -72,6 +111,7 @@ const costCenters = {
   ) => {
     const {
       clients: { masterdata },
+      vtex: { logger },
       vtex,
     } = ctx
 
@@ -102,24 +142,26 @@ const costCenters = {
       })
 
       if (costCenter.organization !== userOrganizationId) {
-        throw new GraphQLError('operation-not-permitted')
+        const error = () => {
+          throw new GraphQLError('operation-not-permitted')
+        }
+
+        error()
       }
 
+      costCenter.addresses = await addMissingAddressIds(costCenter, ctx)
+
       return costCenter
-    } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+    } catch (error) {
+      logger.error({ error, message: 'getCostCenterByIdStorefront-error' })
+      throw new GraphQLError(getErrorMessage(error))
     }
   },
 
   getPaymentTerms: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { payments },
+      vtex: { logger },
     } = ctx
 
     try {
@@ -149,20 +191,15 @@ const costCenters = {
       )
 
       uniquePaymentSystemsWithoutCreditCards.unshift({
-        name: 'Credit card',
         id: 999999,
         implementation: null,
+        name: 'Credit card',
       })
 
       return uniquePaymentSystemsWithoutCreditCards
-    } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+    } catch (error) {
+      logger.error({ error, message: 'getPaymentTerms-error' })
+      throw new GraphQLError(getErrorMessage(error))
     }
   },
 
@@ -201,23 +238,17 @@ const costCenters = {
       return await masterdata.searchDocumentsWithPaginationInfo({
         dataEntity: COST_CENTER_DATA_ENTITY,
         fields: COST_CENTER_FIELDS,
-        schema: COST_CENTER_SCHEMA_VERSION,
         pagination: { page, pageSize },
+        schema: COST_CENTER_SCHEMA_VERSION,
         sort: `${sortedBy} ${sortOrder}`,
         ...(where && { where }),
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
+        error,
         message: 'getCostCenters-error',
-        e,
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(getErrorMessage(error))
     }
   },
 
@@ -258,12 +289,12 @@ const costCenters = {
         sortOrder,
         sortedBy,
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
+        error,
         message: 'getCostCentersByOrganizationId-error',
-        e,
       })
-      throw e
+      throw error
     }
   },
 
@@ -300,8 +331,8 @@ const costCenters = {
       .checkUserPermission('vtex.b2b-organizations@1.x')
       .catch((error: any) => {
         logger.error({
-          message: 'checkUserPermission-error',
           error,
+          message: 'checkUserPermission-error',
         })
 
         return {
@@ -342,12 +373,12 @@ const costCenters = {
         sortOrder,
         sortedBy,
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
+        error,
         message: 'getCostCentersByOrganizationId-error',
-        e,
       })
-      throw e
+      throw error
     }
   },
 }

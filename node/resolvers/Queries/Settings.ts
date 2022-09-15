@@ -1,25 +1,25 @@
-import { B2B_SETTINGS_DATA_ENTITY, B2B_SETTINGS_FIELDS } from '../../mdSchema'
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
-import { B2B_SETTINGS_DOCUMENT_ID } from '../Mutations/Settings'
 
 const B2BSettings = {
   getB2BSettings: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { masterdata },
+      clients: { vbase },
     } = ctx
+
+    const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    try {
-      const document = await masterdata.getDocument({
-        dataEntity: B2B_SETTINGS_DATA_ENTITY,
-        fields: B2B_SETTINGS_FIELDS,
-        id: B2B_SETTINGS_DOCUMENT_ID,
-      })
+    let settings = null
 
-      return document
+    try {
+      settings = await vbase.getJSON<B2BSettingsInput | null>(
+        B2B_SETTINGS_DATA_ENTITY,
+        'settings',
+        true
+      )
     } catch (e) {
       if (e.message) {
         throw new GraphQLError(e.message)
@@ -29,6 +29,8 @@ const B2BSettings = {
         throw new GraphQLError(e)
       }
     }
+
+    return settings
   },
 }
 

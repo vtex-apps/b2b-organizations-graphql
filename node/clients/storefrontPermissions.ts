@@ -318,19 +318,28 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     name: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: MUTATIONS.addUser,
-      variables: {
-        canImpersonate: false,
-        costId,
-        email,
-        id,
-        name,
-        orgId,
-        roleId,
-        userId,
+    return this.graphql.mutate(
+      {
+        mutate: MUTATIONS.addUser,
+        variables: {
+          canImpersonate: false,
+          costId,
+          email,
+          id,
+          name,
+          orgId,
+          roleId,
+          userId,
+        },
       },
-    })
+      {
+        headers: {
+          ...(this.context.authToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
+          }),
+        },
+      }
+    )
   }
 
   public updateUser = async ({
@@ -352,20 +361,29 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     name: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: MUTATIONS.updateUser,
-      variables: {
-        canImpersonate: false,
-        clId,
-        costId,
-        email,
-        id,
-        name,
-        orgId,
-        roleId,
-        userId,
+    return this.graphql.mutate(
+      {
+        mutate: MUTATIONS.updateUser,
+        variables: {
+          canImpersonate: false,
+          clId,
+          costId,
+          email,
+          id,
+          name,
+          orgId,
+          roleId,
+          userId,
+        },
       },
-    })
+      {
+        headers: {
+          ...(this.context.authToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
+          }),
+        },
+      }
+    )
   }
 
   // deprecated
@@ -388,20 +406,29 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     name: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: MUTATIONS.saveUser,
-      variables: {
-        id,
-        roleId,
-        userId,
-        orgId,
-        costId,
-        clId,
-        name,
-        email,
-        canImpersonate: false,
+    return this.graphql.mutate(
+      {
+        mutate: MUTATIONS.saveUser,
+        variables: {
+          id,
+          roleId,
+          userId,
+          orgId,
+          costId,
+          clId,
+          name,
+          email,
+          canImpersonate: false,
+        },
       },
-    })
+      {
+        headers: {
+          ...(this.context.authToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
+          }),
+        },
+      }
+    )
   }
 
   public deleteUser = async ({
@@ -413,14 +440,23 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     userId?: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate({
-      mutate: MUTATIONS.deleteUser,
-      variables: {
-        id,
-        userId,
-        email,
+    return this.graphql.mutate(
+      {
+        mutate: MUTATIONS.deleteUser,
+        variables: {
+          email,
+          id,
+          userId,
+        },
       },
-    })
+      {
+        headers: {
+          ...(this.context.authToken && {
+            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
+          }),
+        },
+      }
+    )
   }
 
   public impersonateUser = async ({
