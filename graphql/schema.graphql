@@ -73,6 +73,10 @@ type Query {
     @cacheControl(scope: PRIVATE)
 
   checkOrganizationIsActive(id: String): Boolean @cacheControl(scope: PRIVATE)
+  getSalesChannels: [Channels] @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getBinding(email: String!): Boolean
+    @withSession
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
 type Mutation {
@@ -186,6 +190,9 @@ type Mutation {
   impersonateUser(clId: ID, userId: ID): MutationResponse
     @withSession
     @withPermissions
+    @cacheControl(scope: PRIVATE)
+  saveSalesChannels(channels: [SalesChannelsInput]!): MutationResponse
+    @checkAdminAccess
     @cacheControl(scope: PRIVATE)
 }
 
@@ -343,6 +350,11 @@ type SimpleRole {
   slug: String
 }
 
+type Channels {
+  id: String
+  name: String
+}
+
 scalar Data
 
 input OrganizationInput {
@@ -397,5 +409,10 @@ input CollectionInput {
 
 input PaymentTermInput {
   id: ID
+  name: String
+}
+
+input SalesChannelsInput {
+  id: String
   name: String
 }
