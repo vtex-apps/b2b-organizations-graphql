@@ -34,6 +34,7 @@ export const COST_CENTER_FIELDS = [
   'organization',
   'phoneNumber',
   'businessDocument',
+  'customFields',
 ]
 export const COST_CENTER_SCHEMA_VERSION = 'v0.0.6'
 
@@ -158,6 +159,10 @@ export const schemas = [
           type: ['string', 'null'],
           title: 'Phone Number',
         },
+        // customFields: {
+        //   type: ['array', 'null'],
+        //   title: 'Custom Fields',
+        // },
       },
       'v-indexed': ['name', 'organization', 'businessDocument'],
       'v-immediate-indexing': true,
