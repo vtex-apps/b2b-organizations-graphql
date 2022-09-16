@@ -35,6 +35,8 @@ const Settings = {
         defaultPaymentTerms,
         defaultPriceTables,
         uiSettings,
+        organizationCustomFields,
+        costCenterCustomFields,
       },
     }: {
       input: B2BSettingsInput
@@ -53,11 +55,45 @@ const Settings = {
 
     const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
 
+    // Get current settings to save them depending on where the saveB2BSettings is coming from. Custom fields come without autoApprove settings and vice versa.
+
+    let currentB2BSettings: B2BSettingsInput | undefined
+
+    try {
+      const getSettingsObj: B2BSettingsInput = await vbase.getJSON(
+        B2B_SETTINGS_DATA_ENTITY,
+        'settings'
+      )
+
+      currentB2BSettings = getSettingsObj
+    } catch (e) {
+      if (e.response?.status === 404) {
+        // when run for the first time on the project - returns 404. ignore in that case
+      } else {
+        logger.error({
+          message: 'saveB2BSettings-currentB2BSettings-error',
+          error: e,
+        })
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    }
+
     try {
       const b2bSettings = {
         autoApprove,
+        costCenterCustomFields:
+          costCenterCustomFields ?? currentB2BSettings?.costCenterCustomFields,
         defaultPaymentTerms,
         defaultPriceTables,
+        organizationCustomFields:
+          organizationCustomFields ??
+          currentB2BSettings?.organizationCustomFields,
         uiSettings,
       }
 

@@ -20,6 +20,12 @@ const B2BSettings = {
         'settings',
         true
       )
+
+      settings = {
+        ...settings,
+        // if organizationCustomFields is null, set it to an empty array
+        organizationCustomFields: settings?.organizationCustomFields ?? [],
+      }
     } catch (e) {
       if (e.message) {
         throw new GraphQLError(e.message)

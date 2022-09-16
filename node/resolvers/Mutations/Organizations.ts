@@ -26,6 +26,7 @@ const Organizations = {
         tradeName,
         defaultCostCenter,
         costCenters,
+        customFields,
         paymentTerms,
         priceTables,
         salesChannel,
@@ -55,6 +56,7 @@ const Organizations = {
         ...(paymentTerms?.length && { paymentTerms }),
         ...(priceTables?.length && { priceTables }),
         ...(salesChannel && { salesChannel }),
+        customFields: customFields ?? [],
         status: ORGANIZATION_STATUSES.ACTIVE,
       }
 
@@ -77,6 +79,9 @@ const Organizations = {
           }),
           ...(data?.businessDocument && {
             businessDocument: data?.businessDocument,
+          }),
+          ...(defaultCostCenter?.customFields && {
+            customFields: defaultCostCenter.customFields,
           }),
           ...(data?.stateRegistration && {
             stateRegistration: data?.stateRegistration,
@@ -129,6 +134,7 @@ const Organizations = {
         b2bCustomerAdmin,
         costCenters,
         defaultCostCenter,
+        customFields,
         name,
         tradeName,
         priceTables,
@@ -174,6 +180,7 @@ const Organizations = {
       b2bCustomerAdmin,
       costCenters,
       created: now,
+      customFields,
       defaultCostCenter:
         defaultCostCenter ?? (costCenters?.length && costCenters[0]),
       notes: '',
@@ -244,6 +251,7 @@ const Organizations = {
       collections,
       paymentTerms,
       priceTables,
+      customFields,
       salesChannel,
       sellers,
       notifyUsers = true,
@@ -255,6 +263,7 @@ const Organizations = {
       collections: any[]
       paymentTerms: any[]
       priceTables: any[]
+      customFields: any[]
       salesChannel?: string
       sellers?: any[]
       notifyUsers?: boolean
@@ -299,6 +308,7 @@ const Organizations = {
           collections,
           paymentTerms,
           priceTables,
+          customFields,
           ...(salesChannel && { salesChannel }),
           ...(sellers && { sellers }),
           status,
@@ -401,6 +411,9 @@ const Organizations = {
                   }),
                   ...(defaultCostCenter.businessDocument && {
                     businessDocument: defaultCostCenter.businessDocument,
+                  }),
+                  ...(defaultCostCenter.customFields && {
+                    customFields: defaultCostCenter.customFields,
                   }),
                 },
                 name,
