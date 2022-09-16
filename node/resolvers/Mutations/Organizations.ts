@@ -46,6 +46,7 @@ const Organizations = {
         created: now,
         paymentTerms: [],
         priceTables: [],
+        customFields: [],
         status: ORGANIZATION_STATUSES.ACTIVE,
       }
 
@@ -67,6 +68,9 @@ const Organizations = {
         }),
         ...(defaultCostCenter.businessDocument && {
           businessDocument: defaultCostCenter.businessDocument,
+        }),
+        ...(defaultCostCenter.customFields && {
+          customFields: defaultCostCenter.customFields,
         }),
       }
 
@@ -173,6 +177,7 @@ const Organizations = {
           logger,
           (settings?.defaultPaymentTerms as unknown) as PaymentTerm[],
           (settings?.defaultPriceTables as unknown) as Price[],
+          (settings?.organizationCustomFields as unknown) as CustomField[],
           Organizations,
           ctx
         )
@@ -218,6 +223,7 @@ const Organizations = {
       collections,
       paymentTerms,
       priceTables,
+      customFields,
     }: {
       id: string
       name: string
@@ -226,6 +232,7 @@ const Organizations = {
       collections: any[]
       paymentTerms: any[]
       priceTables: any[]
+      customFields: any[]
     },
     ctx: Context
   ) => {
@@ -267,6 +274,7 @@ const Organizations = {
           collections,
           paymentTerms,
           priceTables,
+          customFields,
           status,
         },
         id,
@@ -336,6 +344,7 @@ const Organizations = {
       status,
       storefrontPermissions,
       logger,
+      [],
       [],
       [],
       Organizations,

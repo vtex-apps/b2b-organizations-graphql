@@ -15,6 +15,7 @@ export const updateOrganizationRequest = async (
   logger: any,
   paymentTerms: PaymentTerm[],
   priceTables: Price[],
+  customFields: CustomField[],
   Organizations: any,
   ctx: any
 ) => {
@@ -52,9 +53,14 @@ export const updateOrganizationRequest = async (
                 businessDocument:
                   organizationRequest.defaultCostCenter.businessDocument,
               }),
+              ...(organizationRequest.defaultCostCenter.customFields && {
+                customFields:
+                  organizationRequest.defaultCostCenter.customFields,
+              }),
             },
             paymentTerms,
             priceTables,
+            customFields,
           },
         },
         ctx

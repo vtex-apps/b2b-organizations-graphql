@@ -68,7 +68,6 @@ type Query {
     sortedBy: String
   ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
-  getB2BSettings: B2BSetting @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getB2BSettings: B2BSettings @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
@@ -100,6 +99,7 @@ type Mutation {
     collections: [CollectionInput]
     paymentTerms: [PaymentTermInput]
     priceTables: [String]
+    customFields: [CustomFieldInput]
   ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
@@ -236,6 +236,7 @@ type DefaultCostCenter {
   address: Address
   phoneNumber: String
   businessDocument: String
+  customFields: [CustomField]
 }
 
 type Organization {
@@ -245,6 +246,7 @@ type Organization {
   collections: [Collection]
   paymentTerms: [PaymentTerm]
   priceTables: [String]
+  customFields: [CustomField]
   costCenters: [ID]
   status: String
   created: String
@@ -268,12 +270,6 @@ type CostCenter {
   paymentTerms: [PaymentTerm]
   phoneNumber: String
   businessDocument: String
-}
-
-type B2BSetting {
-  autoApprove: Boolean
-  defaultPaymentTerms: [PaymentTerm]
-  defaultPriceTables: [String]
 }
 
 type Address {
@@ -338,12 +334,6 @@ type SimpleRole {
   slug: String
 }
 
-type B2BSettings {
-  autoApprove: Boolean
-  defaultPaymentTerms: [PaymentTerm]
-  defaultPriceTables: [String]
-}
-
 scalar Data
 
 input OrganizationInput {
@@ -364,6 +354,7 @@ input DefaultCostCenterInput {
   address: AddressInput
   phoneNumber: String
   businessDocument: String
+  customFields: [CustomFieldInput]
 }
 
 input CostCenterInput {
@@ -372,6 +363,7 @@ input CostCenterInput {
   paymentTerms: [PaymentTermInput]
   phoneNumber: String
   businessDocument: String
+  customFields: [CustomFieldInput]
 }
 
 input AddressInput {
@@ -401,8 +393,39 @@ input PaymentTermInput {
   name: String
 }
 
+enum CustomFieldType {
+  text
+}
+
+type CustomField {
+  name: String
+  type: CustomFieldType
+  value: String
+}
+
+type SettingsCustomField {
+  name: String
+  type: CustomFieldType
+}
+
+input CustomFieldInput {
+  name: String!
+  type: CustomFieldType!
+  value: String
+}
+
+type B2BSettings {
+  autoApprove: Boolean
+  defaultPaymentTerms: [PaymentTerm]
+  defaultPriceTables: [String]
+  organizationCustomFields: [SettingsCustomField]
+  costCenterCustomFields: [SettingsCustomField]
+}
+
 input B2BSettingsInput {
   autoApprove: Boolean
   defaultPaymentTerms: [PaymentTermInput]
   defaultPriceTables: [String]
+  organizationCustomFields: [CustomFieldInput]
+  costCenterCustomFields: [CustomFieldInput]
 }
