@@ -1,32 +1,24 @@
-import { getAppId } from '../config'
+import GraphQLError from '../../utils/GraphQLError'
+import checkConfig from '../config'
 
-const Settings = {
-  saveAppSettings: async (_: any, __: any, ctx: Context) => {
-    const {
-      clients: { apps },
-      vtex: { logger },
-    } = ctx
+export const B2B_SETTINGS_DOCUMENT_ID = 'b2bSettings'
 
-    const app: string = getAppId()
-
-    const newSettings = {}
-
-    try {
-      await apps.saveAppSettings(app, newSettings)
-
-      return { status: 'success', message: '' }
-    } catch (error) {
-      logger.error({
-        error,
-        message: 'saveAppSettings-error',
-      })
-
-      return { status: 'error', message: error }
-    }
-  },
-  saveSalesChannels: async (
+const B2BSettings = {
+  saveB2BSettings: async (
     _: void,
-    { channels }: { channels: any[] },
+    {
+      input: {
+        autoApprove,
+        defaultPaymentTerms,
+        defaultPriceTables,
+        organizationCustomFields,
+        costCenterCustomFields,
+      },
+    }: {
+      input: B2BSettingsInput
+      page: number
+      pageSize: number
+    },
     ctx: Context
   ) => {
     const {
@@ -34,19 +26,39 @@ const Settings = {
       vtex: { logger },
     } = ctx
 
+    // create schema if it doesn't exist
+    await checkConfig(ctx)
+
+    const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
+
     try {
-      await vbase.saveJSON('b2borg', 'salesChannels', channels)
-    } catch (error) {
+      const b2bSettings = {
+        autoApprove,
+        defaultPaymentTerms,
+        defaultPriceTables,
+        organizationCustomFields,
+        costCenterCustomFields,
+      }
+
+      await vbase.saveJSON(B2B_SETTINGS_DATA_ENTITY, 'settings', b2bSettings)
+
+      return {
+        status: 'success',
+      }
+    } catch (e) {
       logger.error({
-        error,
-        message: 'saveSalesChannels-Error',
+        message: 'saveB2BSettings-error',
+        error: e,
       })
-
-      return { status: 'error', message: error }
+      if (e.message) {
+        throw new GraphQLError(e.message)
+      } else if (e.response?.data?.message) {
+        throw new GraphQLError(e.response.data.message)
+      } else {
+        throw new GraphQLError(e)
+      }
     }
-
-    return { status: 'success', message: '' }
   },
 }
 
-export default Settings
+export default B2BSettings

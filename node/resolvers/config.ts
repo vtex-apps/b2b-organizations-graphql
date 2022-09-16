@@ -40,7 +40,6 @@ const checkConfig = async (ctx: Context) => {
     logger.info({
       message: 'checkConfig-updatingSchema',
     })
-
     schemas.forEach(schema => {
       updates.push(
         masterdata
