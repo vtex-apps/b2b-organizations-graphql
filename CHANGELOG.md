@@ -6,8 +6,35 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Added
- - Allow users to set auto approval for new organization with a new setting fields
+
+- Allow users to set auto approval for new organization with a new setting fields
+
+## [0.22.0] - 2022-09-16
+
+### Added
+
+- Added sales channels binding selection setting
+
+## [0.21.0] - 2022-09-15
+
+### Added
+
+- Added a check verification if the organization is active
+
+## [0.20.1] - 2022-09-15
+
+### Fixed
+
+- Bug fixed on impersonation user
+
+## [0.20.0] - 2022-09-09
+
+### Added
+
+- Added a graphql query to fetch all organizations from a user by email parameter
+
 ## [0.19.8] - 2022-08-31
 
 ### Added

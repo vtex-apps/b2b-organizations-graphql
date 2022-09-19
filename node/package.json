@@ -1,11 +1,12 @@
 {
   "name": "vtex.b2b-organizations",
-  "version": "0.19.8",
+  "version": "0.22.0",
   "dependencies": {
     "@vtex/api": "6.45.12",
     "atob": "^2.1.2",
     "co-body": "^6.0.0",
     "graphql": "^14.5.0",
+    "graphql-tag": "^2.12.6",
     "graphql-tools": "^4.0.6",
     "jsonwebtoken": "^8.5.0",
     "qs": "^6.9.4",

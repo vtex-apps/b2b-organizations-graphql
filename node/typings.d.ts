@@ -110,6 +110,7 @@ interface CostCenter {
   paymentTerms: PaymentTerm[]
   phoneNumber?: string
   businessDocument?: string
+  customFields: CustomField[]
 }
 
 interface Address {

@@ -7,9 +7,6 @@ import {
 import { toHash } from '../../utils'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import { getAppId } from '../config'
-import CostCenters from './CostCenters'
-import Organizations from './Organizations'
-import Settings from './Settings'
 
 const SCROLL_AWAIT_TIME = 100
 const SLEEP_ADD_PERCENTAGE = 0.1
@@ -43,6 +40,30 @@ const getCheckUserPermission = async ({
     })
 
   return checkUserPermission
+}
+
+const getChannels = async (ctx: Context) => {
+  const {
+    clients: { vbase },
+    vtex: { logger },
+  } = ctx
+
+  let channels = {}
+
+  try {
+    channels = await vbase.getJSON('b2borg', 'salesChannels')
+  } catch (err) {
+    if (err.response.status === 404) {
+      await vbase.saveJSON('b2borg', 'salesChannels', {})
+    } else {
+      logger.error({
+        error: err,
+        message: 'getChannels-Error',
+      })
+    }
+  }
+
+  return channels
 }
 
 /**
@@ -100,10 +121,7 @@ const sleep = (ms: number) => {
   return new Promise(resolve => setTimeout(resolve, time))
 }
 
-const Index = {
-  ...CostCenters,
-  ...Organizations,
-  ...Settings,
+const Users = {
   getAppSettings: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { apps, masterdata },
@@ -349,6 +367,61 @@ const Index = {
         throw new GraphQLError(getErrorMessage(error))
       })
   },
+
+  getSalesChannels: async (_: void, __: void, ctx: Context) => {
+    return getChannels(ctx)
+  },
+
+  getBinding: async (_: void, { email }: { email: string }, ctx: Context) => {
+    const {
+      clients: { catalog },
+      vtex: { logger },
+    } = ctx
+
+    let access = false
+    let availableSalesChannels: any = {}
+
+    try {
+      availableSalesChannels = await catalog
+        .salesChannelAvailable(email)
+        .then((res: any) => {
+          return res.map((item: any) => {
+            return item.Id.toString()
+          })
+        })
+    } catch {
+      logger.info({
+        message: 'getBinding-availableSalesChannels',
+        data: { email },
+      })
+    }
+
+    try {
+      const selectedChannels: any = await getChannels(ctx).then((res: any) => {
+        if (res.length) {
+          return res.map((item: any) => {
+            return item.id
+          })
+        }
+
+        return null
+      })
+
+      if (availableSalesChannels.length) {
+        access =
+          selectedChannels?.filter((item: any) =>
+            availableSalesChannels?.includes(item)
+          ).length > 0
+      }
+    } catch (err) {
+      logger.warn({
+        error: err,
+        message: 'getBinding-Error',
+      })
+    }
+
+    return access
+  },
 }
 
-export default Index
+export default Users

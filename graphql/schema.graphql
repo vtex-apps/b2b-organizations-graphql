@@ -69,6 +69,15 @@ type Query {
   ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getB2BSettings: B2BSettings @cacheControl(scope: PUBLIC, maxAge: SHORT)
+
+  getOrganizationsByEmail(email: String!): [B2BOrganization]
+    @cacheControl(scope: PRIVATE)
+
+  checkOrganizationIsActive(id: String): Boolean @cacheControl(scope: PRIVATE)
+  getSalesChannels: [Channels] @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getBinding(email: String!): Boolean
+    @withSession
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
 type Mutation {
@@ -187,6 +196,9 @@ type Mutation {
   saveB2BSettings(input: B2BSettingsInput): MutationResponse
     @withSession
     @withPermissions
+  saveSalesChannels(channels: [SalesChannelsInput]!): MutationResponse
+    @checkAdminAccess
+    @cacheControl(scope: PRIVATE)
 }
 
 type SettingsResponse {
@@ -270,6 +282,7 @@ type CostCenter {
   paymentTerms: [PaymentTerm]
   phoneNumber: String
   businessDocument: String
+  customFields: [CustomField]
 }
 
 type Address {
@@ -328,10 +341,26 @@ type B2BUser {
   costCenterName: String
 }
 
+type B2BOrganization {
+  id: ID
+  clId: ID
+  costId: ID
+  orgId: ID
+  roleId: ID
+  role: SimpleRole
+  organizationName: String
+  costCenterName: String
+}
+
 type SimpleRole {
   id: ID
   name: String!
   slug: String
+}
+
+type Channels {
+  id: String
+  name: String
 }
 
 scalar Data
@@ -390,6 +419,11 @@ input CollectionInput {
 
 input PaymentTermInput {
   id: ID
+  name: String
+}
+
+input SalesChannelsInput {
+  id: String
   name: String
 }
 
