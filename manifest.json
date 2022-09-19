@@ -18,6 +18,9 @@
   },
   "policies": [
     {
+      "name": "update-app-settings"
+    },
+    {
       "name": "POWER_USER_DS"
     },
     {
