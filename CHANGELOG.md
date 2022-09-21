@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed the default accessibility for binding selection setting
+
 ## [0.22.1] - 2022-09-19
 
 ### Fixed
