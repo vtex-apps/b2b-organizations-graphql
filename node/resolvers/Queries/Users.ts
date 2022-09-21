@@ -407,11 +407,15 @@ const Users = {
         return null
       })
 
-      if (availableSalesChannels.length) {
-        access =
-          selectedChannels?.filter((item: any) =>
-            availableSalesChannels?.includes(item)
-          ).length > 0
+      if (selectedChannels) {
+        if (availableSalesChannels.length) {
+          access =
+            selectedChannels.filter((item: any) =>
+              availableSalesChannels.includes(item)
+            ).length > 0
+        }
+      } else {
+        access = true
       }
     } catch (err) {
       logger.warn({
