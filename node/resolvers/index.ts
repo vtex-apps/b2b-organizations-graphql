@@ -9,6 +9,7 @@ import UsersMutation from './Mutations/Users'
 import CostCentersQuery from './Queries/CostCenters'
 import OrganizationsQuery from './Queries/Organizations'
 import UsersQuery from './Queries/Users'
+import SettingsQuery from './Queries/Settings'
 import Routes from './Routes'
 
 export const resolvers = {
@@ -32,6 +33,7 @@ export const resolvers = {
     ...CostCentersQuery,
     ...OrganizationsQuery,
     ...UsersQuery,
+    ...SettingsQuery,
   },
   Routes,
 }
