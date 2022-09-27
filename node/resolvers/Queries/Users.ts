@@ -376,7 +376,7 @@ const Users = {
     const {
       clients: { catalog },
       vtex: { logger },
-    } = ctx
+    } = ctx as any
 
     let access = false
     let availableSalesChannels: any = {}
