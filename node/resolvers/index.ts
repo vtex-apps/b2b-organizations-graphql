@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { costCenterName, organizationName, role } from './fieldResolvers'
+import {
+  costCenterName,
+  organizationName,
+  organizationStatus,
+  role,
+} from './fieldResolvers'
 import CostCentersMutation from './Mutations/CostCenters'
 import MarketingTagsMutation from './Mutations/MarketingTags'
 import OrganizationsMutation from './Mutations/Organizations'
@@ -17,6 +22,7 @@ export const resolvers = {
   B2BOrganization: {
     costCenterName,
     organizationName,
+    organizationStatus,
     role,
   },
   B2BUser: {

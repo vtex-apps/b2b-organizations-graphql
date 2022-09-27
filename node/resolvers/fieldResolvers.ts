@@ -33,6 +33,33 @@ export const organizationName = async (
   }
 }
 
+export const organizationStatus = async (
+  { orgId }: { orgId: string },
+  _: any,
+  ctx: Context
+) => {
+  const {
+    clients: { masterdata },
+    vtex: { logger },
+  } = ctx
+
+  try {
+    const organization: Organization = await masterdata.getDocument({
+      dataEntity: ORGANIZATION_DATA_ENTITY,
+      fields: ORGANIZATION_FIELDS,
+      id: orgId,
+    })
+
+    return organization.status
+  } catch (error) {
+    logger.error({
+      error,
+      message: 'getOrganizationStatus-error',
+    })
+    throw new GraphQLError(getErrorMessage(error))
+  }
+}
+
 export const costCenterName = async (
   { costId }: { costId: string },
   _: any,
