@@ -1,8 +1,6 @@
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
 
-export const B2B_SETTINGS_DOCUMENT_ID = 'b2bSettings'
-
 const B2BSettings = {
   saveB2BSettings: async (
     _: void,
@@ -32,10 +30,39 @@ const B2BSettings = {
     const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
 
     // Get current settings to save them depending on where the saveB2BSettings is coming from. Custom fields come without autoApprove settings and vice versa.
-    const currentB2BSettings: B2BSettingsInput = await vbase.getJSON(
-      B2B_SETTINGS_DATA_ENTITY,
-      'settings'
-    )
+
+    let currentB2BSettings: B2BSettingsInput = {
+      autoApprove: false,
+      defaultPaymentTerms: [],
+      defaultPriceTables: [],
+      organizationCustomFields: [],
+      costCenterCustomFields: [],
+    }
+
+    try {
+      const getSettingsObj: B2BSettingsInput = await vbase.getJSON(
+        B2B_SETTINGS_DATA_ENTITY,
+        'settings'
+      )
+
+      currentB2BSettings = getSettingsObj
+    } catch (e) {
+      if (e.response?.status === 404) {
+        // when run for the first time on the project - returns 404. ignore in that case
+      } else {
+        logger.error({
+          message: 'saveB2BSettings-currentB2BSettings-error',
+          error: e,
+        })
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    }
 
     try {
       const b2bSettings = {

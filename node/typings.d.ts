@@ -100,6 +100,7 @@ interface Organization {
   paymentTerms: PaymentTerm[]
   status: string
   created: string
+  customFields?: CustomField[]
 }
 
 interface CostCenter {

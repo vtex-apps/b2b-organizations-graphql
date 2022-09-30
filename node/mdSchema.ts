@@ -24,7 +24,7 @@ export const ORGANIZATION_FIELDS = [
   'created',
   'customFields',
 ]
-export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.7'
+export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.8'
 
 export const COST_CENTER_DATA_ENTITY = 'cost_centers'
 export const COST_CENTER_FIELDS = [
@@ -126,7 +126,7 @@ export const schemas = [
           format: 'date-time',
         },
         customFields: {
-          type: ['array', 'null'],
+          type: 'array',
           title: 'Custom Fields',
         },
       },
