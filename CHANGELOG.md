@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added marketing tags to the b2b scope
+
 ### Updated
 
 - Update GitHub reusable workflow to version 2
