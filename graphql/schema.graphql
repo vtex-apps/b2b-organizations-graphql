@@ -198,6 +198,7 @@ type Mutation {
     @cacheControl(scope: PRIVATE)
 
   setMarketingTags(costId: ID!, tags: [String]!): MutationResponse
+    @checkAdminAccess
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)
