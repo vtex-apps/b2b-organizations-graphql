@@ -3,7 +3,7 @@ import { MARKETING_TAGS } from '../../utils/constants'
 const MarketingTags = {
   setMarketingTags: async (
     _: void,
-    { tags }: { tags: string[] },
+    { costId, tags }: { costId: string; tags: string[] },
     ctx: Context
   ) => {
     const {
@@ -11,16 +11,16 @@ const MarketingTags = {
       vtex: { logger },
     } = ctx
 
-    try {
-      await vbase.saveJSON(
-        MARKETING_TAGS.VBASE_BUCKET,
-        MARKETING_TAGS.VBASE_ID,
-        {
-          tags,
-        }
-      )
+    if (!costId || !tags) {
+      throw new Error('Invalid parameters')
+    }
 
-      return { status: 'success', message: '', id: MARKETING_TAGS.VBASE_ID }
+    try {
+      await vbase.saveJSON(MARKETING_TAGS.VBASE_BUCKET, costId, {
+        tags,
+      })
+
+      return { status: 'success', message: '', id: costId }
     } catch (error) {
       logger.error({
         error,

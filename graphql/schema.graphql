@@ -77,7 +77,8 @@ type Query {
   getBinding(email: String!): Boolean
     @withSession
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
-  getMarketingTags: MarketingTags @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getMarketingTags(costId: ID!): MarketingTags
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
 type Mutation {
@@ -196,7 +197,7 @@ type Mutation {
     @checkAdminAccess
     @cacheControl(scope: PRIVATE)
 
-  setMarketingTags(tags: [String]!): MutationResponse
+  setMarketingTags(costId: ID!, tags: [String]!): MutationResponse
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)

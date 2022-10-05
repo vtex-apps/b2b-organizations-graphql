@@ -1,19 +1,18 @@
 import { MARKETING_TAGS } from '../../utils/constants'
 
 const MarketingTags = {
-  getMarketingTags: async (_: void, __: any, ctx: Context) => {
+  getMarketingTags: async (
+    _: void,
+    { costId }: { costId: string },
+    ctx: Context
+  ) => {
     const {
       clients: { vbase },
       vtex: { logger },
     } = ctx
 
     try {
-      const data = await vbase.getJSON(
-        MARKETING_TAGS.VBASE_BUCKET,
-        MARKETING_TAGS.VBASE_ID
-      )
-
-      return data
+      return await vbase.getJSON(MARKETING_TAGS.VBASE_BUCKET, costId)
     } catch (error) {
       logger.error({
         error,
