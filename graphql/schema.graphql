@@ -77,6 +77,8 @@ type Query {
   getBinding(email: String!): Boolean
     @withSession
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getMarketingTags(costId: ID!): MarketingTags
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
 type Mutation {
@@ -193,6 +195,12 @@ type Mutation {
     @cacheControl(scope: PRIVATE)
   saveSalesChannels(channels: [SalesChannelsInput]!): MutationResponse
     @checkAdminAccess
+    @cacheControl(scope: PRIVATE)
+
+  setMarketingTags(costId: ID!, tags: [String]!): MutationResponse
+    @checkAdminAccess
+    @withSession
+    @withPermissions
     @cacheControl(scope: PRIVATE)
 }
 
@@ -353,6 +361,10 @@ type SimpleRole {
 type Channels {
   id: String
   name: String
+}
+
+type MarketingTags {
+  tags: [String]
 }
 
 scalar Data

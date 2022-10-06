@@ -10,3 +10,7 @@ export const ORGANIZATION_REQUEST_STATUSES = {
   DECLINED: 'declined',
   PENDING: 'pending',
 }
+
+export const MARKETING_TAGS = {
+  VBASE_BUCKET: 'b2b_marketing_tags',
+}
