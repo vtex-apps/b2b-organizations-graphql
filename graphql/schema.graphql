@@ -69,7 +69,7 @@ type Query {
   ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
 
-  getOrganizationsByEmail(email: String!): [B2BOrganization]
+  getOrganizationsByEmail(email: String): [B2BOrganization]
     @cacheControl(scope: PRIVATE)
 
   checkOrganizationIsActive(id: String): Boolean @cacheControl(scope: PRIVATE)
@@ -349,6 +349,7 @@ type B2BOrganization {
   roleId: ID
   role: SimpleRole
   organizationName: String
+  organizationStatus: String
   costCenterName: String
 }
 

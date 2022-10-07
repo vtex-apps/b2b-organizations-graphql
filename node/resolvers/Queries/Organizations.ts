@@ -164,7 +164,7 @@ const Organizations = {
     }: any
   ) => {
     const organizationFilters: string[] = []
-
+    let fromSession = false
     const {
       data: { checkUserPermission },
     }: any = await storefrontPermissions
@@ -183,8 +183,9 @@ const Organizations = {
       })
 
     if (
-      !adminUserAuthToken &&
-      !checkUserPermission?.permissions.includes('add-sales-users-all')
+      (!adminUserAuthToken &&
+        !checkUserPermission?.permissions.includes('add-sales-users-all')) ||
+      !(email?.length > 0)
     ) {
       const sessionData = await session
         .getSession(sessionToken as string, ['*'])
@@ -210,17 +211,23 @@ const Organizations = {
         }
 
         organizationFilters.push(orgId)
-      } else {
+      }
+
+      if (!(email?.length > 0)) {
         email = sessionData?.namespaces?.profile?.email?.value
+        fromSession = true
       }
     }
 
     const organizations = (
       await storefrontPermissions.getOrganizationsByEmail(email)
     ).data?.getOrganizationsByEmail?.filter(({ orgId }: { orgId: string }) => {
-      return organizationFilters.length > 0
-        ? organizationFilters.find((id: string) => orgId === id)
-        : true
+      return (
+        fromSession ||
+        (organizationFilters.length > 0
+          ? organizationFilters.find((id: string) => orgId === id)
+          : true)
+      )
     })
 
     try {
