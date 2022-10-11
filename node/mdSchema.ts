@@ -19,6 +19,7 @@ export const ORGANIZATION_FIELDS = [
   'collections',
   'paymentTerms',
   'priceTables',
+  'salesChannel',
   'costCenters',
   'status',
   'created',
@@ -108,6 +109,10 @@ export const schemas = [
         priceTables: {
           type: 'array',
           title: 'Price Tables',
+        },
+        salesChannel: {
+          type: 'string',
+          title: 'Sales Channel',
         },
         costCenters: {
           // deprecated

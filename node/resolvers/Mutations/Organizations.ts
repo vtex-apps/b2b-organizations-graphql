@@ -44,6 +44,7 @@ const Organizations = {
         created: now,
         paymentTerms: [],
         priceTables: [],
+        salesChannel: '',
         status: ORGANIZATION_STATUSES.ACTIVE,
       }
 
@@ -185,6 +186,7 @@ const Organizations = {
       collections,
       paymentTerms,
       priceTables,
+      salesChannel,
     }: {
       id: string
       name: string
@@ -193,6 +195,7 @@ const Organizations = {
       collections: any[]
       paymentTerms: any[]
       priceTables: any[]
+      salesChannel: string
     },
     ctx: Context
   ) => {
@@ -234,6 +237,7 @@ const Organizations = {
           collections,
           paymentTerms,
           priceTables,
+          salesChannel,
           status,
         },
         id,
