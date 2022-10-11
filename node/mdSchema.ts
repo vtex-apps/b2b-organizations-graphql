@@ -111,7 +111,7 @@ export const schemas = [
           title: 'Price Tables',
         },
         salesChannel: {
-          type: 'string',
+          type: ['string', 'null'],
           title: 'Sales Channel',
         },
         costCenters: {
