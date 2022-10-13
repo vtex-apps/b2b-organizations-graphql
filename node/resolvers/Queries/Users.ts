@@ -50,6 +50,7 @@ const getChannels = async (ctx: Context) => {
 
   let channels = {}
 
+  console.log(channels)
   try {
     channels = await vbase.getJSON('b2borg', 'salesChannels')
   } catch (err) {
