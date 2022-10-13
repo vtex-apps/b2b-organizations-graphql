@@ -1,3 +1,5 @@
+
+/* eslint-disable no-console */
 import {
   ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_FIELDS,
