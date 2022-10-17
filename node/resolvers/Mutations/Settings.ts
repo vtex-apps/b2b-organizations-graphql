@@ -3,7 +3,7 @@ import { getAppId } from '../config'
 const Settings = {
   saveAppSettings: async (_: any, __: any, ctx: Context) => {
     const {
-      clients: { apps },
+      clients: { vbase },
       vtex: { logger },
     } = ctx
 
@@ -12,7 +12,7 @@ const Settings = {
     const newSettings = {}
 
     try {
-      await apps.saveAppSettings(app, newSettings)
+      await vbase.saveJSON('b2borg', app, newSettings)
 
       return { status: 'success', message: '' }
     } catch (error) {

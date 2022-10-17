@@ -13,7 +13,10 @@ const defaultSettings = {
 }
 
 export const getAppId = (): string => {
-  return process.env.VTEX_APP_ID ?? ''
+  const app = process.env.VTEX_APP_ID
+  const [appName] = String(app).split('@')
+
+  return appName
 }
 
 const checkConfig = async (ctx: Context) => {

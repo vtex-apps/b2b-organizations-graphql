@@ -124,11 +124,18 @@ const sleep = (ms: number) => {
 const Users = {
   getAppSettings: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { apps, masterdata },
+      clients: { masterdata, vbase },
+      vtex: { logger },
     } = ctx
 
     const app: string = getAppId()
-    const settings = await apps.getAppSettings(app)
+    const settings: any = await vbase.getJSON('b2borg', app).catch(error => {
+      logger.error({
+        error,
+        message: 'b2borg.getAppSettings-Error',
+      })
+      return {}
+    })
 
     if (!settings.adminSetup) {
       settings.adminSetup = {}
@@ -171,7 +178,7 @@ const Users = {
           }
         })
 
-      await apps.saveAppSettings(app, settings)
+      await vbase.saveJSON('b2borg', app, settings)
     }
 
     return settings
