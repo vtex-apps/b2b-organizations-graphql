@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.23.3] - 2022-10-17
+
 ### Changed
 
 - Change app settings to store settings in VBase
