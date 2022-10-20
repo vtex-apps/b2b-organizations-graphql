@@ -7,13 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [2.2.2] - 2022-09-30
+## [0.23.0] - 2022-10-20
 
-## [2.2.1] - 2022-09-22
+### Added
 
-## [2.2.0] - 2022-09-21
+- Allow users to set custom fields to hold information about organizations
 
-## [2.1.0] - 2022-09-21
+## [0.23.0] - 2022-09-21
 
 ### Added
 
@@ -48,18 +48,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Added the cookie header to storefront permissions requests passing the authentication token.
-
-### Added
-
-- Allow users to set custom fields to hold information about organizations
-
-## [0.20.0] - 2022-08-30
-
-## [Unreleased]
-
-### Added
-
-- Allow users to set auto approval for new organization with a new setting fields
 
 ## [0.19.7] - 2022-08-23
 
