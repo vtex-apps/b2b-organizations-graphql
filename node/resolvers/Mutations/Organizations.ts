@@ -67,6 +67,9 @@ const Organizations = {
         ...(defaultCostCenter.businessDocument && {
           businessDocument: defaultCostCenter.businessDocument,
         }),
+        ...(defaultCostCenter.stateRegistration && {
+          stateRegistration: defaultCostCenter.stateRegistration,
+        }),
       }
 
       const costCenterResult = await masterdata.createDocument({
@@ -331,6 +334,10 @@ const Organizations = {
                 ...(organizationRequest.defaultCostCenter.businessDocument && {
                   businessDocument:
                     organizationRequest.defaultCostCenter.businessDocument,
+                }),
+                ...(organizationRequest.defaultCostCenter.stateRegistration && {
+                  stateRegistration:
+                    organizationRequest.defaultCostCenter.stateRegistration,
                 }),
               },
             },
