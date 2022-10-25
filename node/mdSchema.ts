@@ -35,8 +35,9 @@ export const COST_CENTER_FIELDS = [
   'organization',
   'phoneNumber',
   'businessDocument',
+  'stateRegistration',
 ]
-export const COST_CENTER_SCHEMA_VERSION = 'v0.0.6'
+export const COST_CENTER_SCHEMA_VERSION = 'v0.0.7'
 
 export const schemas = [
   {
@@ -159,12 +160,21 @@ export const schemas = [
           type: ['string', 'null'],
           title: 'Business Document',
         },
+        stateRegistration: {
+          type: ['string', 'null'],
+          title: 'State Registration',
+        },
         phoneNumber: {
           type: ['string', 'null'],
           title: 'Phone Number',
         },
       },
-      'v-indexed': ['name', 'organization', 'businessDocument'],
+      'v-indexed': [
+        'name',
+        'organization',
+        'businessDocument',
+        'stateRegistration',
+      ],
       'v-immediate-indexing': true,
       'v-cache': false,
     },

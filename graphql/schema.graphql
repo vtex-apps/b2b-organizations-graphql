@@ -252,6 +252,7 @@ type DefaultCostCenter {
   address: Address
   phoneNumber: String
   businessDocument: String
+  stateRegistration: String
 }
 
 type Organization {
@@ -285,6 +286,7 @@ type CostCenter {
   paymentTerms: [PaymentTerm]
   phoneNumber: String
   businessDocument: String
+  stateRegistration: String
 }
 
 type Address {
@@ -390,6 +392,7 @@ input DefaultCostCenterInput {
   address: AddressInput
   phoneNumber: String
   businessDocument: String
+  stateRegistration: String
 }
 
 input CostCenterInput {
@@ -398,6 +401,7 @@ input CostCenterInput {
   paymentTerms: [PaymentTermInput]
   phoneNumber: String
   businessDocument: String
+  stateRegistration: String
 }
 
 input AddressInput {

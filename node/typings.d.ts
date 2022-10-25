@@ -56,6 +56,7 @@ interface DefaultCostCenterInput {
   address: AddressInput
   phoneNumber?: string
   businessDocument?: string
+  stateRegistration?: string
 }
 
 interface CostCenterInput {
@@ -64,6 +65,7 @@ interface CostCenterInput {
   paymentTerms?: PaymentTerm[]
   phoneNumber?: string
   businessDocument?: string
+  stateRegistration?: string
 }
 
 interface AddressInput {

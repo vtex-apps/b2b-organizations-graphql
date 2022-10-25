@@ -11,7 +11,13 @@ const CostCenters = {
     _: void,
     {
       organizationId,
-      input: { name, addresses, phoneNumber, businessDocument },
+      input: {
+        name,
+        addresses,
+        phoneNumber,
+        businessDocument,
+        stateRegistration,
+      },
     }: { organizationId: string; input: CostCenterInput },
     ctx: Context
   ) => {
@@ -46,6 +52,7 @@ const CostCenters = {
         organization: organizationId,
         ...(phoneNumber && { phoneNumber }),
         ...(businessDocument && { businessDocument }),
+        ...(stateRegistration && { stateRegistration }),
       }
 
       const createCostCenterResult = await masterdata.createDocument({
@@ -148,7 +155,14 @@ const CostCenters = {
     _: void,
     {
       id,
-      input: { name, addresses, paymentTerms, phoneNumber, businessDocument },
+      input: {
+        name,
+        addresses,
+        paymentTerms,
+        phoneNumber,
+        businessDocument,
+        stateRegistration,
+      },
     }: { id: string; input: CostCenterInput },
     ctx: Context
   ) => {
@@ -168,6 +182,9 @@ const CostCenters = {
           ...(addresses?.length && { addresses }),
           ...(paymentTerms?.length && { paymentTerms }),
           ...((phoneNumber || phoneNumber === '') && { phoneNumber }),
+          ...((stateRegistration || stateRegistration === '') && {
+            stateRegistration,
+          }),
           ...((businessDocument || businessDocument === '') && {
             businessDocument,
           }),
