@@ -9,7 +9,7 @@ export const ORGANIZATION_REQUEST_FIELDS = [
   'notes',
   'created',
 ]
-export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.0.5'
+export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.0.6'
 
 export const ORGANIZATION_DATA_ENTITY = 'organizations'
 export const ORGANIZATION_FIELDS = [
@@ -66,6 +66,10 @@ export const schemas = [
             },
           },
           'v-indexed': ['email'],
+        },
+        costCenters: {
+          type: 'object',
+          title: 'All Cost Centers',
         },
         status: {
           type: 'string',
