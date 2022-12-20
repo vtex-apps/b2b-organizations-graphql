@@ -379,6 +379,7 @@ input OrganizationInput {
   tradeName: String
   b2bCustomerAdmin: B2BUserInput
   defaultCostCenter: DefaultCostCenterInput
+  costCenters: [DefaultCostCenterInput]
 }
 
 input B2BUserInput {

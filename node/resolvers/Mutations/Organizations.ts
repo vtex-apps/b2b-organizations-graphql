@@ -20,7 +20,7 @@ const Organizations = {
   createOrganization: async (
     _: void,
     {
-      input: { name, tradeName, defaultCostCenter },
+      input: { name, tradeName, defaultCostCenter, costCenters },
     }: { input: OrganizationInput },
     ctx: Context
   ) => {
@@ -56,32 +56,46 @@ const Organizations = {
 
       const organizationId = createOrganizationResult.DocumentId
 
-      // create cost center
-      const costCenter = {
-        addresses: [defaultCostCenter.address],
-        name: defaultCostCenter.name,
-        organization: organizationId,
-        ...(defaultCostCenter.phoneNumber && {
-          phoneNumber: defaultCostCenter.phoneNumber,
-        }),
-        ...(defaultCostCenter.businessDocument && {
-          businessDocument: defaultCostCenter.businessDocument,
-        }),
-        ...(defaultCostCenter.stateRegistration && {
-          stateRegistration: defaultCostCenter.stateRegistration,
-        }),
+      const createCostCenter = async (data: any) => {
+        // create cost center
+        const costCenter = {
+          addresses: [data?.address],
+          name: data?.name,
+          organization: organizationId,
+          ...(data?.phoneNumber && {
+            phoneNumber: data?.phoneNumber,
+          }),
+          ...(data?.businessDocument && {
+            businessDocument: data?.businessDocument,
+          }),
+          ...(data?.stateRegistration && {
+            stateRegistration: data?.stateRegistration,
+          }),
+        }
+
+        return masterdata.createDocument({
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: costCenter,
+          schema: COST_CENTER_SCHEMA_VERSION,
+        })
       }
 
-      const costCenterResult = await masterdata.createDocument({
-        dataEntity: COST_CENTER_DATA_ENTITY,
-        fields: costCenter,
-        schema: COST_CENTER_SCHEMA_VERSION,
-      })
+      let costCenterResult: any[] = []
+
+      if (!defaultCostCenter && costCenters?.length) {
+        costCenterResult = await Promise.all(
+          costCenters?.map(async (costCenter: any) =>
+            createCostCenter(costCenter)
+          )
+        )
+      } else {
+        costCenterResult = [await createCostCenter(defaultCostCenter)]
+      }
 
       message({ storefrontPermissions, logger, mail }).organizationCreated(name)
 
       return {
-        costCenterId: costCenterResult.DocumentId,
+        costCenterId: costCenterResult[0].DocumentId,
         href: createOrganizationResult.Href,
         id: createOrganizationResult.DocumentId,
         status: '',
@@ -97,7 +111,13 @@ const Organizations = {
   createOrganizationRequest: async (
     _: void,
     {
-      input: { name, tradeName, b2bCustomerAdmin, defaultCostCenter },
+      input: {
+        b2bCustomerAdmin,
+        costCenters,
+        defaultCostCenter,
+        name,
+        tradeName,
+      },
     }: { input: OrganizationInput },
     ctx: Context
   ) => {
@@ -136,6 +156,7 @@ const Organizations = {
       name,
       ...(tradeName && { tradeName }),
       b2bCustomerAdmin,
+      costCenters,
       created: now,
       defaultCostCenter,
       notes: '',
@@ -324,6 +345,19 @@ const Organizations = {
                 firstName,
                 lastName,
               },
+              costCenters: organizationRequest.costCenters.map(costCenter => ({
+                address: costCenter.address,
+                name: costCenter.name,
+                ...(costCenter.phoneNumber && {
+                  phoneNumber: costCenter.phoneNumber,
+                }),
+                ...(costCenter.businessDocument && {
+                  businessDocument: costCenter.businessDocument,
+                }),
+                ...(costCenter.stateRegistration && {
+                  stateRegistration: costCenter.stateRegistration,
+                }),
+              })),
               defaultCostCenter: {
                 address: organizationRequest.defaultCostCenter.address,
                 name: organizationRequest.defaultCostCenter.name,
