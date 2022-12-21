@@ -82,7 +82,7 @@ strategy:
   organizationAB:
     enabled: true
     sendDashboard: true
-    hardTries: 1
+    hardTries: 2
     stopOnFail: false
     parallel: true
     specs:
@@ -92,7 +92,7 @@ strategy:
   addCostCentersForOrganizationAandaddUsersForOrganizationB:
     enabled: true
     sendDashboard: true
-    hardTries: 1
+    hardTries: 2
     stopOnFail: false
     parallel: true
     specs:
@@ -105,7 +105,7 @@ strategy:
   addUsersForOrganizationA:
     enabled: true
     sendDashboard: true
-    hardTries: 1
+    hardTries: 2
     stopOnFail: false
     parallel: true
     specs:
@@ -115,7 +115,7 @@ strategy:
   addSalesUserAndHideOrganizationByDolarSalesChannel:
     enabled: true
     sendDashboard: true
-    hardTries: 1
+    hardTries: 2
     stopOnFail: false
     parallel: false
     specs:
@@ -144,8 +144,8 @@ strategy:
     stopOnFail: false
     parallel: true
     specs:
-      - cy-runner/cypress-shared/integration/b2b/2.5.2-buyer_scenarios_orgA_costA1.spec.js
-      - cy-runner/cypress-shared/integration/b2b/2.6.2-buyer_scenarios_orgA_costA2.spec.js
+      - cypress-shared/integration/b2b/2.5.2-buyer_scenarios_orgA_costA1.spec.js
+      - cypress-shared/integration/b2b/2.6.2-buyer_scenarios_orgA_costA2.spec.js
     dependency:
       - cypress-shared/integration/b2b/2.5.1-buyer_scenarios_orgA_costA1.spec.js
       - cypress-shared/integration/b2b/2.6.1-buyer_scenarios_orgA_costA2.spec.js
@@ -161,8 +161,8 @@ strategy:
       - cypress-shared/integration/b2b/2.10-approver_scenarios_orgA_costcenter2.spec.js
       - cypress-shared/integration/b2b/2.11-approver_scenarios_orgB.spec.js
     dependency:
-      - cy-runner/cypress-shared/integration/b2b/2.5.2-buyer_scenarios_orgA_costA1.spec.js
-      - cy-runner/cypress-shared/integration/b2b/2.6.2-buyer_scenarios_orgA_costA2.spec.js
+      - cypress-shared/integration/b2b/2.5.2-buyer_scenarios_orgA_costA1.spec.js
+      - cypress-shared/integration/b2b/2.6.2-buyer_scenarios_orgA_costA2.spec.js
       - cypress-shared/integration/b2b/2.7-buyer_scenarios_orgB_costB1.spec.js
       - cypress-shared/integration/b2b/2.4.3-show_organization_by_adding_principal_sales_channel.spec.js
   organizationAUsersBasicTests2:
