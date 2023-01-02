@@ -88,9 +88,13 @@ type Mutation {
     id: ID!
     status: String!
     notes: String
+    notifyUsers: Boolean
   ): MutationResponse
   deleteOrganizationRequest(id: ID!): MutationResponse
-  createOrganization(input: OrganizationInput!): OrganizationCostCenterResponse
+  createOrganization(
+    input: OrganizationInput!
+    notifyUsers: Boolean
+  ): OrganizationCostCenterResponse
     @checkAdminAccess
     @cacheControl(scope: PRIVATE)
   createCostCenter(

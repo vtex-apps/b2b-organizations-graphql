@@ -21,7 +21,8 @@ const Organizations = {
     _: void,
     {
       input: { name, tradeName, defaultCostCenter, costCenters },
-    }: { input: OrganizationInput },
+      notifyUsers = true,
+    }: { input: OrganizationInput; notifyUsers?: boolean },
     ctx: Context
   ) => {
     const {
@@ -92,7 +93,11 @@ const Organizations = {
         costCenterResult = [await createCostCenter(defaultCostCenter)]
       }
 
-      message({ storefrontPermissions, logger, mail }).organizationCreated(name)
+      if (notifyUsers) {
+        message({ storefrontPermissions, logger, mail }).organizationCreated(
+          name
+        )
+      }
 
       return {
         costCenterId: costCenterResult[0].DocumentId,
@@ -129,27 +134,6 @@ const Organizations = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    const duplicate = await masterdata
-      .searchDocumentsWithPaginationInfo({
-        dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
-        fields: ORGANIZATION_REQUEST_FIELDS,
-        pagination: {
-          page: 1,
-          pageSize: 1,
-        },
-        schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
-        sort: `created DESC`,
-        where: `b2bCustomerAdmin.email=${b2bCustomerAdmin.email} AND (status=pending OR status=approved)`,
-      })
-      .then((res: any) => {
-        return res.data[0]?.status ?? ''
-      })
-      .catch(() => '')
-
-    if (duplicate) {
-      return { href: '', id: '', status: duplicate }
-    }
-
     const now = new Date()
 
     const organizationRequest = {
@@ -158,7 +142,8 @@ const Organizations = {
       b2bCustomerAdmin,
       costCenters,
       created: now,
-      defaultCostCenter,
+      defaultCostCenter:
+        defaultCostCenter ?? (costCenters?.length && costCenters[0]),
       notes: '',
       status: ORGANIZATION_REQUEST_STATUSES.PENDING,
     }
@@ -170,7 +155,11 @@ const Organizations = {
         schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
       })
 
-      return { href: result.Href, id: result.DocumentId, status: duplicate }
+      return {
+        href: result.Href,
+        id: result.DocumentId,
+        status: organizationRequest.status,
+      }
     } catch (error) {
       logger.error({
         error,
@@ -278,7 +267,12 @@ const Organizations = {
   },
   updateOrganizationRequest: async (
     _: void,
-    { id, status, notes }: { id: string; status: string; notes: string },
+    {
+      id,
+      status,
+      notes,
+      notifyUsers = true,
+    }: { id: string; status: string; notes: string; notifyUsers: boolean },
     ctx: Context
   ) => {
     const {
@@ -345,19 +339,21 @@ const Organizations = {
                 firstName,
                 lastName,
               },
-              costCenters: organizationRequest.costCenters.map(costCenter => ({
-                address: costCenter.address,
-                name: costCenter.name,
-                ...(costCenter.phoneNumber && {
-                  phoneNumber: costCenter.phoneNumber,
-                }),
-                ...(costCenter.businessDocument && {
-                  businessDocument: costCenter.businessDocument,
-                }),
-                ...(costCenter.stateRegistration && {
-                  stateRegistration: costCenter.stateRegistration,
-                }),
-              })),
+              costCenters: organizationRequest?.costCenters?.map(
+                costCenter => ({
+                  address: costCenter.address,
+                  name: costCenter.name,
+                  ...(costCenter.phoneNumber && {
+                    phoneNumber: costCenter.phoneNumber,
+                  }),
+                  ...(costCenter.businessDocument && {
+                    businessDocument: costCenter.businessDocument,
+                  }),
+                  ...(costCenter.stateRegistration && {
+                    stateRegistration: costCenter.stateRegistration,
+                  }),
+                })
+              ),
               defaultCostCenter: {
                 address: organizationRequest.defaultCostCenter.address,
                 name: organizationRequest.defaultCostCenter.name,
@@ -375,6 +371,7 @@ const Organizations = {
                 }),
               },
             },
+            notifyUsers,
           },
           ctx
         )
@@ -437,7 +434,7 @@ const Organizations = {
             })
           })
 
-        if (addUserResult?.status === 'success') {
+        if (addUserResult?.status === 'success' && notifyUsers) {
           message({
             logger,
             mail,
@@ -450,10 +447,12 @@ const Organizations = {
           )
         }
 
-        // notify sales admin
-        message({ storefrontPermissions, logger, mail }).organizationCreated(
-          organizationRequest.name
-        )
+        if (notifyUsers) {
+          // notify sales admin
+          message({ storefrontPermissions, logger, mail }).organizationCreated(
+            organizationRequest.name
+          )
+        }
 
         return { status: 'success', message: '', id: organizationId }
       } catch (error) {
