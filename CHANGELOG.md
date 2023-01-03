@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.24.0] - 2022-10-25
 
+### Changed
+
+- Cypress improvements
+
 ### Added
 
 - Added the state registration number to cost center schema
