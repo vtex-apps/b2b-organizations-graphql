@@ -79,6 +79,7 @@ type Query {
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getMarketingTags(costId: ID!): MarketingTags
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getB2BSettings: B2BSettings @cacheControl(scope: PUBLIC, maxAge: SHORT)
 }
 
 type Mutation {
@@ -203,6 +204,10 @@ type Mutation {
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)
+
+  saveB2BSettings(input: B2BSettingsInput): MutationResponse
+    @withSession
+    @withPermissions
 }
 
 type SettingsResponse {
@@ -372,6 +377,12 @@ type MarketingTags {
   tags: [String]
 }
 
+type B2BSettings {
+  autoApprove: Boolean
+  defaultPaymentTerms: [PaymentTerm]
+  defaultPriceTables: [String]
+}
+
 scalar Data
 
 input OrganizationInput {
@@ -434,4 +445,10 @@ input PaymentTermInput {
 input SalesChannelsInput {
   id: String
   name: String
+}
+
+input B2BSettingsInput {
+  autoApprove: Boolean
+  defaultPaymentTerms: [PaymentTermInput]
+  defaultPriceTables: [String]
 }

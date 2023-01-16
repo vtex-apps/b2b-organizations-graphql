@@ -15,6 +15,7 @@ import UsersMutation from './Mutations/Users'
 import CostCentersQuery from './Queries/CostCenters'
 import MarketingTagsQuery from './Queries/MarketingTags'
 import OrganizationsQuery from './Queries/Organizations'
+import SettingsQuery from './Queries/Settings'
 import UsersQuery from './Queries/Users'
 import Routes from './Routes'
 
@@ -41,6 +42,7 @@ export const resolvers = {
     ...CostCentersQuery,
     ...MarketingTagsQuery,
     ...OrganizationsQuery,
+    ...SettingsQuery,
     ...UsersQuery,
   },
   Routes,
