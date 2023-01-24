@@ -8,7 +8,6 @@
     "graphql": "^14.5.0",
     "graphql-tag": "^2.12.6",
     "graphql-tools": "^4.0.6",
-    "jsonwebtoken": "^8.5.0",
     "qs": "^6.9.4",
     "ramda": "^0.25.0"
   },
