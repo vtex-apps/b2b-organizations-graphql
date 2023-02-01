@@ -8,6 +8,7 @@ const B2BSettings = {
     } = ctx
 
     const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
+
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
@@ -30,6 +31,13 @@ const B2BSettings = {
     }
 
     return settings
+  },
+  getSellers: async (_: void, __: void, ctx: Context) => {
+    const {
+      clients: { sellers },
+    } = ctx
+
+    return (await sellers.getSellers())?.items
   },
 }
 

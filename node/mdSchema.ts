@@ -21,10 +21,11 @@ export const ORGANIZATION_FIELDS = [
   'priceTables',
   'salesChannel',
   'costCenters',
+  'sellers',
   'status',
   'created',
 ]
-export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.7'
+export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.8'
 
 export const COST_CENTER_DATA_ENTITY = 'cost_centers'
 export const COST_CENTER_FIELDS = [
@@ -119,6 +120,10 @@ export const schemas = [
           // deprecated
           type: 'array',
           title: 'Cost Centers',
+        },
+        sellers: {
+          type: 'array',
+          title: 'Sellers',
         },
         status: {
           type: 'string',

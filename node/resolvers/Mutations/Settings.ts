@@ -30,7 +30,12 @@ const Settings = {
   saveB2BSettings: async (
     _: void,
     {
-      input: { autoApprove, defaultPaymentTerms, defaultPriceTables },
+      input: {
+        autoApprove,
+        defaultPaymentTerms,
+        defaultPriceTables,
+        uiSettings,
+      },
     }: {
       input: B2BSettingsInput
       page: number
@@ -53,6 +58,7 @@ const Settings = {
         autoApprove,
         defaultPaymentTerms,
         defaultPriceTables,
+        uiSettings,
       }
 
       await vbase.saveJSON(B2B_SETTINGS_DATA_ENTITY, 'settings', b2bSettings)
@@ -62,8 +68,8 @@ const Settings = {
       }
     } catch (e) {
       logger.error({
-        message: 'saveB2BSettings-error',
         error: e,
+        message: 'saveB2BSettings-error',
       })
       if (e.message) {
         throw new GraphQLError(e.message)

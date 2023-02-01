@@ -223,6 +223,7 @@ const Organizations = {
       paymentTerms,
       priceTables,
       salesChannel,
+      sellers,
     }: {
       id: string
       name: string
@@ -232,6 +233,7 @@ const Organizations = {
       paymentTerms: any[]
       priceTables: any[]
       salesChannel?: string
+      sellers?: any[]
     },
     ctx: Context
   ) => {
@@ -274,6 +276,7 @@ const Organizations = {
           paymentTerms,
           priceTables,
           ...(salesChannel && { salesChannel }),
+          ...(sellers && { sellers }),
           status,
         },
         id,

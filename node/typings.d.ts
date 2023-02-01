@@ -158,8 +158,13 @@ interface Price {
   id: string
 }
 
+interface UISettings {
+  showModal: boolean
+}
+
 interface B2BSettingsInput {
   autoApprove: boolean
   defaultPaymentTerms: PaymentTerm[]
   defaultPriceTables: Price[]
+  uiSettings: UISettings
 }

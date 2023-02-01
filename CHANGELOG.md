@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- added sellers to orgs
+- added ui modal options to settings
+
+
 ## [0.25.1] - 2023-01-24
 
 ### Fixed
