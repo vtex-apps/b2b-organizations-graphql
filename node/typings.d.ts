@@ -44,6 +44,9 @@ interface OrganizationInput {
   b2bCustomerAdmin: B2BCustomerInput
   defaultCostCenter?: DefaultCostCenterInput
   costCenters?: DefaultCostCenterInput[]
+  paymentTerms?: PaymentTerm[]
+  priceTables?: Price[]
+  salesChannel?: string
 }
 
 interface B2BCustomerInput {
@@ -92,6 +95,9 @@ interface OrganizationRequest {
   b2bCustomerAdmin: B2BCustomerInput
   status: string
   created: string
+  paymentTerms?: PaymentTerm[]
+  priceTables?: Price[]
+  salesChannel?: string
 }
 
 interface Organization {
@@ -132,6 +138,12 @@ interface Address {
   checked?: boolean
 }
 
+interface B2BSetting {
+  autoApprove: boolean
+  defaultPaymentTerms: PaymentTerm[]
+  defaultPriceTables: [string]
+}
+
 interface UserArgs {
   id?: string
   roleId: string
@@ -147,4 +159,15 @@ interface UserArgs {
 interface PaymentTerm {
   name: string
   id: string
+}
+
+interface Price {
+  name: string
+  id: string
+}
+
+interface B2BSettingsInput {
+  autoApprove: boolean
+  defaultPaymentTerms: PaymentTerm[]
+  defaultPriceTables: Price[]
 }

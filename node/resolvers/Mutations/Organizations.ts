@@ -15,12 +15,21 @@ import {
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import message from '../message'
+import B2BSettings from '../Queries/Settings'
 
 const Organizations = {
   createOrganization: async (
     _: void,
     {
-      input: { name, tradeName, defaultCostCenter, costCenters },
+      input: {
+        name,
+        tradeName,
+        defaultCostCenter,
+        costCenters,
+        paymentTerms,
+        priceTables,
+        salesChannel,
+      },
       notifyUsers = true,
     }: { input: OrganizationInput; notifyUsers?: boolean },
     ctx: Context
@@ -43,9 +52,9 @@ const Organizations = {
         collections: [],
         costCenters: [],
         created: now,
-        paymentTerms: [],
-        priceTables: [],
-        salesChannel: null,
+        paymentTerms,
+        priceTables,
+        salesChannel,
         status: ORGANIZATION_STATUSES.ACTIVE,
       }
 
@@ -122,8 +131,12 @@ const Organizations = {
         defaultCostCenter,
         name,
         tradeName,
+        priceTables,
+        salesChannel,
+        paymentTerms,
       },
-    }: { input: OrganizationInput },
+      notifyUsers = true,
+    }: { input: OrganizationInput; notifyUsers?: boolean },
     ctx: Context
   ) => {
     const {
@@ -136,24 +149,56 @@ const Organizations = {
 
     const now = new Date()
 
+    const settings = (await B2BSettings.getB2BSettings(
+      undefined,
+      undefined,
+      ctx
+    )) as B2BSettingsInput
+
+    const status = settings?.autoApprove
+      ? ORGANIZATION_REQUEST_STATUSES.APPROVED
+      : ORGANIZATION_REQUEST_STATUSES.PENDING
+
+    paymentTerms =
+      paymentTerms ??
+      ((settings?.defaultPaymentTerms as unknown) as PaymentTerm[])
+    priceTables =
+      priceTables ?? ((settings?.defaultPriceTables as unknown) as Price[])
+
     const organizationRequest = {
       name,
       ...(tradeName && { tradeName }),
+      ...(priceTables && { priceTables }),
+      ...(salesChannel && { salesChannel }),
+      ...(paymentTerms && { paymentTerms }),
       b2bCustomerAdmin,
       costCenters,
       created: now,
       defaultCostCenter:
         defaultCostCenter ?? (costCenters?.length && costCenters[0]),
       notes: '',
-      status: ORGANIZATION_REQUEST_STATUSES.PENDING,
+      status,
     }
 
     try {
-      const result = await masterdata.createDocument({
+      const result = (await masterdata.createDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         fields: organizationRequest,
         schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
-      })
+      })) as any
+
+      if (settings?.autoApprove) {
+        await Organizations.updateOrganizationRequest(
+          _,
+          {
+            id: result.DocumentId,
+            notes: 'Auto approved',
+            notifyUsers,
+            status: ORGANIZATION_REQUEST_STATUSES.APPROVED,
+          },
+          ctx
+        )
+      }
 
       return {
         href: result.Href,
@@ -314,158 +359,146 @@ const Organizations = {
 
     const { email, firstName, lastName } = organizationRequest.b2bCustomerAdmin
 
-    if (status === ORGANIZATION_REQUEST_STATUSES.APPROVED) {
-      try {
-        // update request status to approved
-        await masterdata.updatePartialDocument({
-          dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
-          fields: { status },
-          id,
-        })
+    // if we reach this block, status is declined
+    try {
+      if (status === ORGANIZATION_REQUEST_STATUSES.APPROVED) {
+        try {
+          const {
+            paymentTerms,
+            priceTables,
+            salesChannel,
+            defaultCostCenter,
+            name,
+            tradeName,
+          } = organizationRequest
 
-        const {
-          costCenterId,
-          id: organizationId,
-        } = await Organizations.createOrganization(
-          _,
-          {
-            input: {
-              name: organizationRequest.name,
-              ...(organizationRequest.tradeName && {
-                tradeName: organizationRequest.tradeName,
-              }),
-              b2bCustomerAdmin: {
-                email,
-                firstName,
-                lastName,
+          const {
+            costCenterId,
+            id: organizationId,
+          } = await Organizations.createOrganization(
+            undefined,
+            {
+              input: {
+                ...(tradeName && {
+                  tradeName,
+                }),
+                b2bCustomerAdmin: {
+                  email,
+                  firstName,
+                  lastName,
+                },
+                defaultCostCenter: {
+                  address: defaultCostCenter.address,
+                  name: defaultCostCenter.name,
+                  ...(defaultCostCenter.phoneNumber && {
+                    phoneNumber: defaultCostCenter.phoneNumber,
+                  }),
+                  ...(defaultCostCenter.businessDocument && {
+                    businessDocument: defaultCostCenter.businessDocument,
+                  }),
+                },
+                name,
+                paymentTerms,
+                priceTables,
+                salesChannel,
               },
-              costCenters: organizationRequest?.costCenters?.map(
-                costCenter => ({
-                  address: costCenter.address,
-                  name: costCenter.name,
-                  ...(costCenter.phoneNumber && {
-                    phoneNumber: costCenter.phoneNumber,
-                  }),
-                  ...(costCenter.businessDocument && {
-                    businessDocument: costCenter.businessDocument,
-                  }),
-                  ...(costCenter.stateRegistration && {
-                    stateRegistration: costCenter.stateRegistration,
-                  }),
-                })
-              ),
-              defaultCostCenter: {
-                address: organizationRequest.defaultCostCenter.address,
-                name: organizationRequest.defaultCostCenter.name,
-                ...(organizationRequest.defaultCostCenter.phoneNumber && {
-                  phoneNumber:
-                    organizationRequest.defaultCostCenter.phoneNumber,
-                }),
-                ...(organizationRequest.defaultCostCenter.businessDocument && {
-                  businessDocument:
-                    organizationRequest.defaultCostCenter.businessDocument,
-                }),
-                ...(organizationRequest.defaultCostCenter.stateRegistration && {
-                  stateRegistration:
-                    organizationRequest.defaultCostCenter.stateRegistration,
-                }),
-              },
+              notifyUsers,
             },
-            notifyUsers,
-          },
-          ctx
-        )
-
-        // get roleId of org admin
-        const roles = await storefrontPermissions
-          .listRoles()
-          .then((result: any) => {
-            return result.data.listRoles
-          })
-
-        const roleId = roles.find(
-          (roleItem: any) => roleItem.slug === 'customer-admin'
-        ).id
-
-        // check if user already exists in CL
-        let existingUser = {} as any
-        const clId = await masterdata
-          .searchDocuments({
-            dataEntity: 'CL',
-            fields: ['id'],
-            pagination: {
-              page: 1,
-              pageSize: 1,
-            },
-            where: `email=${email}`,
-          })
-          .then((res: any) => {
-            return res[0]?.id
-          })
-          .catch(() => undefined)
-
-        // check if user already exists in storefront-permissions
-        if (clId) {
-          await storefrontPermissions
-            .getUser(clId)
-            .then((result: any) => {
-              existingUser = result?.data?.getUser ?? {}
-            })
-            .catch(() => null)
-        }
-
-        // grant user org admin role, assign org and cost center
-        const addUserResult = await storefrontPermissions
-          .saveUser({
-            ...existingUser,
-            costId: costCenterId,
-            email,
-            name: existingUser?.name || firstName,
-            orgId: organizationId,
-            roleId,
-          })
-          .then((result: any) => {
-            return result.data.saveUser
-          })
-          .catch((error: any) => {
-            logger.error({
-              error,
-              message: 'addUser-error',
-            })
-          })
-
-        if (addUserResult?.status === 'success' && notifyUsers) {
-          message({
-            logger,
-            mail,
-            storefrontPermissions,
-          }).organizationApproved(
-            organizationRequest.name,
-            firstName,
-            email,
-            notes
+            ctx
           )
-        }
 
-        if (notifyUsers) {
+          // get roleId of org admin
+          const roles = await storefrontPermissions
+            .listRoles()
+            .then((result: any) => {
+              return result.data.listRoles
+            })
+
+          const roleId = roles.find(
+            (roleItem: any) => roleItem.slug === 'customer-admin'
+          ).id
+
+          // check if user already exists in CL
+          let existingUser = {} as any
+          const clId = await masterdata
+            .searchDocuments({
+              dataEntity: 'CL',
+              fields: ['id'],
+              pagination: {
+                page: 1,
+                pageSize: 1,
+              },
+              where: `email=${email}`,
+            })
+            .then((res: any) => {
+              return res[0]?.id ?? undefined
+            })
+            .catch(() => undefined)
+
+          // check if user already exists in storefront-permissions
+          if (clId) {
+            await storefrontPermissions
+              .getUser(clId)
+              .then((result: any) => {
+                existingUser = result?.data?.getUser ?? {}
+              })
+              .catch(() => null)
+          }
+
+          // grant user org admin role, assign org and cost center
+          const addUserResult = await storefrontPermissions
+            .saveUser({
+              ...existingUser,
+              costId: costCenterId,
+              email,
+              name: existingUser?.name || firstName,
+              orgId: organizationId,
+              roleId,
+            })
+            .then((result: any) => {
+              return result.data.saveUser
+            })
+            .catch((error: any) => {
+              logger.error({
+                error,
+                message: 'addUser-error',
+              })
+            })
+
+          if (addUserResult?.status === 'success') {
+            message({
+              logger,
+              mail,
+              storefrontPermissions,
+            }).organizationApproved(
+              organizationRequest.name,
+              firstName,
+              email,
+              notes
+            )
+          }
+
           // notify sales admin
           message({ storefrontPermissions, logger, mail }).organizationCreated(
             organizationRequest.name
           )
+
+          return { status: 'success', message: '', id: organizationId }
+        } catch (e) {
+          logger.error({
+            error: e,
+            message: 'updateOrganizationRequest-error',
+          })
+          if (e.message) {
+            throw new GraphQLError(e.message)
+          } else if (e.response?.data?.message) {
+            throw new GraphQLError(e.response.data.message)
+          } else {
+            throw new GraphQLError(e)
+          }
         }
-
-        return { status: 'success', message: '', id: organizationId }
-      } catch (error) {
-        logger.error({
-          error,
-          message: 'updateOrganizationRequest-error',
-        })
-        throw new GraphQLError(getErrorMessage(error))
       }
-    }
 
-    // if we reach this block, status is declined
-    try {
       // update request status to declined
       await masterdata.updatePartialDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,

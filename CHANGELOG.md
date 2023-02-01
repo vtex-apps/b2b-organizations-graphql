@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added multiple cost centers at same time on create organization and create organization request mutations
 
+## [0.25.1] - 2023-01-24
+
+### Fixed
+
+- Removing JWT dependency
+
+## [0.25.0] - 2023-01-16
+
+### Added
+ - Allow users to set auto approval for new organization with a new setting fields
+
 ## [0.24.0] - 2022-10-25
 
 ### Changed
