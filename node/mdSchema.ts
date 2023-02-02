@@ -14,7 +14,7 @@ export const ORGANIZATION_REQUEST_FIELDS = [
   'salesChannel',
   'sellers',
 ]
-export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.1.0'
+export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.1.1'
 
 export const ORGANIZATION_DATA_ENTITY = 'organizations'
 export const ORGANIZATION_FIELDS = [
