@@ -176,6 +176,7 @@ interface Price {
 
 interface UISettings {
   showModal: boolean
+  clearCart: boolean
 }
 
 interface B2BSettingsInput {

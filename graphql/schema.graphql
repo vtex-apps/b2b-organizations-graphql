@@ -404,6 +404,7 @@ type B2BSettings {
 
 type UISettings {
   showModal: Boolean
+  clearCart: Boolean
 }
 
 scalar Data
@@ -482,6 +483,7 @@ input SalesChannelsInput {
 
 input UISettingsInput {
   showModal: Boolean
+  clearCart: Boolean
 }
 
 input B2BSettingsInput {
