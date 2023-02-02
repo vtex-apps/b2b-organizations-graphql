@@ -218,6 +218,7 @@ type Mutation {
   saveB2BSettings(input: B2BSettingsInput): MutationResponse
     @withSession
     @withPermissions
+    @checkAdminAccess
 }
 
 type SettingsResponse {
