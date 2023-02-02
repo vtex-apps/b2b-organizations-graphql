@@ -52,9 +52,9 @@ const Organizations = {
         collections: [],
         costCenters: [],
         created: now,
-        paymentTerms,
-        priceTables,
-        salesChannel,
+        ...(paymentTerms?.length && { paymentTerms }),
+        ...(priceTables?.length && { priceTables }),
+        ...(salesChannel && { salesChannel }),
         status: ORGANIZATION_STATUSES.ACTIVE,
       }
 
@@ -155,9 +155,7 @@ const Organizations = {
       ctx
     )) as B2BSettingsInput
 
-    const status = settings?.autoApprove
-      ? ORGANIZATION_REQUEST_STATUSES.APPROVED
-      : ORGANIZATION_REQUEST_STATUSES.PENDING
+    const status = ORGANIZATION_REQUEST_STATUSES.PENDING
 
     paymentTerms =
       paymentTerms ??
@@ -245,6 +243,7 @@ const Organizations = {
       paymentTerms,
       priceTables,
       salesChannel,
+      notifyUsers = true,
     }: {
       id: string
       name: string
@@ -254,6 +253,7 @@ const Organizations = {
       paymentTerms: any[]
       priceTables: any[]
       salesChannel?: string
+      notifyUsers?: boolean
     },
     ctx: Context
   ) => {
@@ -272,7 +272,7 @@ const Organizations = {
         id,
       })
 
-      if (currentData.status !== status) {
+      if (currentData.status !== status && notifyUsers) {
         await message({
           logger,
           mail,
@@ -376,7 +376,7 @@ const Organizations = {
             costCenterId,
             id: organizationId,
           } = await Organizations.createOrganization(
-            undefined,
+            _,
             {
               input: {
                 ...(tradeName && {
@@ -465,7 +465,7 @@ const Organizations = {
               })
             })
 
-          if (addUserResult?.status === 'success') {
+          if (addUserResult?.status === 'success' && notifyUsers) {
             message({
               logger,
               mail,
@@ -478,10 +478,20 @@ const Organizations = {
             )
           }
 
-          // notify sales admin
-          message({ storefrontPermissions, logger, mail }).organizationCreated(
-            organizationRequest.name
-          )
+          await masterdata.updatePartialDocument({
+            dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
+            fields: { status },
+            id,
+          })
+
+          if (notifyUsers) {
+            // notify sales admin
+            message({
+              storefrontPermissions,
+              logger,
+              mail,
+            }).organizationCreated(organizationRequest.name)
+          }
 
           return { status: 'success', message: '', id: organizationId }
         } catch (e) {
@@ -506,12 +516,14 @@ const Organizations = {
         id,
       })
 
-      message({ storefrontPermissions, logger, mail }).organizationDeclined(
-        organizationRequest.name,
-        firstName,
-        email,
-        notes
-      )
+      if (notifyUsers) {
+        message({ storefrontPermissions, logger, mail }).organizationDeclined(
+          organizationRequest.name,
+          firstName,
+          email,
+          notes
+        )
+      }
 
       return { status: 'success', message: '' }
     } catch (e) {

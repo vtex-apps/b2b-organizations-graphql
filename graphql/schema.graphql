@@ -118,6 +118,7 @@ type Mutation {
     paymentTerms: [PaymentTermInput]
     priceTables: [String]
     salesChannel: String
+    notifyUsers: Boolean
   ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
