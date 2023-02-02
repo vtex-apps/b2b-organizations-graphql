@@ -34,7 +34,7 @@ export class CheckAdminAccess extends SchemaDirectiveVisitor {
         logger.warn({
           error: err,
           message: 'CheckAdminAccess: Invalid token',
-          token: adminUserAuthToken,
+          token,
         })
         throw new ForbiddenError('Unauthorized Access')
       }
