@@ -18,12 +18,18 @@ export class CheckAdminAccess extends SchemaDirectiveVisitor {
         clients: { identity },
       } = context
 
-      if (!adminUserAuthToken) {
+      let token = adminUserAuthToken
+
+      if (context?.headers['x-vtex-credential']) {
+        token = context?.headers['x-vtex-credential'] as string
+      }
+
+      if (!token) {
         throw new AuthenticationError('No token was provided')
       }
 
       try {
-        await identity.validateToken({ token: adminUserAuthToken })
+        await identity.validateToken({ token })
       } catch (err) {
         logger.warn({
           error: err,

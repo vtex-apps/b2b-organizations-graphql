@@ -23,8 +23,14 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
       }
 
       if (adminUserAuthToken) {
+        let token = adminUserAuthToken
+
+        if (context?.headers['x-vtex-credential']) {
+          token = context?.headers['x-vtex-credential'] as string
+        }
+
         try {
-          await identity.validateToken({ token: adminUserAuthToken })
+          await identity.validateToken({ token })
         } catch (err) {
           logger.warn({
             error: err,
