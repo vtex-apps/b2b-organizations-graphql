@@ -134,6 +134,7 @@ const Organizations = {
         priceTables,
         salesChannel,
         paymentTerms,
+        sellers,
       },
       notifyUsers = true,
     }: { input: OrganizationInput; notifyUsers?: boolean },
@@ -169,6 +170,7 @@ const Organizations = {
       ...(priceTables && { priceTables }),
       ...(salesChannel && { salesChannel }),
       ...(paymentTerms && { paymentTerms }),
+      ...(sellers && { sellers }),
       b2bCustomerAdmin,
       costCenters,
       created: now,
@@ -373,6 +375,7 @@ const Organizations = {
             defaultCostCenter,
             name,
             tradeName,
+            sellers,
           } = organizationRequest
 
           const {
@@ -404,6 +407,7 @@ const Organizations = {
                 paymentTerms,
                 priceTables,
                 salesChannel,
+                sellers,
               },
               notifyUsers,
             },

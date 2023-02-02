@@ -416,6 +416,7 @@ input OrganizationInput {
   paymentTerms: [PaymentTermInput]
   priceTables: [String]
   salesChannel: String
+  sellers: [SellerInput]
 }
 
 input B2BUserInput {

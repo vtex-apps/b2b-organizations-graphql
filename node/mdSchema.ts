@@ -12,6 +12,7 @@ export const ORGANIZATION_REQUEST_FIELDS = [
   'priceTables',
   'paymentTerms',
   'salesChannel',
+  'sellers',
 ]
 export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.1.0'
 
