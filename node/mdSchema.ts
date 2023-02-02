@@ -5,11 +5,15 @@ export const ORGANIZATION_REQUEST_FIELDS = [
   'tradeName',
   'defaultCostCenter',
   'b2bCustomerAdmin',
+  'costCenters',
   'status',
   'notes',
   'created',
+  'priceTables',
+  'paymentTerms',
+  'salesChannel',
 ]
-export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.0.5'
+export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.1.0'
 
 export const ORGANIZATION_DATA_ENTITY = 'organizations'
 export const ORGANIZATION_FIELDS = [
@@ -67,6 +71,10 @@ export const schemas = [
           },
           'v-indexed': ['email'],
         },
+        costCenters: {
+          type: 'array',
+          title: 'All Cost Centers',
+        },
         status: {
           type: 'string',
           title: 'Status',
@@ -79,6 +87,18 @@ export const schemas = [
           type: 'string',
           title: 'Created',
           format: 'date-time',
+        },
+        priceTables: {
+          type: 'array',
+          title: 'Price Tables',
+        },
+        paymentTerms: {
+          type: 'array',
+          title: 'Payment Terms',
+        },
+        salesChannel: {
+          type: ['string', 'null'],
+          title: 'Sales Channel',
         },
       },
       'v-indexed': ['name', 'b2bCustomerAdmin', 'status', 'created'],

@@ -84,14 +84,21 @@ type Query {
 
 type Mutation {
   saveAppSettings: MutationResponse @cacheControl(scope: PRIVATE)
-  createOrganizationRequest(input: OrganizationInput!): MasterDataResponse
+  createOrganizationRequest(
+    input: OrganizationInput!
+    notifyUsers: Boolean
+  ): MasterDataResponse
   updateOrganizationRequest(
     id: ID!
     status: String!
     notes: String
+    notifyUsers: Boolean
   ): MutationResponse
   deleteOrganizationRequest(id: ID!): MutationResponse
-  createOrganization(input: OrganizationInput!): OrganizationCostCenterResponse
+  createOrganization(
+    input: OrganizationInput!
+    notifyUsers: Boolean
+  ): OrganizationCostCenterResponse
     @checkAdminAccess
     @cacheControl(scope: PRIVATE)
   createCostCenter(
@@ -111,6 +118,7 @@ type Mutation {
     paymentTerms: [PaymentTermInput]
     priceTables: [String]
     salesChannel: String
+    notifyUsers: Boolean
   ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
@@ -390,6 +398,10 @@ input OrganizationInput {
   tradeName: String
   b2bCustomerAdmin: B2BUserInput
   defaultCostCenter: DefaultCostCenterInput
+  costCenters: [DefaultCostCenterInput]
+  paymentTerms: [PaymentTermInput]
+  priceTables: [String]
+  salesChannel: String
 }
 
 input B2BUserInput {

@@ -42,7 +42,11 @@ interface OrganizationInput {
   name: string
   tradeName?: string
   b2bCustomerAdmin: B2BCustomerInput
-  defaultCostCenter: DefaultCostCenterInput
+  defaultCostCenter?: DefaultCostCenterInput
+  costCenters?: DefaultCostCenterInput[]
+  paymentTerms?: PaymentTerm[]
+  priceTables?: Price[]
+  salesChannel?: string
 }
 
 interface B2BCustomerInput {
@@ -84,12 +88,16 @@ interface AddressInput {
 }
 
 interface OrganizationRequest {
+  costCenters: DefaultCostCenterInput[]
   name: string
   tradeName?: string
   defaultCostCenter: DefaultCostCenterInput
   b2bCustomerAdmin: B2BCustomerInput
   status: string
   created: string
+  paymentTerms?: PaymentTerm[]
+  priceTables?: Price[]
+  salesChannel?: string
 }
 
 interface Organization {
