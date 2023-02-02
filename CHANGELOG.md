@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - added ui modal options to settings
 
 
+## [0.26.0] - 2023-02-02
+
+### Added
+
+- Added the field to add multiple cost centers to an organization request
+- Added the paymentTerms, sales channel and price tables do the organization request to add when the organization is created
+- Added the notifyUser flag throughout the organization mutations which implies that the user will be notified when the organization is created or updated by email
+
 ## [0.25.1] - 2023-01-24
 
 ### Fixed
