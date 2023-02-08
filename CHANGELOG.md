@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - added sellers to organization request
 
 
+## [0.27.0] - 2023-02-08
+
+### Added
+
+- Added the apiToken apiKey validation
+
+
 ## [0.26.1] - 2023-02-03
 
 ### Added

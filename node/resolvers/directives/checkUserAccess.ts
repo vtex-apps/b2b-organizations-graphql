@@ -18,18 +18,24 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
         clients: { identity, vtexId },
       } = context
 
-      if (!adminUserAuthToken && !storeUserAuthToken) {
+      let token = adminUserAuthToken
+
+      if (!token && !storeUserAuthToken) {
         throw new AuthenticationError('No admin or store token was provided')
       }
 
-      if (adminUserAuthToken) {
+      if (token) {
+        if (context?.headers['x-vtex-credential']) {
+          token = context?.headers['x-vtex-credential'] as string
+        }
+
         try {
-          await identity.validateToken({ token: adminUserAuthToken })
+          await identity.validateToken({ token })
         } catch (err) {
           logger.warn({
             error: err,
             message: 'CheckUserAccess: Invalid admin token',
-            token: adminUserAuthToken,
+            token,
           })
           throw new ForbiddenError('Unauthorized Access')
         }
@@ -45,7 +51,7 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
           logger.warn({
             error: err,
             message: 'CheckUserAccess: Invalid store user token',
-            token: adminUserAuthToken,
+            token: storeUserAuthToken,
           })
           authUser = null
         }
