@@ -134,6 +134,7 @@ const Organizations = {
         priceTables,
         salesChannel,
         paymentTerms,
+        sellers,
       },
       notifyUsers = true,
     }: { input: OrganizationInput; notifyUsers?: boolean },
@@ -169,6 +170,7 @@ const Organizations = {
       ...(priceTables && { priceTables }),
       ...(salesChannel && { salesChannel }),
       ...(paymentTerms && { paymentTerms }),
+      ...(sellers && { sellers }),
       b2bCustomerAdmin,
       costCenters,
       created: now,
@@ -243,6 +245,7 @@ const Organizations = {
       paymentTerms,
       priceTables,
       salesChannel,
+      sellers,
       notifyUsers = true,
     }: {
       id: string
@@ -253,6 +256,7 @@ const Organizations = {
       paymentTerms: any[]
       priceTables: any[]
       salesChannel?: string
+      sellers?: any[]
       notifyUsers?: boolean
     },
     ctx: Context
@@ -296,6 +300,7 @@ const Organizations = {
           paymentTerms,
           priceTables,
           ...(salesChannel && { salesChannel }),
+          ...(sellers && { sellers }),
           status,
         },
         id,
@@ -370,6 +375,7 @@ const Organizations = {
             defaultCostCenter,
             name,
             tradeName,
+            sellers,
           } = organizationRequest
 
           const {
@@ -401,6 +407,7 @@ const Organizations = {
                 paymentTerms,
                 priceTables,
                 salesChannel,
+                sellers,
               },
               notifyUsers,
             },

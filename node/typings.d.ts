@@ -37,6 +37,10 @@ declare module '*.json' {
   const value: any
   export default value
 }
+interface Seller {
+  id: string
+  name: string
+}
 
 interface OrganizationInput {
   name: string
@@ -47,6 +51,7 @@ interface OrganizationInput {
   paymentTerms?: PaymentTerm[]
   priceTables?: Price[]
   salesChannel?: string
+  sellers?: Seller[]
 }
 
 interface B2BCustomerInput {
@@ -98,6 +103,7 @@ interface OrganizationRequest {
   paymentTerms?: PaymentTerm[]
   priceTables?: Price[]
   salesChannel?: string
+  sellers?: Seller[]
 }
 
 interface Organization {
@@ -116,6 +122,8 @@ interface CostCenter {
   organization: string
   addresses: Address[]
   paymentTerms: PaymentTerm[]
+  salesChannel: string
+  priceTables: Price[]
   phoneNumber?: string
   businessDocument?: string
 }
@@ -166,8 +174,14 @@ interface Price {
   id: string
 }
 
+interface UISettings {
+  showModal: boolean
+  clearCart: boolean
+}
+
 interface B2BSettingsInput {
   autoApprove: boolean
   defaultPaymentTerms: PaymentTerm[]
   defaultPriceTables: Price[]
+  uiSettings: UISettings
 }

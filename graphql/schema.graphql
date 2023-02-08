@@ -80,6 +80,7 @@ type Query {
   getMarketingTags(costId: ID!): MarketingTags
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
   getB2BSettings: B2BSettings @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getSellers: [Seller] @checkAdminAccess @cacheControl(scope: PRIVATE)
 }
 
 type Mutation {
@@ -118,6 +119,7 @@ type Mutation {
     paymentTerms: [PaymentTermInput]
     priceTables: [String]
     salesChannel: String
+    sellers: [SellerInput]
     notifyUsers: Boolean
   ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
@@ -216,6 +218,7 @@ type Mutation {
   saveB2BSettings(input: B2BSettingsInput): MutationResponse
     @withSession
     @withPermissions
+    @checkAdminAccess
 }
 
 type SettingsResponse {
@@ -260,6 +263,12 @@ type B2BUserSimple {
   email: String
 }
 
+type Seller {
+  id: String
+  name: String
+  email: String
+}
+
 type DefaultCostCenter {
   name: String
   address: Address
@@ -275,6 +284,7 @@ type Organization {
   collections: [Collection]
   paymentTerms: [PaymentTerm]
   priceTables: [String]
+  sellers: [Seller]
   salesChannel: String
   costCenters: [ID]
   status: String
@@ -389,6 +399,12 @@ type B2BSettings {
   autoApprove: Boolean
   defaultPaymentTerms: [PaymentTerm]
   defaultPriceTables: [String]
+  uiSettings: UISettings
+}
+
+type UISettings {
+  showModal: Boolean
+  clearCart: Boolean
 }
 
 scalar Data
@@ -402,6 +418,7 @@ input OrganizationInput {
   paymentTerms: [PaymentTermInput]
   priceTables: [String]
   salesChannel: String
+  sellers: [SellerInput]
 }
 
 input B2BUserInput {
@@ -449,6 +466,11 @@ input CollectionInput {
   name: String
 }
 
+input SellerInput {
+  id: String
+  name: String
+}
+
 input PaymentTermInput {
   id: ID
   name: String
@@ -459,8 +481,14 @@ input SalesChannelsInput {
   name: String
 }
 
+input UISettingsInput {
+  showModal: Boolean
+  clearCart: Boolean
+}
+
 input B2BSettingsInput {
   autoApprove: Boolean
   defaultPaymentTerms: [PaymentTermInput]
   defaultPriceTables: [String]
+  uiSettings: UISettingsInput
 }

@@ -32,6 +32,13 @@ const B2BSettings = {
 
     return settings
   },
+  getSellers: async (_: void, __: void, ctx: Context) => {
+    const {
+      clients: { sellers },
+    } = ctx
+
+    return (await sellers.getSellers())?.items
+  },
 }
 
 export default B2BSettings
