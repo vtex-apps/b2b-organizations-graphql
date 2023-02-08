@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - added sellers to organization request
 
 
+## [0.26.1] - 2023-02-03
+
+### Added
+
+- `ListOrders` policy
+
 ## [0.26.0] - 2023-02-02
 
 ### Added
@@ -31,7 +37,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.25.0] - 2023-01-16
 
 ### Added
- - Allow users to set auto approval for new organization with a new setting fields
+
+- Allow users to set auto approval for new organization with a new setting fields
 
 ## [0.24.0] - 2022-10-25
 
