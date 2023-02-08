@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added the apiToken apiKey validation
+
+
 ## [0.26.1] - 2023-02-03
 
 ### Added
