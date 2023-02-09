@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added custom fields for organizations and cost centers
+
 ## [0.28.0] - 2023-02-08
 
 ### Added
