@@ -12,7 +12,7 @@ const B2BSettings = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    let settings = null
+    let settings: Partial<B2BSettingsInput> | null = null
 
     try {
       settings = await vbase.getJSON<B2BSettingsInput | null>(
@@ -23,7 +23,8 @@ const B2BSettings = {
 
       settings = {
         ...settings,
-        // if organizationCustomFields is null, set it to an empty array
+        // if custom fields are null, set to an empty array
+        costCenterCustomFields: settings?.costCenterCustomFields ?? [],
         organizationCustomFields: settings?.organizationCustomFields ?? [],
       }
     } catch (e) {
