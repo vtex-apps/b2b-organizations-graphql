@@ -48,6 +48,7 @@ interface OrganizationInput {
   b2bCustomerAdmin: B2BCustomerInput
   defaultCostCenter?: DefaultCostCenterInput
   costCenters?: DefaultCostCenterInput[]
+  customFields?: CustomField[]
   paymentTerms?: PaymentTerm[]
   priceTables?: Price[]
   salesChannel?: string
@@ -65,6 +66,7 @@ interface DefaultCostCenterInput {
   address: AddressInput
   phoneNumber?: string
   businessDocument?: string
+  customFields?: CustomField[]
   stateRegistration?: string
 }
 
@@ -74,6 +76,7 @@ interface CostCenterInput {
   paymentTerms?: PaymentTerm[]
   phoneNumber?: string
   businessDocument?: string
+  customFields?: CustomField[]
   stateRegistration?: string
 }
 
@@ -114,6 +117,7 @@ interface Organization {
   paymentTerms: PaymentTerm[]
   status: string
   created: string
+  customFields?: CustomField[]
 }
 
 interface CostCenter {
@@ -126,6 +130,7 @@ interface CostCenter {
   priceTables: Price[]
   phoneNumber?: string
   businessDocument?: string
+  customFields: CustomField[]
 }
 
 interface Address {
@@ -146,10 +151,12 @@ interface Address {
   checked?: boolean
 }
 
-interface B2BSetting {
+interface B2BSettings {
   autoApprove: boolean
   defaultPaymentTerms: PaymentTerm[]
   defaultPriceTables: [string]
+  organizationCustomFields: SettingsCustomField[]
+  costCenterCustomFields: SettingsCustomField[]
 }
 
 interface UserArgs {
@@ -179,9 +186,31 @@ interface UISettings {
   clearCart: boolean
 }
 
+interface CustomField {
+  name: string
+  type: 'text' | 'dropdown'
+  value: string
+  dropdownValues?: Array<{ label: string; value: string }> | null
+  useOnRegistration?: boolean
+}
+
+interface SettingsCustomField {
+  name: string
+  type: 'text' | 'dropdown'
+  dropdownValues?: Array<{ label: string; value: string }> | null
+  useOnRegistration?: boolean
+}
+
+interface CustomFieldSetting {
+  name: string
+  type: 'text' | 'dropdown'
+}
+
 interface B2BSettingsInput {
   autoApprove: boolean
   defaultPaymentTerms: PaymentTerm[]
   defaultPriceTables: Price[]
   uiSettings: UISettings
+  organizationCustomFields: CustomFieldSetting[]
+  costCenterCustomFields: CustomFieldSetting[]
 }
