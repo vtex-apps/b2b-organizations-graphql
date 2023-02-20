@@ -13,18 +13,24 @@ const getUsers = async (
     data: { listRoles },
   }: any = await storefrontPermissions.listRoles()
 
-  const role = listRoles.find((r: any) => r.slug === roleSlug)
+  const roles = listRoles.filter((r: any) => r.slug.match(roleSlug))
 
-  if (!role) return []
+  if (!roles.length) {
+    return []
+  }
 
-  const {
-    data: { listUsers },
-  }: any = await storefrontPermissions.listUsers({
-    roleId: role.id,
-    ...(organizationId && { organizationId }),
-  })
+  return Promise.all(
+    roles.map(async (role: any) => {
+      const {
+        data: { listUsers },
+      }: any = await storefrontPermissions.listUsers({
+        roleId: role.id,
+        ...(organizationId && { organizationId }),
+      })
 
-  return listUsers
+      return [...listUsers]
+    })
+  )
 }
 
 const message = ({
@@ -37,15 +43,20 @@ const message = ({
   mail: MailClient
 }) => {
   const organizationCreated = async (name: string) => {
-    let users = []
+    let users: any[] = []
 
     try {
-      users = await getUsers(storefrontPermissions, 'sales-admin')
+      users = await getUsers(
+        storefrontPermissions,
+        'sales-admin|customer-admin'
+      )
     } catch (err) {
       logger.error(err)
     }
 
     const promises = []
+
+    // console.log('users', users)
 
     for (const user of users) {
       promises.push(
@@ -124,7 +135,7 @@ const message = ({
     id: string,
     status: string
   ) => {
-    let users = []
+    let users: any[] = []
 
     try {
       users = await getUsers(storefrontPermissions, 'customer-admin', id)
