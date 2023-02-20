@@ -108,9 +108,11 @@ const Organizations = {
       }
 
       if (notifyUsers) {
-        message({ storefrontPermissions, logger, mail }).organizationCreated(
-          name
-        )
+        message({
+          storefrontPermissions,
+          logger,
+          mail,
+        }).organizationCreated(name)
       }
 
       return {
@@ -147,7 +149,7 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, storefrontPermissions, mail },
       vtex: { logger },
     } = ctx
 
@@ -206,6 +208,17 @@ const Organizations = {
           ctx
         )
       }
+
+      message({
+        logger,
+        mail,
+        storefrontPermissions,
+      }).organizationRequestCreated(
+        organizationRequest.name,
+        b2bCustomerAdmin.firstName,
+        b2bCustomerAdmin.email,
+        ''
+      )
 
       return {
         href: result.Href,
@@ -503,15 +516,6 @@ const Organizations = {
             fields: { status },
             id,
           })
-
-          if (notifyUsers) {
-            // notify sales admin
-            message({
-              storefrontPermissions,
-              logger,
-              mail,
-            }).organizationCreated(organizationRequest.name)
-          }
 
           return { status: 'success', message: '', id: organizationId }
         } catch (e) {

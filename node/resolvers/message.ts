@@ -28,9 +28,9 @@ const getUsers = async (
         ...(organizationId && { organizationId }),
       })
 
-      return [...listUsers]
+      return listUsers
     })
-  )
+  ).then((users: any) => users.flat())
 }
 
 const message = ({
@@ -46,10 +46,7 @@ const message = ({
     let users: any[] = []
 
     try {
-      users = await getUsers(
-        storefrontPermissions,
-        'sales-admin|customer-admin'
-      )
+      users = await getUsers(storefrontPermissions, 'sales-admin')
     } catch (err) {
       logger.error(err)
     }
@@ -95,6 +92,30 @@ const message = ({
           organization: { name, admin, note },
         },
         templateName: 'organization-approved',
+      })
+      .catch(err =>
+        logger.error({
+          message: {
+            error: err,
+            message: 'Error sending organization approved email',
+          },
+        })
+      )
+  }
+
+  const organizationRequestCreated = async (
+    name: string,
+    admin: string,
+    email: string,
+    note: string
+  ) => {
+    return mail
+      .sendMail({
+        jsonData: {
+          message: { to: email },
+          organization: { name, admin, note },
+        },
+        templateName: 'organization-request-created',
       })
       .catch(err =>
         logger.error({
@@ -173,6 +194,7 @@ const message = ({
     organizationApproved,
     organizationCreated,
     organizationDeclined,
+    organizationRequestCreated,
     organizationStatusChanged,
   }
 }
