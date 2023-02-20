@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.29.1] - 2023-02-20
+
 ### Fixed
 
 - Fixed the adminToken when get the users queries
