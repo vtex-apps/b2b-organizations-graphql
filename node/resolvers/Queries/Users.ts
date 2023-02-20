@@ -134,6 +134,7 @@ const Users = {
         error,
         message: 'b2borg.getAppSettings-Error',
       })
+
       return {}
     })
 
@@ -282,16 +283,18 @@ const Users = {
       vtex,
     } = ctx
 
-    const { organizationId: orgId } = await checkUserPermissions({
-      adminUserAuthToken,
-      logger,
-      organizationId,
-      storefrontPermissions,
-      validateUserAdmin: false,
-      vtex,
-    })
+    if (!adminUserAuthToken) {
+      const { organizationId: orgId } = await checkUserPermissions({
+        adminUserAuthToken,
+        logger,
+        organizationId,
+        storefrontPermissions,
+        validateUserAdmin: false,
+        vtex,
+      })
 
-    organizationId = orgId
+      organizationId = orgId
+    }
 
     const variables = {
       ...(organizationId && { organizationId }),
@@ -340,16 +343,18 @@ const Users = {
       vtex,
     } = ctx
 
-    const { organizationId: orgId } = await checkUserPermissions({
-      adminUserAuthToken,
-      logger,
-      organizationId,
-      storefrontPermissions,
-      validateUserAdmin: true,
-      vtex,
-    })
+    if (!adminUserAuthToken) {
+      const { organizationId: orgId } = await checkUserPermissions({
+        adminUserAuthToken,
+        logger,
+        organizationId,
+        storefrontPermissions,
+        validateUserAdmin: true,
+        vtex,
+      })
 
-    organizationId = orgId
+      organizationId = orgId
+    }
 
     const variables = {
       ...(organizationId && { organizationId }),
