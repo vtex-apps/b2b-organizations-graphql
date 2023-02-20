@@ -26,6 +26,13 @@ const B2BSettings = {
         // if custom fields are null, set to an empty array
         costCenterCustomFields: settings?.costCenterCustomFields ?? [],
         organizationCustomFields: settings?.organizationCustomFields ?? [],
+        transactionEmailSettings: settings?.transactionEmailSettings ?? {
+          organizationApproved: true,
+          organizationCreated: true,
+          organizationDeclined: true,
+          organizationRequestCreated: false,
+          organizationStatusChanged: true,
+        },
       }
     } catch (e) {
       if (e.message) {

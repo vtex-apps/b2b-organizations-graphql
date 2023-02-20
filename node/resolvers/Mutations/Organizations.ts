@@ -107,7 +107,16 @@ const Organizations = {
         costCenterResult = [await createCostCenter(defaultCostCenter)]
       }
 
-      if (notifyUsers) {
+      const settings = (await B2BSettings.getB2BSettings(
+        undefined,
+        undefined,
+        ctx
+      )) as B2BSettingsInput
+
+      if (
+        notifyUsers &&
+        settings?.transactionEmailSettings?.organizationCreated
+      ) {
         message({
           storefrontPermissions,
           logger,
@@ -209,16 +218,18 @@ const Organizations = {
         )
       }
 
-      message({
-        logger,
-        mail,
-        storefrontPermissions,
-      }).organizationRequestCreated(
-        organizationRequest.name,
-        b2bCustomerAdmin.firstName,
-        b2bCustomerAdmin.email,
-        ''
-      )
+      if (settings?.transactionEmailSettings?.organizationRequestCreated) {
+        message({
+          logger,
+          mail,
+          storefrontPermissions,
+        }).organizationRequestCreated(
+          organizationRequest.name,
+          b2bCustomerAdmin.firstName,
+          b2bCustomerAdmin.email,
+          ''
+        )
+      }
 
       return {
         href: result.Href,
@@ -291,6 +302,12 @@ const Organizations = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
+    const settings = (await B2BSettings.getB2BSettings(
+      undefined,
+      undefined,
+      ctx
+    )) as B2BSettingsInput
+
     try {
       const currentData: Organization = await masterdata.getDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
@@ -298,7 +315,11 @@ const Organizations = {
         id,
       })
 
-      if (currentData.status !== status && notifyUsers) {
+      if (
+        currentData.status !== status &&
+        notifyUsers &&
+        settings?.transactionEmailSettings?.organizationStatusChanged
+      ) {
         await message({
           logger,
           mail,
@@ -352,6 +373,12 @@ const Organizations = {
       clients: { masterdata, mail, storefrontPermissions },
       vtex: { logger },
     } = ctx
+
+    const settings = (await B2BSettings.getB2BSettings(
+      undefined,
+      undefined,
+      ctx
+    )) as B2BSettingsInput
 
     if (
       status !== ORGANIZATION_REQUEST_STATUSES.APPROVED &&
@@ -498,7 +525,11 @@ const Organizations = {
               })
             })
 
-          if (addUserResult?.status === 'success' && notifyUsers) {
+          if (
+            addUserResult?.status === 'success' &&
+            notifyUsers &&
+            settings?.transactionEmailSettings?.organizationApproved
+          ) {
             message({
               logger,
               mail,
@@ -540,7 +571,10 @@ const Organizations = {
         id,
       })
 
-      if (notifyUsers) {
+      if (
+        notifyUsers &&
+        settings?.transactionEmailSettings?.organizationDeclined
+      ) {
         message({ storefrontPermissions, logger, mail }).organizationDeclined(
           organizationRequest.name,
           firstName,
