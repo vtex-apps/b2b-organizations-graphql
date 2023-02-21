@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added the email transactional to the organization request and the options for disabling/enabling them.
+
+
 ## [0.29.1] - 2023-02-20
 
 ### Fixed

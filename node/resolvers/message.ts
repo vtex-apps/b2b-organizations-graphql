@@ -13,18 +13,24 @@ const getUsers = async (
     data: { listRoles },
   }: any = await storefrontPermissions.listRoles()
 
-  const role = listRoles.find((r: any) => r.slug === roleSlug)
+  const roles = listRoles.filter((r: any) => r.slug.match(roleSlug))
 
-  if (!role) return []
+  if (!roles.length) {
+    return []
+  }
 
-  const {
-    data: { listUsers },
-  }: any = await storefrontPermissions.listUsers({
-    roleId: role.id,
-    ...(organizationId && { organizationId }),
-  })
+  return Promise.all(
+    roles.map(async (role: any) => {
+      const {
+        data: { listUsers },
+      }: any = await storefrontPermissions.listUsers({
+        roleId: role.id,
+        ...(organizationId && { organizationId }),
+      })
 
-  return listUsers
+      return listUsers
+    })
+  ).then((users: any) => users.flat())
 }
 
 const message = ({
@@ -37,7 +43,7 @@ const message = ({
   mail: MailClient
 }) => {
   const organizationCreated = async (name: string) => {
-    let users = []
+    let users: any[] = []
 
     try {
       users = await getUsers(storefrontPermissions, 'sales-admin')
@@ -46,6 +52,8 @@ const message = ({
     }
 
     const promises = []
+
+    // console.log('users', users)
 
     for (const user of users) {
       promises.push(
@@ -95,6 +103,30 @@ const message = ({
       )
   }
 
+  const organizationRequestCreated = async (
+    name: string,
+    admin: string,
+    email: string,
+    note: string
+  ) => {
+    return mail
+      .sendMail({
+        jsonData: {
+          message: { to: email },
+          organization: { name, admin, note },
+        },
+        templateName: 'organization-request-created',
+      })
+      .catch(err =>
+        logger.error({
+          message: {
+            error: err,
+            message: 'Error sending organization approved email',
+          },
+        })
+      )
+  }
+
   const organizationDeclined = async (
     name: string,
     admin: string,
@@ -124,7 +156,7 @@ const message = ({
     id: string,
     status: string
   ) => {
-    let users = []
+    let users: any[] = []
 
     try {
       users = await getUsers(storefrontPermissions, 'customer-admin', id)
@@ -162,6 +194,7 @@ const message = ({
     organizationApproved,
     organizationCreated,
     organizationDeclined,
+    organizationRequestCreated,
     organizationStatusChanged,
   }
 }

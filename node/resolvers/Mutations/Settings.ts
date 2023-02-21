@@ -37,6 +37,7 @@ const Settings = {
         uiSettings,
         organizationCustomFields,
         costCenterCustomFields,
+        transactionEmailSettings,
       },
     }: {
       input: B2BSettingsInput
@@ -94,6 +95,9 @@ const Settings = {
         organizationCustomFields:
           organizationCustomFields ??
           currentB2BSettings?.organizationCustomFields,
+        transactionEmailSettings:
+          transactionEmailSettings ??
+          currentB2BSettings?.transactionEmailSettings,
         uiSettings,
       }
 

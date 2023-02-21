@@ -406,6 +406,15 @@ type B2BSettings {
   organizationCustomFields: [SettingsCustomField]
   costCenterCustomFields: [SettingsCustomField]
   uiSettings: UISettings
+  transactionEmailSettings: TransactionEmailSettings
+}
+
+type TransactionEmailSettings {
+  organizationApproved: Boolean
+  organizationCreated: Boolean
+  organizationDeclined: Boolean
+  organizationRequestCreated: Boolean
+  organizationStatusChanged: Boolean
 }
 
 type UISettings {
@@ -513,10 +522,17 @@ input CustomFieldInput {
   useOnRegistration: Boolean
 }
 
-
 input SalesChannelsInput {
   id: String
   name: String
+}
+
+input TransactionEmailSettingsInput {
+  organizationApproved: Boolean
+  organizationCreated: Boolean
+  organizationDeclined: Boolean
+  organizationRequestCreated: Boolean
+  organizationStatusChanged: Boolean
 }
 
 input UISettingsInput {
@@ -531,6 +547,7 @@ input B2BSettingsInput {
   uiSettings: UISettingsInput
   organizationCustomFields: [CustomFieldInput]
   costCenterCustomFields: [CustomFieldInput]
+  transactionEmailSettings: TransactionEmailSettingsInput
 }
 
 type DropdownValue {

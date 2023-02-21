@@ -107,10 +107,21 @@ const Organizations = {
         costCenterResult = [await createCostCenter(defaultCostCenter)]
       }
 
-      if (notifyUsers) {
-        message({ storefrontPermissions, logger, mail }).organizationCreated(
-          name
-        )
+      const settings = (await B2BSettings.getB2BSettings(
+        undefined,
+        undefined,
+        ctx
+      )) as B2BSettingsInput
+
+      if (
+        notifyUsers &&
+        settings?.transactionEmailSettings?.organizationCreated
+      ) {
+        message({
+          storefrontPermissions,
+          logger,
+          mail,
+        }).organizationCreated(name)
       }
 
       return {
@@ -147,7 +158,7 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, storefrontPermissions, mail },
       vtex: { logger },
     } = ctx
 
@@ -204,6 +215,19 @@ const Organizations = {
             status: ORGANIZATION_REQUEST_STATUSES.APPROVED,
           },
           ctx
+        )
+      }
+
+      if (settings?.transactionEmailSettings?.organizationRequestCreated) {
+        message({
+          logger,
+          mail,
+          storefrontPermissions,
+        }).organizationRequestCreated(
+          organizationRequest.name,
+          b2bCustomerAdmin.firstName,
+          b2bCustomerAdmin.email,
+          ''
         )
       }
 
@@ -278,6 +302,12 @@ const Organizations = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
+    const settings = (await B2BSettings.getB2BSettings(
+      undefined,
+      undefined,
+      ctx
+    )) as B2BSettingsInput
+
     try {
       const currentData: Organization = await masterdata.getDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
@@ -285,7 +315,11 @@ const Organizations = {
         id,
       })
 
-      if (currentData.status !== status && notifyUsers) {
+      if (
+        currentData.status !== status &&
+        notifyUsers &&
+        settings?.transactionEmailSettings?.organizationStatusChanged
+      ) {
         await message({
           logger,
           mail,
@@ -339,6 +373,12 @@ const Organizations = {
       clients: { masterdata, mail, storefrontPermissions },
       vtex: { logger },
     } = ctx
+
+    const settings = (await B2BSettings.getB2BSettings(
+      undefined,
+      undefined,
+      ctx
+    )) as B2BSettingsInput
 
     if (
       status !== ORGANIZATION_REQUEST_STATUSES.APPROVED &&
@@ -485,7 +525,11 @@ const Organizations = {
               })
             })
 
-          if (addUserResult?.status === 'success' && notifyUsers) {
+          if (
+            addUserResult?.status === 'success' &&
+            notifyUsers &&
+            settings?.transactionEmailSettings?.organizationApproved
+          ) {
             message({
               logger,
               mail,
@@ -503,15 +547,6 @@ const Organizations = {
             fields: { status },
             id,
           })
-
-          if (notifyUsers) {
-            // notify sales admin
-            message({
-              storefrontPermissions,
-              logger,
-              mail,
-            }).organizationCreated(organizationRequest.name)
-          }
 
           return { status: 'success', message: '', id: organizationId }
         } catch (e) {
@@ -536,7 +571,10 @@ const Organizations = {
         id,
       })
 
-      if (notifyUsers) {
+      if (
+        notifyUsers &&
+        settings?.transactionEmailSettings?.organizationDeclined
+      ) {
         message({ storefrontPermissions, logger, mail }).organizationDeclined(
           organizationRequest.name,
           firstName,

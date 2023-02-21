@@ -206,6 +206,14 @@ interface CustomFieldSetting {
   type: 'text' | 'dropdown'
 }
 
+interface TransactionEmailSetting {
+  organizationCreated: boolean
+  organizationApproved: boolean
+  organizationDeclined: boolean
+  organizationStatusChanged: boolean
+  organizationRequestCreated: boolean
+}
+
 interface B2BSettingsInput {
   autoApprove: boolean
   defaultPaymentTerms: PaymentTerm[]
@@ -213,4 +221,5 @@ interface B2BSettingsInput {
   uiSettings: UISettings
   organizationCustomFields: CustomFieldSetting[]
   costCenterCustomFields: CustomFieldSetting[]
+  transactionEmailSettings: TransactionEmailSetting
 }
