@@ -511,7 +511,7 @@ const Organizations = {
               ...existingUser,
               costId: costCenterId,
               email,
-              name: existingUser?.name || firstName,
+              name: existingUser?.name || `${firstName} ${lastName}`,
               orgId: organizationId,
               roleId,
             })
