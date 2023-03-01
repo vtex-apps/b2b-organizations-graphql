@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.30.1] - 2023-03-01
+
 ### Fixed
 
 - Bug fixed on save user (last name data)
