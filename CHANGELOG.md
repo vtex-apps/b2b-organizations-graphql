@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Bug fix on checking app and api keys
+
+
 ## [0.30.1] - 2023-03-01
 
 ### Fixed
