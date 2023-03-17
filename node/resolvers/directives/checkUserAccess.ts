@@ -20,15 +20,20 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
 
       let token = adminUserAuthToken
 
+      const apiToken = context?.headers['vtex-api-apptoken'] as string
+      const appKey = context?.headers['vtex-api-appkey'] as string
+
+      if (apiToken?.length && appKey?.length) {
+        token = (
+          await identity.getToken({ appkey: appKey, apptoken: apiToken })
+        ).token
+      }
+
       if (!token && !storeUserAuthToken) {
         throw new AuthenticationError('No admin or store token was provided')
       }
 
       if (token) {
-        if (context?.headers['x-vtex-credential']) {
-          token = context?.headers['x-vtex-credential'] as string
-        }
-
         try {
           await identity.validateToken({ token })
         } catch (err) {

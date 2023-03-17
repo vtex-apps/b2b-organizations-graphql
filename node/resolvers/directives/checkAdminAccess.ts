@@ -20,8 +20,13 @@ export class CheckAdminAccess extends SchemaDirectiveVisitor {
 
       let token = adminUserAuthToken
 
-      if (context?.headers['x-vtex-credential']) {
-        token = context?.headers['x-vtex-credential'] as string
+      const apiToken = context?.headers['vtex-api-apptoken'] as string
+      const appKey = context?.headers['vtex-api-appkey'] as string
+
+      if (apiToken?.length && appKey?.length) {
+        token = (
+          await identity.getToken({ appkey: appKey, apptoken: apiToken })
+        ).token
       }
 
       if (!token) {
