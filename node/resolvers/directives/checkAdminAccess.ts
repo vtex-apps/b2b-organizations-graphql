@@ -27,6 +27,8 @@ export class CheckAdminAccess extends SchemaDirectiveVisitor {
         token = (
           await identity.getToken({ appkey: appKey, apptoken: apiToken })
         ).token
+        context.cookies.set('VtexIdclientAutCookie', token)
+        context.vtex.adminUserAuthToken = token
       }
 
       if (!token) {
