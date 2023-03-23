@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.30.2] - 2023-03-17
 
+### Changed
+
+- Run schedule job only on saturday
+
 ### Fixed
 
 - Bug fix on checking app and api keys
