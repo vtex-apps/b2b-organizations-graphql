@@ -462,7 +462,7 @@ const Organizations = {
                 priceTables,
                 salesChannel,
                 sellers,
-                customFields
+                customFields,
               },
               notifyUsers,
             },
