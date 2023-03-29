@@ -191,7 +191,7 @@ const Organizations = {
       b2bCustomerAdmin,
       costCenters,
       created: now,
-      customFields,
+      customFields: customFields ?? [],
       defaultCostCenter:
         defaultCostCenter ?? (costCenters?.length && costCenters[0]),
       notes: '',
@@ -426,6 +426,7 @@ const Organizations = {
             name,
             tradeName,
             sellers,
+            customFields,
           } = organizationRequest
 
           const {
@@ -461,6 +462,7 @@ const Organizations = {
                 priceTables,
                 salesChannel,
                 sellers,
+                customFields
               },
               notifyUsers,
             },
