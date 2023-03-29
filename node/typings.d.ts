@@ -107,6 +107,7 @@ interface OrganizationRequest {
   priceTables?: Price[]
   salesChannel?: string
   sellers?: Seller[]
+  customFields?: CustomField[]
 }
 
 interface Organization {
