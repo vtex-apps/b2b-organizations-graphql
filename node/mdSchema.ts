@@ -13,7 +13,7 @@ export const ORGANIZATION_REQUEST_FIELDS = [
   'paymentTerms',
   'salesChannel',
   'sellers',
-  'customFields'
+  'customFields',
 ]
 export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.1.1'
 
@@ -108,7 +108,7 @@ export const schemas = [
         customFields: {
           type: 'array',
           title: 'Custom Fields',
-        }
+        },
       },
       'v-indexed': ['name', 'b2bCustomerAdmin', 'status', 'created'],
       'v-immediate-indexing': true,
