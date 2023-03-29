@@ -236,7 +236,7 @@ const costCenters = {
     let where = ''
 
     if (search) {
-      where = `name="*${search}*"`
+      where = `name="*${search}*" OR businessDocument="*${search}*"`
     }
 
     try {
