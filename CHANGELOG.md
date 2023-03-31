@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added the businessDocument as search field
+
 ## [0.30.4] - 2023-03-29
 
 ### Fixed
