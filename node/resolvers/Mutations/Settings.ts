@@ -32,7 +32,8 @@ const Settings = {
     {
       input: {
         autoApprove,
-        companyReadOnly,
+        businessReadOnly,
+        stateReadOnly,
         defaultPaymentTerms,
         defaultPriceTables,
         uiSettings,
@@ -89,7 +90,8 @@ const Settings = {
     try {
       const b2bSettings = {
         autoApprove,
-        companyReadOnly,
+        businessReadOnly,
+        stateReadOnly,
         costCenterCustomFields:
           costCenterCustomFields ?? currentB2BSettings?.costCenterCustomFields,
         defaultPaymentTerms,
