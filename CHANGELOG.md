@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added the businessDocument as search field
 
+## [0.30.4] - 2023-03-29
+
+### Fixed
+- Fixed createOrganization schema to accept customFields
+
 ## [0.30.3] - 2023-03-20
 
 ### Fixed
