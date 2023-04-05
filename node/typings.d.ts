@@ -154,6 +154,8 @@ interface Address {
 
 interface B2BSettings {
   autoApprove: boolean
+  businessReadOnly: boolean
+  stateReadOnly: boolean
   defaultPaymentTerms: PaymentTerm[]
   defaultPriceTables: [string]
   organizationCustomFields: SettingsCustomField[]
@@ -217,6 +219,8 @@ interface TransactionEmailSetting {
 
 interface B2BSettingsInput {
   autoApprove: boolean
+  businessReadOnly: boolean
+  stateReadOnly: boolean
   defaultPaymentTerms: PaymentTerm[]
   defaultPriceTables: Price[]
   uiSettings: UISettings

@@ -401,6 +401,8 @@ type MarketingTags {
 
 type B2BSettings {
   autoApprove: Boolean
+  businessReadOnly: Boolean
+  stateReadOnly: Boolean
   defaultPaymentTerms: [PaymentTerm]
   defaultPriceTables: [String]
   organizationCustomFields: [SettingsCustomField]
@@ -542,6 +544,8 @@ input UISettingsInput {
 
 input B2BSettingsInput {
   autoApprove: Boolean
+  businessReadOnly: Boolean
+  stateReadOnly: Boolean
   defaultPaymentTerms: [PaymentTermInput]
   defaultPriceTables: [String]
   uiSettings: UISettingsInput
