@@ -57,6 +57,7 @@ type Query {
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getUsers(organizationId: ID, costCenterId: ID): [B2BUser]
     @withSession
+    @checkUserAccess
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getUsersPaginated(
     organizationId: ID
@@ -66,10 +67,14 @@ type Query {
     search: String
     sortOrder: String
     sortedBy: String
-  ): B2BUserPagination @withSession @cacheControl(scope: PRIVATE, maxAge: SHORT)
+  ): B2BUserPagination
+    @withSession
+    @checkUserAccess
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
 
   getOrganizationsByEmail(email: String): [B2BOrganization]
+    @checkUserAccess
     @cacheControl(scope: PRIVATE)
 
   checkOrganizationIsActive(id: String): Boolean @cacheControl(scope: PRIVATE)
