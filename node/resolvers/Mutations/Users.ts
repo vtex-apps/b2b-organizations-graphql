@@ -148,10 +148,7 @@ const getUserFromStorefrontPermissions = ({
 const Users = {
   impersonateB2BUser: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: {
-        masterdata,
-        storefrontPermissions: storefrontPermissionsClient,
-      },
+      clients: { storefrontPermissions: storefrontPermissionsClient },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as Context | any
@@ -167,7 +164,6 @@ const Users = {
 
     const user = await getB2BUserFromStorefrontPermissions({ id })
     const { clId } = user
-    let { userId } = user
 
     if (!clId) {
       throw new GraphQLError('client-not-found')
@@ -203,32 +199,6 @@ const Users = {
       if (!permitted) {
         throw new GraphQLError('operation-not-permitted')
       }
-    }
-
-    if (!userId) {
-      const { userId: userIdFromCl } = await masterdata
-        .getDocument({
-          dataEntity: 'CL',
-          fields: ['userId'],
-          id: clId,
-        })
-        .then((res: any) => {
-          return res?.userId ?? undefined
-        })
-        .catch((error: any) => {
-          logger.warn({
-            error,
-            message: 'impersonateUser-getUserIdError',
-          })
-
-          return error
-        })
-
-      userId = userIdFromCl
-    }
-
-    if (!userId) {
-      throw new GraphQLError('user-not-found')
     }
 
     const impersonation = await storefrontPermissionsClient
