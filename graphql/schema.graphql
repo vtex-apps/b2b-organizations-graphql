@@ -208,6 +208,11 @@ type Mutation {
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
   impersonateUser(clId: ID, userId: ID): MutationResponse
+    @deprecated(reason: "Use impersonateB2BUser instead")
+    @withSession
+    @withPermissions
+    @cacheControl(scope: PRIVATE)
+  impersonateB2BUser(id: ID!): MutationResponse
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)

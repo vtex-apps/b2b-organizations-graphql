@@ -10,6 +10,7 @@ import checkImpersonation from '../queries/checkImpersonation'
 import getPermission from '../queries/getPermission'
 import getRole from '../queries/getRole'
 import getUser from '../queries/getUser'
+import getB2BUser from '../queries/getB2BUser'
 import listAllUsers from '../queries/listAllUsers'
 import listRoles from '../queries/listRoles'
 import listUsers from '../queries/listUsers'
@@ -181,6 +182,19 @@ export default class StorefrontPermissions extends AppGraphQLClient {
       },
       query: getUser,
       variables: { id: userId },
+    })
+  }
+
+  public getB2BUser = async (id: string): Promise<any> => {
+    return this.graphql.query({
+      extensions: {
+        persistedQuery: {
+          provider: 'vtex.storefront-permissions@1.x',
+          sender: 'vtex.b2b-organizations@0.x',
+        },
+      },
+      query: getB2BUser,
+      variables: { id },
     })
   }
 

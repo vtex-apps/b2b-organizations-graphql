@@ -122,7 +122,128 @@ const checkUserIsAllowed = async ({
   }
 }
 
+const getUserFromStorefrontPermissions = ({
+  clId: clientId,
+  storefrontPermissionsClient,
+  logger,
+}: {
+  clId: string
+  storefrontPermissionsClient: any
+  logger: any
+}) =>
+  storefrontPermissionsClient
+    .getUser(clientId)
+    .then((result: any) => {
+      return result?.data?.getUser ?? {}
+    })
+    .catch((error: any) => {
+      logger.warn({
+        error,
+        message: 'impersonateUser-getUserError',
+      })
+
+      return error
+    })
+
 const Users = {
+  impersonateB2BUser: async (_: void, { id }: { id: string }, ctx: Context) => {
+    const {
+      clients: {
+        masterdata,
+        storefrontPermissions: storefrontPermissionsClient,
+      },
+
+      vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
+    } = ctx as Context | any
+
+    const getB2BUserFromStorefrontPermissions = ({
+      id: b2bId,
+    }: {
+      id: string
+    }) =>
+      storefrontPermissionsClient
+        .getB2BUser(b2bId)
+        .then((result: any) => result?.data?.getB2BUser ?? {})
+
+    const user = await getB2BUserFromStorefrontPermissions({ id })
+    const { clId } = user
+    let { userId } = user
+
+    if (!clId) {
+      throw new GraphQLError('client-not-found')
+    }
+
+    if (!adminUserAuthToken) {
+      if (!sessionData?.namespaces['storefront-permissions']?.organization) {
+        throw new GraphQLError('organization-data-not-found')
+      }
+
+      const roleSlug = await storefrontPermissions.getRole(user.roleId)?.data
+        ?.getRole?.slug
+
+      let permitted = false
+
+      if (!roleSlug.includes('sales')) {
+        permitted =
+          (storefrontPermissions?.permissions?.includes(
+            'impersonate-users-costcenter'
+          ) &&
+            !roleSlug.includes('admin') &&
+            user?.costId ===
+              sessionData?.namespaces['storefront-permissions']?.costcenter) ||
+          (storefrontPermissions?.permissions?.includes(
+            'impersonate-users-organization'
+          ) &&
+            user?.orgId ===
+              sessionData?.namespaces['storefront-permissions']
+                ?.organization) ||
+          storefrontPermissions?.permissions?.includes('impersonate-users-all')
+      }
+
+      if (!permitted) {
+        throw new GraphQLError('operation-not-permitted')
+      }
+    }
+
+    if (!userId) {
+      const { userId: userIdFromCl } = await masterdata
+        .getDocument({
+          dataEntity: 'CL',
+          fields: ['userId'],
+          id: clId,
+        })
+        .then((res: any) => {
+          return res?.userId ?? undefined
+        })
+        .catch((error: any) => {
+          logger.warn({
+            error,
+            message: 'impersonateUser-getUserIdError',
+          })
+
+          return error
+        })
+
+      userId = userIdFromCl
+    }
+
+    if (!userId) {
+      throw new GraphQLError('user-not-found')
+    }
+
+    const impersonation = await storefrontPermissionsClient
+      .impersonateUser({ userId: id })
+      .catch((error: any) => {
+        logger.error({
+          error,
+          message: 'impersonateUser-impersonateUserError',
+        })
+
+        return { status: 'error', message: error }
+      })
+
+    return impersonation?.data?.impersonateUser ?? { status: 'error' }
+  },
   /**
    *
    * Mutation to impersonate a user
@@ -146,25 +267,6 @@ const Users = {
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as Context | any
 
-    const getUserFromStorefrontPermissions = ({
-      clId: clientId,
-    }: {
-      clId: string
-    }) =>
-      storefrontPermissionsClient
-        .getUser(clientId)
-        .then((result: any) => {
-          return result?.data?.getUser ?? {}
-        })
-        .catch((error: any) => {
-          logger.warn({
-            error,
-            message: 'impersonateUser-getUserError',
-          })
-
-          return error
-        })
-
     if (!adminUserAuthToken && clId) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
         throw new GraphQLError('organization-data-not-found')
@@ -175,7 +277,11 @@ const Users = {
       const roleSlug = await getUserRoleSlug(clId, ctx)
 
       if (!roleSlug.includes('sales')) {
-        const userInfo = await getUserFromStorefrontPermissions({ clId })
+        const userInfo = await getUserFromStorefrontPermissions({
+          clId,
+          logger,
+          storefrontPermissionsClient,
+        })
 
         permitted =
           (storefrontPermissions?.permissions?.includes(
@@ -227,7 +333,11 @@ const Users = {
 
       userId = userIdFromCl
 
-      const userData = await getUserFromStorefrontPermissions({ clId })
+      const userData = await getUserFromStorefrontPermissions({
+        clId,
+        logger,
+        storefrontPermissionsClient,
+      })
 
       if (userData && !userData.userId) {
         await storefrontPermissionsClient.saveUser({
