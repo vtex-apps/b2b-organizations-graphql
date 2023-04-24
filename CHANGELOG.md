@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.32.0] - 2023-04-24
+
 ### Fixed
 
 - Hotfix to force housekeeper to update the app
