@@ -41,7 +41,11 @@ const CostCenters = {
 
       const {
         organization: { value: userOrganizationId },
-      } = sessionData.namespaces['storefront-permissions']
+      } = sessionData.namespaces['storefront-permissions'] ?? {
+        organization: {
+          value: null,
+        },
+      }
 
       organizationId = userOrganizationId
     }

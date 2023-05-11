@@ -260,7 +260,11 @@ const Organizations = {
 
     const {
       organization: { value: userOrganizationId },
-    } = sessionData.namespaces['storefront-permissions']
+    } = sessionData.namespaces['storefront-permissions'] ?? {
+      organization: {
+        value: null,
+      },
+    }
 
     if (!id) {
       // get user's organization from session
