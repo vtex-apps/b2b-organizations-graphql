@@ -36,12 +36,13 @@ const isUserPermitted = ({
   sessionData,
   orgId,
   roleSlug,
-}: any) => (storefrontPermissions?.permissions?.includes('add-users-organization') &&
-  sessionData.namespaces['storefront-permissions'].organization.value === orgId &&
-  !roleSlug.includes('sales')) ||
-(storefrontPermissions?.permissions?.includes('add-sales-users-all') &&
-  roleSlug.includes('sales'))
-  
+}: any) =>
+  (storefrontPermissions?.permissions?.includes('add-users-organization') &&
+    sessionData.namespaces['storefront-permissions'].organization.value ===
+      orgId &&
+    !roleSlug.includes('sales')) ||
+  (storefrontPermissions?.permissions?.includes('add-sales-users-all') &&
+    roleSlug.includes('sales'))
 
 const getRoleSlug = async ({
   clId,
