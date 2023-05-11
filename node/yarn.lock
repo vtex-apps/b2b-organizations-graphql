@@ -1739,10 +1739,6 @@ vary@^1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=
 
-"vtex.b2b-organizations-graphql@https://wender--helmethouseprod.myvtex.com/_v/private/typings/linked/v1/vtex.b2b-organizations-graphql@0.32.0+build1683822095/public/@types/vtex.b2b-organizations-graphql":
-  version "0.32.0"
-  resolved "https://wender--helmethouseprod.myvtex.com/_v/private/typings/linked/v1/vtex.b2b-organizations-graphql@0.32.0+build1683822095/public/@types/vtex.b2b-organizations-graphql#1e1a9749c38306802af214a4efd46760119daf51"
-
 "vtex.storefront-permissions@http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.33.2/public/@types/vtex.storefront-permissions":
   version "1.33.2"
   resolved "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.33.2/public/@types/vtex.storefront-permissions#804c8f9a1f84da0fdb025fb1c9c2a395d7506df3"
