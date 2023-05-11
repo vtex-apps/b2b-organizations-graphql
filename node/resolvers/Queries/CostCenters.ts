@@ -132,7 +132,14 @@ const costCenters = {
     const {
       organization: { value: userOrganizationId },
       costcenter: { value: userCostCenterId },
-    } = sessionData.namespaces['storefront-permissions']
+    } = sessionData.namespaces['storefront-permissions'] ?? {
+      organization: {
+        value: null,
+      },
+      costcenter: {
+        value: null,
+      },
+    }
 
     if (!id) {
       // get user's organization from session
@@ -360,7 +367,11 @@ const costCenters = {
 
       const {
         organization: { value: userOrganizationId },
-      } = sessionData.namespaces['storefront-permissions']
+      } = sessionData.namespaces['storefront-permissions'] ?? {
+        organization: {
+          value: null,
+        },
+      }
 
       if (!id) {
         // get user's organization from session
