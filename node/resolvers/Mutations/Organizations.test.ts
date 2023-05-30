@@ -9,8 +9,6 @@ import {
   verify,
   when,
 } from 'ts-mockito'
-import type { Logger } from '@vtex/api/lib/service/logger'
-import { afterAll } from '@jest/globals'
 
 import type { Clients } from '../../clients'
 import { ORGANIZATION_REQUEST_STATUSES } from '../../utils/constants'
@@ -25,7 +23,7 @@ const spyOrganizations = spy(Organizations)
 const spyB2BSettings = spy(B2BSettings)
 const mockedMasterdata = mock<Clients['masterdata']>()
 const mockedStorefrontPermissions = mock<Clients['storefrontPermissions']>()
-const mockedContext = {
+const mockedContext = ({
   clients: {
     masterdata: instance(mockedMasterdata),
     storefrontPermissions: instance(mockedStorefrontPermissions),
@@ -33,7 +31,7 @@ const mockedContext = {
   vtex: {
     logger: mock<Logger>(),
   },
-} as Context
+} as unknown) as Context
 
 afterAll(() => {
   jest.resetAllMocks()

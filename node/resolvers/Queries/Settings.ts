@@ -1,8 +1,8 @@
 import GraphQLError from '../../utils/GraphQLError'
 import Config from '../config'
 
-class B2BSettings {
-  public static async getB2BSettings(_: void, __: void, ctx: Context) {
+const B2BSettings = {
+  getB2BSettings: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { vbase },
     } = ctx
@@ -45,15 +45,14 @@ class B2BSettings {
     }
 
     return settings
-  }
-
-  public static async getSellers(_: void, __: void, ctx: Context) {
+  },
+  getSellers: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { sellers },
     } = ctx
 
     return (await sellers.getSellers())?.items
-  }
+  },
 }
 
 export default B2BSettings

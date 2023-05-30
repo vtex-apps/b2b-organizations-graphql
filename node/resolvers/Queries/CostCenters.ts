@@ -5,7 +5,7 @@ import {
   COST_CENTER_SCHEMA_VERSION,
 } from '../../mdSchema'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-import checkConfig from '../config'
+import Config from '../config'
 import Organizations from './Organizations'
 
 const getCostCenters = async ({
@@ -87,7 +87,7 @@ const costCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await checkConfig(ctx)
+    await Config.checkConfig(ctx)
 
     try {
       const result: CostCenter = await masterdata.getDocument({
@@ -117,7 +117,7 @@ const costCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await checkConfig(ctx)
+    await Config.checkConfig(ctx)
 
     if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
       throw new Error('This organization is not active')
@@ -238,7 +238,7 @@ const costCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await checkConfig(ctx)
+    await Config.checkConfig(ctx)
 
     let where = ''
 
@@ -289,7 +289,7 @@ const costCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await checkConfig(ctx)
+    await Config.checkConfig(ctx)
 
     try {
       return await getCostCenters({
@@ -335,7 +335,7 @@ const costCenters = {
     } = ctx as any
 
     // create schema if it doesn't exist
-    await checkConfig(ctx)
+    await Config.checkConfig(ctx)
 
     if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
       throw new Error('This organization is not active')
