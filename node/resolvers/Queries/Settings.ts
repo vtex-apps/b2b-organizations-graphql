@@ -1,8 +1,8 @@
 import GraphQLError from '../../utils/GraphQLError'
-import checkConfig from '../config'
+import Config from '../config'
 
-const B2BSettings = {
-  getB2BSettings: async (_: void, __: void, ctx: Context) => {
+class B2BSettings {
+  public static async getB2BSettings(_: void, __: void, ctx: Context) {
     const {
       clients: { vbase },
     } = ctx
@@ -10,7 +10,7 @@ const B2BSettings = {
     const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
 
     // create schema if it doesn't exist
-    await checkConfig(ctx)
+    await Config.checkConfig(ctx)
 
     let settings: Partial<B2BSettingsInput> | null = null
 
@@ -45,14 +45,15 @@ const B2BSettings = {
     }
 
     return settings
-  },
-  getSellers: async (_: void, __: void, ctx: Context) => {
+  }
+
+  public static async getSellers(_: void, __: void, ctx: Context) {
     const {
       clients: { sellers },
     } = ctx
 
     return (await sellers.getSellers())?.items
-  },
+  }
 }
 
 export default B2BSettings

@@ -14,6 +14,7 @@ import {
 } from '../../utils/constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
+import Config from '../config'
 import message from '../message'
 import B2BSettings from '../Queries/Settings'
 import CostCenters from './CostCenters'
@@ -83,7 +84,7 @@ const Organizations = {
     } = ctx
 
     // create schema if it doesn't exist
-    await checkConfig(ctx)
+    await Config.checkConfig(ctx)
 
     const now = new Date()
 
@@ -364,7 +365,7 @@ const Organizations = {
     } = ctx
 
     // create schema if it doesn't exist
-    await checkConfig(ctx)
+    await Config.checkConfig(ctx)
 
     const settings = (await B2BSettings.getB2BSettings(
       undefined,
@@ -401,12 +402,12 @@ const Organizations = {
       await masterdata.updatePartialDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
         fields: {
-          name,
-          ...((tradeName || tradeName === '') && { tradeName }),
           collections,
+          ...((tradeName || tradeName === '') && { tradeName }),
+          customFields,
+          name,
           paymentTerms,
           priceTables,
-          customFields,
           ...(salesChannel && { salesChannel }),
           ...(sellers && { sellers }),
           status,
@@ -453,7 +454,7 @@ const Organizations = {
     }
 
     // create schema if it doesn't exist
-    await checkConfig(ctx)
+    await Config.checkConfig(ctx)
 
     let organizationRequest: OrganizationRequest
 
@@ -510,6 +511,7 @@ const Organizations = {
                   firstName,
                   lastName,
                 },
+                customFields,
                 defaultCostCenter: {
                   address: defaultCostCenter.address,
                   name: defaultCostCenter.name,
@@ -538,7 +540,6 @@ const Organizations = {
                 priceTables,
                 salesChannel,
                 sellers,
-                customFields,
               },
               notifyUsers,
             },
