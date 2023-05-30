@@ -13,7 +13,6 @@ import {
   ORGANIZATION_STATUSES,
 } from '../../utils/constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-import checkConfig from '../config'
 import Config from '../config'
 import message from '../message'
 import B2BSettings from '../Queries/Settings'
@@ -225,7 +224,7 @@ const Organizations = {
     } = ctx
 
     // create schema if it doesn't exist
-    await checkConfig(ctx)
+    await Config.checkConfig(ctx)
 
     const now = new Date()
 
