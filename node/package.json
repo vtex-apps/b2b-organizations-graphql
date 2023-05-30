@@ -21,7 +21,8 @@
     "@vtex/tsconfig": "^0.5.6",
     "casual": "^1.6.2",
     "ts-mockito": "^2.6.1",
-    "typescript": "3.9.7"
+    "typescript": "3.9.7",
+    "vtex.storefront-permissions": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.33.2/public/@types/vtex.storefront-permissions"
   },
   "resolutions": {
     "@types/testing-library__dom": "6.12.1",
