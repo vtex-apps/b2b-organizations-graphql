@@ -3,3 +3,4 @@ node_modules/
 .eslintrc
 .gitignore
 README.md
+./**/*.test.ts

@@ -128,9 +128,11 @@ describe('given an Organization Mutation', () => {
         spyOrganizations.createOrganization(anything(), anything(), anything())
       ).once()
 
-      const inputArg = capture(spyOrganizations.createOrganization).last()[1]
+      const [, capturedInput] = capture(
+        spyOrganizations.createOrganization
+      ).last()
 
-      expect(inputArg.input.defaultCostCenter?.stateRegistration).toEqual(
+      expect(capturedInput.input.defaultCostCenter?.stateRegistration).toEqual(
         stateRegistration
       )
     })
