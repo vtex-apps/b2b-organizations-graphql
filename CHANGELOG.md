@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Feature
+
+- Added marketing tags to the cost center payload
+- Added sellers by cost center (scope)
+
+### Fixed
+
+- Fixed adding multiple cost centers from an organization request
+- Fixed users when there are multiple cost centers
+
 ## [0.32.1] - 2023-05-11
 
 ### Fixed
