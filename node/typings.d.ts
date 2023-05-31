@@ -69,6 +69,7 @@ interface DefaultCostCenterInput {
   customFields?: CustomField[]
   stateRegistration?: string
   sellers?: Seller[]
+  marketingTags?: string[]
 }
 
 interface CostCenterInput {
