@@ -17,6 +17,7 @@ import checkConfig from '../config'
 import message from '../message'
 import B2BSettings from '../Queries/Settings'
 import CostCenters from './CostCenters'
+import MarketingTags from './MarketingTags'
 
 const createUserAndAttachToOrganization = async ({
   storefrontPermissions,
@@ -128,13 +129,31 @@ const Organizations = {
           ...(data?.stateRegistration && {
             stateRegistration: data?.stateRegistration,
           }),
+          ...(data?.sellers && {
+            sellers: data?.sellers,
+          }),
         }
 
-        return masterdata.createDocument({
+        const result = await masterdata.createDocument({
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: costCenter,
           schema: COST_CENTER_SCHEMA_VERSION,
         })
+
+        if (data.marketingTags && data.marketingTags?.length > 0) {
+          MarketingTags.setMarketingTags(
+            _,
+            { costId: result.DocumentId, tags: data.marketingTags },
+            ctx
+          ).catch(error => {
+            logger.error({
+              error,
+              message: 'setMarketingTags-error',
+            })
+          })
+        }
+
+        return result
       }
 
       let costCenterResult: any[] = []
@@ -508,6 +527,9 @@ const Organizations = {
                   }),
                   ...(defaultCostCenter.sellers && {
                     sellers: defaultCostCenter.sellers,
+                  }),
+                  ...(defaultCostCenter.marketingTags && {
+                    marketingTags: defaultCostCenter.marketingTags,
                   }),
                 },
                 name,
