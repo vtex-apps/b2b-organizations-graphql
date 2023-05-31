@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.33.0] - 2023-05-31
+
 ### Feature
 
 - Added marketing tags to the cost center payload
