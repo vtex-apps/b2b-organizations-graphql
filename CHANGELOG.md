@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.33.1] - 2023-05-31
+
 ### Fixed
 
 - Bug fixed on creating the organization with marketing tags and sellers
