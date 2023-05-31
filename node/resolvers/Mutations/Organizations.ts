@@ -16,6 +16,46 @@ import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import message from '../message'
 import B2BSettings from '../Queries/Settings'
+import CostCenters from './CostCenters'
+
+const createUserAndAttachToOrganization = async ({
+  storefrontPermissions,
+  email,
+  costCenterId,
+  organizationId,
+  firstName,
+  lastName,
+  logger,
+}: any) => {
+  // get roleId of org admin
+  const roles = await storefrontPermissions.listRoles().then((result: any) => {
+    return result.data.listRoles
+  })
+
+  const roleId = roles.find(
+    (roleItem: any) => roleItem.slug === 'customer-admin'
+  ).id
+
+  // grant user org admin role, assign org and cost center
+  return storefrontPermissions
+    .saveUser({
+      clId: null,
+      costId: costCenterId,
+      email,
+      name: `${firstName} ${lastName}`,
+      orgId: organizationId,
+      roleId,
+    })
+    .then((result: any) => {
+      return result.data.saveUser
+    })
+    .catch((error: any) => {
+      logger.error({
+        error,
+        message: 'addUser-error',
+      })
+    })
+}
 
 const Organizations = {
   createOrganization: async (
@@ -30,6 +70,7 @@ const Organizations = {
         paymentTerms,
         priceTables,
         salesChannel,
+        sellers,
       },
       notifyUsers = true,
     }: { input: OrganizationInput; notifyUsers?: boolean },
@@ -56,6 +97,7 @@ const Organizations = {
         ...(paymentTerms?.length && { paymentTerms }),
         ...(priceTables?.length && { priceTables }),
         ...(salesChannel && { salesChannel }),
+        ...(sellers && { sellers }),
         customFields: customFields ?? [],
         status: ORGANIZATION_STATUSES.ACTIVE,
       }
@@ -181,6 +223,10 @@ const Organizations = {
     priceTables =
       priceTables ?? ((settings?.defaultPriceTables as unknown) as Price[])
 
+    if (!defaultCostCenter && costCenters?.length) {
+      defaultCostCenter = costCenters.shift()
+    }
+
     const organizationRequest = {
       name,
       ...(tradeName && { tradeName }),
@@ -192,8 +238,7 @@ const Organizations = {
       costCenters,
       created: now,
       customFields: customFields ?? [],
-      defaultCostCenter:
-        defaultCostCenter ?? (costCenters?.length && costCenters[0]),
+      defaultCostCenter,
       notes: '',
       status,
     }
@@ -359,6 +404,7 @@ const Organizations = {
       throw new GraphQLError(getErrorMessage(error))
     }
   },
+
   updateOrganizationRequest: async (
     _: void,
     {
@@ -427,6 +473,7 @@ const Organizations = {
             tradeName,
             sellers,
             customFields,
+            costCenters,
           } = organizationRequest
 
           const {
@@ -453,8 +500,14 @@ const Organizations = {
                   ...(defaultCostCenter.businessDocument && {
                     businessDocument: defaultCostCenter.businessDocument,
                   }),
+                  ...(defaultCostCenter.stateRegistration && {
+                    stateRegistration: defaultCostCenter.stateRegistration,
+                  }),
                   ...(defaultCostCenter.customFields && {
                     customFields: defaultCostCenter.customFields,
+                  }),
+                  ...(defaultCostCenter.sellers && {
+                    sellers: defaultCostCenter.sellers,
                   }),
                 },
                 name,
@@ -469,63 +522,49 @@ const Organizations = {
             ctx
           )
 
-          // get roleId of org admin
-          const roles = await storefrontPermissions
-            .listRoles()
-            .then((result: any) => {
-              return result.data.listRoles
-            })
+          if (costCenters && costCenters.length > 0) {
+            await Promise.all(
+              costCenters.map(async (costCenter: any) => {
+                const { id: costId } = await CostCenters.createCostCenter(
+                  _,
+                  {
+                    input: {
+                      ...costCenter,
+                      addresses: [costCenter.address],
+                    },
+                    organizationId,
+                  },
+                  ctx
+                )
 
-          const roleId = roles.find(
-            (roleItem: any) => roleItem.slug === 'customer-admin'
-          ).id
+                const userToAdd = costCenter.user ?? {
+                  email,
+                  firstName,
+                  lastName,
+                }
 
-          // check if user already exists in CL
-          let existingUser = {} as any
-          const clId = await masterdata
-            .searchDocuments({
-              dataEntity: 'CL',
-              fields: ['id'],
-              pagination: {
-                page: 1,
-                pageSize: 1,
-              },
-              where: `email=${email}`,
-            })
-            .then((res: any) => {
-              return res[0]?.id ?? undefined
-            })
-            .catch(() => undefined)
-
-          // check if user already exists in storefront-permissions
-          if (clId) {
-            await storefrontPermissions
-              .getUser(clId)
-              .then((result: any) => {
-                existingUser = result?.data?.getUser ?? {}
+                await createUserAndAttachToOrganization({
+                  storefrontPermissions,
+                  email: userToAdd.email,
+                  costCenterId: costId,
+                  organizationId,
+                  firstName: userToAdd.firstName,
+                  lastName: userToAdd.lastName,
+                  logger,
+                })
               })
-              .catch(() => null)
+            )
           }
 
-          // grant user org admin role, assign org and cost center
-          const addUserResult = await storefrontPermissions
-            .saveUser({
-              ...existingUser,
-              costId: costCenterId,
-              email,
-              name: existingUser?.name || `${firstName} ${lastName}`,
-              orgId: organizationId,
-              roleId,
-            })
-            .then((result: any) => {
-              return result.data.saveUser
-            })
-            .catch((error: any) => {
-              logger.error({
-                error,
-                message: 'addUser-error',
-              })
-            })
+          const addUserResult = await createUserAndAttachToOrganization({
+            storefrontPermissions,
+            email,
+            costCenterId,
+            organizationId,
+            firstName,
+            lastName,
+            logger,
+          })
 
           if (
             addUserResult?.status === 'success' &&

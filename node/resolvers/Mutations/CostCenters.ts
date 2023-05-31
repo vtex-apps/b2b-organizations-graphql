@@ -5,6 +5,7 @@ import {
 } from '../../mdSchema'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
+import MarketingTags from './MarketingTags'
 
 const CostCenters = {
   createCostCenter: async (
@@ -18,6 +19,8 @@ const CostCenters = {
         businessDocument,
         stateRegistration,
         customFields,
+        marketingTags,
+        sellers,
       },
     }: { organizationId: string; input: CostCenterInput },
     ctx: Context
@@ -59,6 +62,7 @@ const CostCenters = {
         ...(businessDocument && { businessDocument }),
         ...(stateRegistration && { stateRegistration }),
         ...(customFields && { customFields }),
+        ...(sellers && { sellers }),
       }
 
       const createCostCenterResult = await masterdata.createDocument({
@@ -66,6 +70,14 @@ const CostCenters = {
         fields: costCenter,
         schema: COST_CENTER_SCHEMA_VERSION,
       })
+
+      if (marketingTags && marketingTags?.length > 0) {
+        MarketingTags.setMarketingTags(
+          _,
+          { costId: createCostCenterResult.DocumentId, tags: marketingTags },
+          ctx
+        )
+      }
 
       return {
         href: createCostCenterResult.Href,

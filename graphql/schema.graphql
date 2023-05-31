@@ -287,6 +287,7 @@ type DefaultCostCenter {
   businessDocument: String
   customFields: [CustomField]
   stateRegistration: String
+  sellers: [Seller]
 }
 
 type Organization {
@@ -324,6 +325,7 @@ type CostCenter {
   businessDocument: String
   customFields: [CustomField]
   stateRegistration: String
+  sellers: [Seller]
 }
 
 type Address {
@@ -462,6 +464,9 @@ input DefaultCostCenterInput {
   businessDocument: String
   customFields: [CustomFieldInput]
   stateRegistration: String
+  marketingTags: [String]
+  user: B2BUserInput
+  sellers: [SellerInput]
 }
 
 input CostCenterInput {

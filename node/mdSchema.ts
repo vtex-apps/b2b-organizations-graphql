@@ -45,8 +45,9 @@ export const COST_CENTER_FIELDS = [
   'businessDocument',
   'customFields',
   'stateRegistration',
+  'sellers',
 ]
-export const COST_CENTER_SCHEMA_VERSION = 'v0.0.7'
+export const COST_CENTER_SCHEMA_VERSION = 'v0.0.8'
 
 export const schemas = [
   {
@@ -145,12 +146,11 @@ export const schemas = [
           title: 'Sales Channel',
         },
         costCenters: {
-          // deprecated
           type: 'array',
           title: 'Cost Centers',
         },
         sellers: {
-          type: 'array',
+          type: ['array', 'null'],
           title: 'Sellers',
         },
         status: {
@@ -208,6 +208,10 @@ export const schemas = [
         customFields: {
           type: ['array', 'null'],
           title: 'Custom Fields',
+        },
+        sellers: {
+          type: ['array', 'null'],
+          title: 'Sellers',
         },
       },
       'v-indexed': [
