@@ -1,125 +1,33 @@
 import * as casual from 'casual'
+
+// eslint-disable-next-line jest/no-mocks-import
+import { mockContext } from '../../__mocks__/context.mock'
+// eslint-disable-next-line jest/no-mocks-import
+import { mockOrganizations } from '../../__mocks__/resolvers-mutations-organization.mock'
+// eslint-disable-next-line jest/no-mocks-import
 import {
-  anything,
-  capture,
-  instance,
-  mock,
-  resetCalls,
-  spy,
-  verify,
-  when,
-} from 'ts-mockito'
-
+  mockB2BSettings,
+  mockSettingsConfig,
+} from '../../__mocks__/settings.mock'
 import { ORGANIZATION_REQUEST_STATUSES } from '../../utils/constants'
-import type { Settings } from '../config'
-import Config from '../config'
 import Organizations from './Organizations'
-import B2BSettings from '../Queries/Settings'
-import type { Clients } from '../../clients'
-
-const orgId = casual.uuid
 
 beforeEach(() => {
-  mockConfigsAndSettings()
+  mockSettingsConfig()
+  mockB2BSettings()
 })
 afterEach(() => {
   jest.resetAllMocks()
 })
 
-function mockContext(
-  mockedMasterdata: Clients['masterdata'],
-  mockedStorefrontPermissions: Clients['storefrontPermissions']
-) {
-  return ({
-    clients: {
-      masterdata: instance(mockedMasterdata),
-      storefrontPermissions: instance(mockedStorefrontPermissions),
-    },
-    vtex: {
-      logger: mock<Logger>(),
-    },
-  } as unknown) as Context
-}
-
-function mockConfigsAndSettings() {
-  const spyB2BSettings = spy(B2BSettings)
-
-  when(
-    spyB2BSettings.getB2BSettings(anything(), anything(), anything())
-  ).thenResolve({} as B2BSettingsInput)
-
-  const spyConfig = spy(Config)
-
-  when(spyConfig.checkConfig(anything())).thenResolve({} as Settings)
-
-  return spyB2BSettings
-}
-
-function mockOrganizationsToUpdateOrganization() {
-  const spyOrganizations = spy(Organizations)
-
-  when(
-    spyOrganizations.createOrganization(anything(), anything(), anything())
-  ).thenResolve({
-    costCenterId: undefined,
-    href: '',
-    id: orgId,
-    status: '',
-  })
-
-  return spyOrganizations
-}
-
-function mockMasterdataOperationsToUpdateOrganization() {
-  const mockedMasterdata = mock<Clients['masterdata']>()
-
-  when(mockedMasterdata.getDocument(anything())).thenResolve({
-    b2bCustomerAdmin: {
-      email: casual.email,
-      firstName: casual.first_name,
-      lastName: casual.last_name,
-    },
-    defaultCostCenter: {
-      address: {},
-    },
-    status: ORGANIZATION_REQUEST_STATUSES.PENDING,
-  } as OrganizationRequest)
-
-  when(mockedMasterdata.searchDocuments(anything())).thenResolve({} as any)
-  when(mockedMasterdata.createDocument(anything())).thenResolve({
-    DocumentId: casual.uuid,
-  } as any)
-
-  when(mockedMasterdata.updatePartialDocument(anything())).thenResolve()
-
-  return mockedMasterdata
-}
-
-function mockStorefrontPermissionsOperationsToUpdateOrganization() {
-  const mockedStorefrontPermissions = mock<Clients['storefrontPermissions']>()
-
-  when(mockedStorefrontPermissions.listRoles()).thenResolve({
-    data: { listRoles: [{ id: casual.uuid, slug: 'customer-admin' }] },
-  })
-
-  when(mockedStorefrontPermissions.saveUser(anything())).thenResolve({})
-
-  return mockedStorefrontPermissions
-}
-
 describe('given an Organization Mutation', () => {
-  const spyOrganizations = mockOrganizationsToUpdateOrganization()
-  const mockedMasterdata = mockMasterdataOperationsToUpdateOrganization()
-  const mockedStorefrontPermissions = mockStorefrontPermissionsOperationsToUpdateOrganization()
-  const mockedContext = mockContext(
-    mockedMasterdata,
-    mockedStorefrontPermissions
-  )
+  let mockedContext: Context
+  let mockedOrganizations: jest.Mocked<typeof Organizations>
+  const orgId = casual.uuid
 
-  afterEach(() => {
-    resetCalls(spyOrganizations)
-    resetCalls(mockedMasterdata)
-    resetCalls(mockedStorefrontPermissions)
+  beforeEach(() => {
+    mockedContext = mockContext()
+    mockedOrganizations = mockOrganizations(orgId)
   })
 
   describe('when update an organization with status APPROVED and state registration', () => {
@@ -134,21 +42,24 @@ describe('given an Organization Mutation', () => {
     let result: { id?: string; message: string; status: string }
 
     beforeEach(async () => {
-      when(mockedMasterdata.getDocument(anything())).thenResolve({
-        b2bCustomerAdmin: {
-          email: casual.email,
-          firstName: casual.first_name,
-          lastName: casual.last_name,
-        },
-        defaultCostCenter: {
-          address: {},
-          stateRegistration,
-        },
-        status: ORGANIZATION_REQUEST_STATUSES.PENDING,
-      } as OrganizationRequest)
+      jest
+        .spyOn(mockedContext.clients.masterdata, 'getDocument')
+        .mockImplementation()
+        .mockResolvedValueOnce({
+          b2bCustomerAdmin: {
+            email: casual.email,
+            firstName: casual.first_name,
+            lastName: casual.last_name,
+          },
+          defaultCostCenter: {
+            address: {},
+            stateRegistration,
+          },
+          status: ORGANIZATION_REQUEST_STATUSES.PENDING,
+        })
 
       result = await Organizations.updateOrganizationRequest(
-        instance(mock()),
+        jest.fn() as any,
         input,
         mockedContext
       )
@@ -160,21 +71,18 @@ describe('given an Organization Mutation', () => {
     })
 
     it('should call create organization with data', () => {
-      verify(
-        spyOrganizations.createOrganization(anything(), anything(), anything())
-      ).once()
+      expect(mockedOrganizations.createOrganization).toHaveBeenCalledTimes(1)
 
-      const [, capturedInput] = capture(
-        spyOrganizations.createOrganization
-      ).last()
-
-      expect(capturedInput.input.defaultCostCenter?.stateRegistration).toEqual(
-        stateRegistration
-      )
+      expect(
+        mockedOrganizations.createOrganization.mock.calls[0]?.[1]?.input
+          ?.defaultCostCenter?.stateRegistration
+      ).toEqual(stateRegistration)
     })
 
     it('should save the user in store front permission', () => {
-      verify(mockedStorefrontPermissions.saveUser(anything())).once()
+      expect(
+        mockedContext.clients.storefrontPermissions.saveUser
+      ).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -190,7 +98,7 @@ describe('given an Organization Mutation', () => {
 
     beforeEach(async () => {
       result = await Organizations.updateOrganizationRequest(
-        instance(mock()),
+        jest.fn() as any,
         input,
         mockedContext
       )
@@ -201,22 +109,19 @@ describe('given an Organization Mutation', () => {
       expect(result.id).toEqual(orgId)
     })
 
-    it('should call create organization with data', () => {
-      verify(
-        spyOrganizations.createOrganization(anything(), anything(), anything())
-      ).once()
-
-      const [, capturedInput] = capture(
-        spyOrganizations.createOrganization
-      ).last()
+    it('should call create organization without state registration', () => {
+      expect(mockedOrganizations.createOrganization).toHaveBeenCalledTimes(1)
 
       expect(
-        capturedInput.input.defaultCostCenter?.stateRegistration
+        mockedOrganizations.createOrganization.mock.calls[0]?.[1]?.input
+          ?.defaultCostCenter?.stateRegistration
       ).toBeUndefined()
     })
 
     it('should save the user in store front permission', () => {
-      verify(mockedStorefrontPermissions.saveUser(anything())).once()
+      expect(
+        mockedContext.clients.storefrontPermissions.saveUser
+      ).toHaveBeenCalledTimes(1)
     })
   })
 })

@@ -17,12 +17,12 @@
     "@types/node": "^12.0.0",
     "@types/ramda": "types/npm-ramda#dist",
     "@vtex/api": "6.45.15",
-    "tslint": "^5.12.0",
-    "tslint-config-vtex": "^2.1.0",
     "@vtex/test-tools": "^1.0.0",
     "@vtex/tsconfig": "^0.5.6",
     "casual": "^1.6.2",
-    "ts-mockito": "^2.6.1",
+    "tslint": "^5.12.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-config-vtex": "^2.1.0",
     "typescript": "3.9.7"
   },
   "scripts": {
