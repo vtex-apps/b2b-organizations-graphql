@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.32.3] - 2023-06-01
-
 ### Fixed
 
 - State registration number not being saved when approving an organization
