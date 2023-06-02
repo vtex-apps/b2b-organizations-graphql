@@ -76,7 +76,7 @@ const CostCenters = {
           _,
           { costId: createCostCenterResult.DocumentId, tags: marketingTags },
           ctx
-        ).catch((error) => {
+        ).catch(error => {
           logger.error({
             error,
             message: 'setMarketingTags-error',

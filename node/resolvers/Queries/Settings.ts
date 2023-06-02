@@ -1,4 +1,5 @@
 import GraphQLError from '../../utils/GraphQLError'
+import checkConfig from '../config'
 
 const B2BSettings = {
   getB2BSettings: async (_: void, __: void, ctx: Context) => {

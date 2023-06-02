@@ -7,6 +7,7 @@ import {
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import checkConfig from '../config'
 
 const getWhereByStatus = ({ status }: { status: string[] }) => {
   const whereArray = []
@@ -14,7 +15,7 @@ const getWhereByStatus = ({ status }: { status: string[] }) => {
   if (status?.length) {
     const statusArray = [] as string[]
 
-    status.forEach((stat) => {
+    status.forEach(stat => {
       statusArray.push(`status=${stat}`)
     })
     const statuses = `(${statusArray.join(' OR ')})`
