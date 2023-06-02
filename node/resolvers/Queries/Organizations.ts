@@ -7,7 +7,6 @@ import {
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-import Config from '../config'
 
 const getWhereByStatus = ({ status }: { status: string[] }) => {
   const whereArray = []
@@ -15,7 +14,7 @@ const getWhereByStatus = ({ status }: { status: string[] }) => {
   if (status?.length) {
     const statusArray = [] as string[]
 
-    status.forEach(stat => {
+    status.forEach((stat) => {
       statusArray.push(`status=${stat}`)
     })
     const statuses = `(${statusArray.join(' OR ')})`
@@ -88,7 +87,7 @@ const Organizations = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     try {
       return await masterdata.getDocument({
@@ -127,7 +126,7 @@ const Organizations = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     const whereArray = getWhereByStatus({ status })
 
@@ -252,7 +251,7 @@ const Organizations = {
     } = ctx as any
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     if (!sessionData?.namespaces['storefront-permissions']) {
       throw new GraphQLError('organization-data-not-found')
@@ -307,7 +306,7 @@ const Organizations = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     try {
       return await masterdata.getDocument({
@@ -349,7 +348,7 @@ const Organizations = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
     const whereArray = getWhereByStatus({ status })
 
     if (search) {

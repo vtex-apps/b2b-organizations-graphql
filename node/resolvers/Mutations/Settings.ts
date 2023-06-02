@@ -1,5 +1,5 @@
 import GraphQLError from '../../utils/GraphQLError'
-import Config, { getAppId } from '../config'
+import { getAppId } from '../config'
 
 export const B2B_SETTINGS_DOCUMENT_ID = 'b2bSettings'
 
@@ -54,7 +54,7 @@ const Settings = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
 

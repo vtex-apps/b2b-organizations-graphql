@@ -5,14 +5,14 @@ module.exports = {
     {
       globals: {
         'ts-jest': {
-          tsConfig: '<rootDir>/node/tsconfig.json',
+          tsConfig: '<rootDir>/tsconfig.json',
         },
       },
       moduleFileExtensions: ['ts', 'tsx', 'js'],
       preset: 'ts-jest',
       testEnvironment: 'node',
       testEnvironmentOptions: {},
-      testMatch: ['<rootDir>/node/**/?(*.)+(spec|test).(js|ts)?(x)'],
+      testMatch: ['<rootDir>/**/?(*.)+(spec|test).(js|ts)?(x)'],
       transform: {
         '^.+\\.tsx?$': 'ts-jest',
       },

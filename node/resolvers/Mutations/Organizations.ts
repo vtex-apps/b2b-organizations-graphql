@@ -13,11 +13,11 @@ import {
   ORGANIZATION_STATUSES,
 } from '../../utils/constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-import Config from '../config'
 import message from '../message'
 import B2BSettings from '../Queries/Settings'
 import CostCenters from './CostCenters'
 import MarketingTags from './MarketingTags'
+import checkConfig from '../config'
 
 const createUserAndAttachToOrganization = async ({
   storefrontPermissions,
@@ -83,7 +83,7 @@ const Organizations = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     const now = new Date()
 
@@ -145,7 +145,7 @@ const Organizations = {
             _,
             { costId: result.DocumentId, tags: data.marketingTags },
             ctx
-          ).catch(error => {
+          ).catch((error) => {
             logger.error({
               error,
               message: 'setMarketingTags-error',
@@ -224,7 +224,7 @@ const Organizations = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     const now = new Date()
 
@@ -238,9 +238,9 @@ const Organizations = {
 
     paymentTerms =
       paymentTerms ??
-      ((settings?.defaultPaymentTerms as unknown) as PaymentTerm[])
+      (settings?.defaultPaymentTerms as unknown as PaymentTerm[])
     priceTables =
-      priceTables ?? ((settings?.defaultPriceTables as unknown) as Price[])
+      priceTables ?? (settings?.defaultPriceTables as unknown as Price[])
 
     if (!defaultCostCenter && costCenters?.length) {
       defaultCostCenter = costCenters.shift()
@@ -364,7 +364,7 @@ const Organizations = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     const settings = (await B2BSettings.getB2BSettings(
       undefined,
@@ -453,7 +453,7 @@ const Organizations = {
     }
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     let organizationRequest: OrganizationRequest
 
@@ -495,55 +495,53 @@ const Organizations = {
             costCenters,
           } = organizationRequest
 
-          const {
-            costCenterId,
-            id: organizationId,
-          } = await Organizations.createOrganization(
-            _,
-            {
-              input: {
-                ...(tradeName && {
-                  tradeName,
-                }),
-                b2bCustomerAdmin: {
-                  email,
-                  firstName,
-                  lastName,
-                },
-                customFields,
-                defaultCostCenter: {
-                  address: defaultCostCenter.address,
-                  name: defaultCostCenter.name,
-                  ...(defaultCostCenter.phoneNumber && {
-                    phoneNumber: defaultCostCenter.phoneNumber,
+          const { costCenterId, id: organizationId } =
+            await Organizations.createOrganization(
+              _,
+              {
+                input: {
+                  ...(tradeName && {
+                    tradeName,
                   }),
-                  ...(defaultCostCenter.businessDocument && {
-                    businessDocument: defaultCostCenter.businessDocument,
-                  }),
-                  ...(defaultCostCenter.stateRegistration && {
+                  b2bCustomerAdmin: {
+                    email,
+                    firstName,
+                    lastName,
+                  },
+                  customFields,
+                  defaultCostCenter: {
+                    address: defaultCostCenter.address,
+                    name: defaultCostCenter.name,
+                    ...(defaultCostCenter.phoneNumber && {
+                      phoneNumber: defaultCostCenter.phoneNumber,
+                    }),
+                    ...(defaultCostCenter.businessDocument && {
+                      businessDocument: defaultCostCenter.businessDocument,
+                    }),
+                    ...(defaultCostCenter.stateRegistration && {
+                      stateRegistration: defaultCostCenter.stateRegistration,
+                    }),
+                    ...(defaultCostCenter.customFields && {
+                      customFields: defaultCostCenter.customFields,
+                    }),
+                    ...(defaultCostCenter.sellers && {
+                      sellers: defaultCostCenter.sellers,
+                    }),
+                    ...(defaultCostCenter.marketingTags && {
+                      marketingTags: defaultCostCenter.marketingTags,
+                    }),
                     stateRegistration: defaultCostCenter.stateRegistration,
-                  }),
-                  ...(defaultCostCenter.customFields && {
-                    customFields: defaultCostCenter.customFields,
-                  }),
-                  ...(defaultCostCenter.sellers && {
-                    sellers: defaultCostCenter.sellers,
-                  }),
-                  ...(defaultCostCenter.marketingTags && {
-                    marketingTags: defaultCostCenter.marketingTags,
-                  }),
-                  stateRegistration: defaultCostCenter.stateRegistration,
+                  },
+                  name,
+                  paymentTerms,
+                  priceTables,
+                  salesChannel,
+                  sellers,
                 },
-                name,
-                paymentTerms,
-                priceTables,
-                salesChannel,
-                sellers,
+                notifyUsers,
               },
-              notifyUsers,
-            },
-            ctx
-          )
+              ctx
+            )
 
           if (costCenters && costCenters.length > 0) {
             await Promise.all(

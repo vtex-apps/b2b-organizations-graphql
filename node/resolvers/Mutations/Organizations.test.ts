@@ -1,33 +1,73 @@
 import * as casual from 'casual'
 
-// eslint-disable-next-line jest/no-mocks-import
-import { mockContext } from '../../__mocks__/context.mock'
-// eslint-disable-next-line jest/no-mocks-import
-import { mockOrganizations } from '../../__mocks__/resolvers-mutations-organization.mock'
-// eslint-disable-next-line jest/no-mocks-import
-import {
-  mockB2BSettings,
-  mockSettingsConfig,
-} from '../../__mocks__/settings.mock'
 import { ORGANIZATION_REQUEST_STATUSES } from '../../utils/constants'
+import B2BSettings from '../Queries/Settings'
 import Organizations from './Organizations'
 
+jest.mock('../config')
+jest.mock('../Queries/Settings')
+const mockedOrganizations = Organizations as jest.Mocked<typeof Organizations>
+
+const mockContext = () => {
+  return {
+    clients: {
+      masterdata: {
+        createDocument: jest.fn().mockResolvedValue({
+          DocumentId: casual.uuid,
+        }),
+        getDocument: jest.fn().mockResolvedValueOnce({
+          b2bCustomerAdmin: {
+            email: casual.email,
+            firstName: casual.first_name,
+            lastName: casual.last_name,
+          },
+          defaultCostCenter: {
+            address: {},
+          },
+          status: ORGANIZATION_REQUEST_STATUSES.PENDING,
+        } as OrganizationRequest),
+        searchDocuments: jest.fn().mockResolvedValue({}),
+        updatePartialDocument: jest.fn().mockResolvedValueOnce({}),
+      },
+      storefrontPermissions: {
+        listRoles: jest.fn().mockResolvedValueOnce({
+          data: { listRoles: [{ id: casual.uuid, slug: 'customer-admin' }] },
+        }),
+        saveUser: jest.fn().mockResolvedValueOnce({ data: {} }),
+      },
+    },
+    vtex: {
+      logger: jest.fn(),
+    },
+  } as unknown as Context
+}
+
 beforeEach(() => {
-  mockSettingsConfig()
-  mockB2BSettings()
+  jest
+    .spyOn(B2BSettings, 'getB2BSettings')
+    .mockImplementation(
+      async (_: void, __: void, ___: Context) => ({} as B2BSettingsInput)
+    )
 })
 afterEach(() => {
   jest.resetAllMocks()
 })
 
 describe('given an Organization Mutation', () => {
-  let mockedContext: Context
-  let mockedOrganizations: jest.Mocked<typeof Organizations>
   const orgId = casual.uuid
+  let mockedContext: Context
 
   beforeEach(() => {
     mockedContext = mockContext()
-    mockedOrganizations = mockOrganizations(orgId)
+    jest
+      .spyOn(mockedOrganizations, 'createOrganization')
+      .mockImplementation()
+      .mockResolvedValueOnce({
+        costCenterId: casual.uuid,
+        href: '',
+        id: orgId,
+        status: '',
+      })
   })
 
   describe('when update an organization with status APPROVED and state registration', () => {

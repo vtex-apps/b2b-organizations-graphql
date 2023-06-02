@@ -5,7 +5,7 @@ import {
   COST_CENTER_SCHEMA_VERSION,
 } from '../../mdSchema'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-import Config from '../config'
+import checkConfig from '../config'
 import Organizations from './Organizations'
 
 const getCostCenters = async ({
@@ -87,7 +87,7 @@ const costCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     try {
       const result: CostCenter = await masterdata.getDocument({
@@ -117,7 +117,7 @@ const costCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
       throw new Error('This organization is not active')
@@ -180,27 +180,26 @@ const costCenters = {
       const paymentRules = await payments.rules()
 
       const enabledConnectors = paymentRules.filter(
-        rule => rule.enabled === true
+        (rule) => rule.enabled === true
       )
 
       const enabledPaymentSystems = enabledConnectors.map(
-        connector => connector.paymentSystem
+        (connector) => connector.paymentSystem
       )
 
       const uniquePaymentSystems = enabledPaymentSystems.filter(
         (value, index, self) => {
           return (
             index ===
-            self.findIndex(t => t.id === value.id && t.name === value.name)
+            self.findIndex((t) => t.id === value.id && t.name === value.name)
           )
         }
       )
 
-      const uniquePaymentSystemsWithoutCreditCards = uniquePaymentSystems.filter(
-        value => {
+      const uniquePaymentSystemsWithoutCreditCards =
+        uniquePaymentSystems.filter((value) => {
           return !CREDIT_CARDS.includes(value.name)
-        }
-      )
+        })
 
       uniquePaymentSystemsWithoutCreditCards.unshift({
         id: 999999,
@@ -238,7 +237,7 @@ const costCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     let where = ''
 
@@ -289,7 +288,7 @@ const costCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     try {
       return await getCostCenters({
@@ -335,7 +334,7 @@ const costCenters = {
     } = ctx as any
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
       throw new Error('This organization is not active')

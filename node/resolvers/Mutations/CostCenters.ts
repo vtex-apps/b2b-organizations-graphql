@@ -4,7 +4,7 @@ import {
   ORGANIZATION_DATA_ENTITY,
 } from '../../mdSchema'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-import Config from '../config'
+import checkConfig from '../config'
 import MarketingTags from './MarketingTags'
 
 const CostCenters = {
@@ -32,7 +32,7 @@ const CostCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     if (!organizationId) {
       // get user's organization from session
@@ -76,7 +76,7 @@ const CostCenters = {
           _,
           { costId: createCostCenterResult.DocumentId, tags: marketingTags },
           ctx
-        ).catch(error => {
+        ).catch((error) => {
           logger.error({
             error,
             message: 'setMarketingTags-error',
@@ -109,7 +109,7 @@ const CostCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     try {
       const costCenter: CostCenterInput = await masterdata.getDocument({
@@ -196,7 +196,7 @@ const CostCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     try {
       await masterdata.updatePartialDocument({
@@ -240,7 +240,7 @@ const CostCenters = {
     } = ctx
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
     try {
       const costCenter: CostCenterInput = await masterdata.getDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,

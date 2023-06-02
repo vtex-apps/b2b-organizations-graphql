@@ -1,5 +1,4 @@
 import GraphQLError from '../../utils/GraphQLError'
-import Config from '../config'
 
 const B2BSettings = {
   getB2BSettings: async (_: void, __: void, ctx: Context) => {
@@ -10,7 +9,7 @@ const B2BSettings = {
     const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
 
     // create schema if it doesn't exist
-    await Config.checkConfig(ctx)
+    await checkConfig(ctx)
 
     let settings: Partial<B2BSettingsInput> | null = null
 
