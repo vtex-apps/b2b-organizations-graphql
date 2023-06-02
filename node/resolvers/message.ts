@@ -65,7 +65,7 @@ const message = ({
             },
             templateName: 'organization-created',
           })
-          .catch(err =>
+          .catch((err) =>
             logger.error({
               message: {
                 error: err,
@@ -93,7 +93,7 @@ const message = ({
         },
         templateName: 'organization-approved',
       })
-      .catch(err =>
+      .catch((err) =>
         logger.error({
           message: {
             error: err,
@@ -117,7 +117,7 @@ const message = ({
         },
         templateName: 'organization-request-created',
       })
-      .catch(err =>
+      .catch((err) =>
         logger.error({
           message: {
             error: err,
@@ -141,7 +141,7 @@ const message = ({
         },
         templateName: 'organization-declined',
       })
-      .catch(err =>
+      .catch((err) =>
         logger.error({
           message: {
             error: err,
@@ -176,7 +176,7 @@ const message = ({
             },
             templateName: 'organization-status-changed',
           })
-          .catch(err =>
+          .catch((err) =>
             logger.error({
               message: {
                 error: err,

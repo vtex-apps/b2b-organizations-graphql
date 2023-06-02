@@ -530,7 +530,6 @@ const Organizations = {
                     ...(defaultCostCenter.marketingTags && {
                       marketingTags: defaultCostCenter.marketingTags,
                     }),
-                    stateRegistration: defaultCostCenter.stateRegistration,
                   },
                   name,
                   paymentTerms,

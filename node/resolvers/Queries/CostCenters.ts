@@ -180,27 +180,26 @@ const costCenters = {
       const paymentRules = await payments.rules()
 
       const enabledConnectors = paymentRules.filter(
-        rule => rule.enabled === true
+        (rule) => rule.enabled === true
       )
 
       const enabledPaymentSystems = enabledConnectors.map(
-        connector => connector.paymentSystem
+        (connector) => connector.paymentSystem
       )
 
       const uniquePaymentSystems = enabledPaymentSystems.filter(
         (value, index, self) => {
           return (
             index ===
-            self.findIndex(t => t.id === value.id && t.name === value.name)
+            self.findIndex((t) => t.id === value.id && t.name === value.name)
           )
         }
       )
 
-      const uniquePaymentSystemsWithoutCreditCards = uniquePaymentSystems.filter(
-        value => {
+      const uniquePaymentSystemsWithoutCreditCards =
+        uniquePaymentSystems.filter((value) => {
           return !CREDIT_CARDS.includes(value.name)
-        }
-      )
+        })
 
       uniquePaymentSystemsWithoutCreditCards.unshift({
         id: 999999,
