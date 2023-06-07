@@ -59,9 +59,7 @@ describe('given an Organization Mutation', () => {
 
   beforeEach(() => {
     mockedContext = mockContext()
-    jest
-      .spyOn(mockedOrganizations, 'createOrganization')
-      .mockImplementation()
+    mockedOrganizations.createOrganization
       .mockResolvedValueOnce({
         costCenterId: casual.uuid,
         href: '',
