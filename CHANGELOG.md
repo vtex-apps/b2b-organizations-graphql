@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- State registration number not being saved when approving an organization
+- Setup unit tests and fix lint errors
 
 ## [0.33.1] - 2023-05-31
 

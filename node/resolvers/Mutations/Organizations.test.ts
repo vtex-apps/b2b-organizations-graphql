@@ -1,28 +1,35 @@
-import * as casual from 'casual'
+import {
+  randEmail,
+  randFirstName,
+  randLastName,
+  randUuid,
+  randWord,
+} from '@ngneat/falso'
 
 import { ORGANIZATION_REQUEST_STATUSES } from '../../utils/constants'
-import B2BSettings from '../Queries/Settings'
 import Organizations from './Organizations'
 
 jest.mock('../config')
 jest.mock('../Queries/Settings')
+
 const mockedOrganizations = Organizations as jest.Mocked<typeof Organizations>
 
-const mockContext = () => {
+const mockContext = (stateRegistration?: string) => {
   return {
     clients: {
       masterdata: {
         createDocument: jest.fn().mockResolvedValue({
-          DocumentId: casual.uuid,
+          DocumentId: randUuid(),
         }),
         getDocument: jest.fn().mockResolvedValueOnce({
           b2bCustomerAdmin: {
-            email: casual.email,
-            firstName: casual.first_name,
-            lastName: casual.last_name,
+            email: randEmail(),
+            firstName: randFirstName(),
+            lastName: randLastName(),
           },
           defaultCostCenter: {
             address: {},
+            stateRegistration,
           },
           status: ORGANIZATION_REQUEST_STATUSES.PENDING,
         } as OrganizationRequest),
@@ -31,7 +38,7 @@ const mockContext = () => {
       },
       storefrontPermissions: {
         listRoles: jest.fn().mockResolvedValueOnce({
-          data: { listRoles: [{ id: casual.uuid, slug: 'customer-admin' }] },
+          data: { listRoles: [{ id: randUuid(), slug: 'customer-admin' }] },
         }),
         saveUser: jest.fn().mockResolvedValueOnce({ data: {} }),
       },
@@ -42,26 +49,27 @@ const mockContext = () => {
   } as unknown as Context
 }
 
-beforeEach(() => {
-  jest
-    .spyOn(B2BSettings, 'getB2BSettings')
-    .mockImplementation(
-      async (_: void, __: void, ___: Context) => ({} as B2BSettingsInput)
-    )
-})
 afterEach(() => {
   jest.resetAllMocks()
 })
 
 describe('given an Organization Mutation', () => {
-  const orgId = casual.uuid
+  const orgId = randUuid()
+  const input = {
+    id: '1',
+    notes: 'OK',
+    notifyUsers: true,
+    status: ORGANIZATION_REQUEST_STATUSES.APPROVED,
+  }
+
+  let result: { id?: string; message: string; status: string }
   let mockedContext: Context
 
   beforeEach(() => {
-    mockedContext = mockContext()
-    mockedOrganizations.createOrganization
+    jest
+      .spyOn(mockedOrganizations, 'createOrganization')
       .mockResolvedValueOnce({
-        costCenterId: casual.uuid,
+        costCenterId: randUuid(),
         href: '',
         id: orgId,
         status: '',
@@ -69,35 +77,12 @@ describe('given an Organization Mutation', () => {
   })
 
   describe('when update an organization with status APPROVED and state registration', () => {
-    const stateRegistration = casual.word
-    const input = {
-      id: '1',
-      notes: 'OK',
-      notifyUsers: true,
-      status: ORGANIZATION_REQUEST_STATUSES.APPROVED,
-    }
-
-    let result: { id?: string; message: string; status: string }
+    const stateRegistration = randWord()
 
     beforeEach(async () => {
-      jest
-        .spyOn(mockedContext.clients.masterdata, 'getDocument')
-        .mockImplementation()
-        .mockResolvedValueOnce({
-          b2bCustomerAdmin: {
-            email: casual.email,
-            firstName: casual.first_name,
-            lastName: casual.last_name,
-          },
-          defaultCostCenter: {
-            address: {},
-            stateRegistration,
-          },
-          status: ORGANIZATION_REQUEST_STATUSES.PENDING,
-        })
-
+      mockedContext = mockContext(stateRegistration)
       result = await Organizations.updateOrganizationRequest(
-        jest.fn() as any,
+        jest.fn() as never,
         input,
         mockedContext
       )
@@ -125,18 +110,10 @@ describe('given an Organization Mutation', () => {
   })
 
   describe('when update an organization with status APPROVED and without state registration', () => {
-    const input = {
-      id: '1',
-      notes: 'OK',
-      notifyUsers: true,
-      status: ORGANIZATION_REQUEST_STATUSES.APPROVED,
-    }
-
-    let result: { id?: string; message: string; status: string }
-
     beforeEach(async () => {
+      mockedContext = mockContext()
       result = await Organizations.updateOrganizationRequest(
-        jest.fn() as any,
+        jest.fn() as never,
         input,
         mockedContext
       )
