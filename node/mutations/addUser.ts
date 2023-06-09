@@ -2,7 +2,7 @@ import { print } from 'graphql'
 import gql from 'graphql-tag'
 
 export default print(gql`
-  mutation(
+  mutation (
     $id: ID
     $userId: ID
     $roleId: ID!

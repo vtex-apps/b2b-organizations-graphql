@@ -122,7 +122,7 @@ const checkUserPermissions = async ({
 const sleep = (ms: number) => {
   const time = ms + SLEEP_ADD_PERCENTAGE * ms
 
-  return new Promise(resolve => setTimeout(resolve, time))
+  return new Promise((resolve) => setTimeout(resolve, time))
 }
 
 const Users = {
@@ -133,7 +133,7 @@ const Users = {
     } = ctx
 
     const app: string = getAppId()
-    const settings: any = await vbase.getJSON('b2borg', app).catch(error => {
+    const settings: any = await vbase.getJSON('b2borg', app).catch((error) => {
       logger.error({
         error,
         message: 'b2borg.getAppSettings-Error',
@@ -154,7 +154,7 @@ const Users = {
     ) {
       const updates: any = []
 
-      schemas.forEach(schema => {
+      schemas.forEach((schema) => {
         updates.push(
           masterdata
             .createOrUpdateSchema({
@@ -177,7 +177,7 @@ const Users = {
         .then(() => {
           settings.adminSetup.schemaHash = currHash
         })
-        .catch(e => {
+        .catch((e) => {
           if (e.response.status !== 304) {
             throw new Error(e)
           }
@@ -214,7 +214,7 @@ const Users = {
       .then((result: any) => {
         return result.data.listAllUsers
       })
-      .catch(error => {
+      .catch((error) => {
         logger.error({
           error,
           message: 'getOrganizationsWithoutSalesManager-getUsers-error',
@@ -266,7 +266,7 @@ const Users = {
       throw new GraphQLError(getErrorMessage(error))
     }
 
-    return organizations.filter(organization => {
+    return organizations.filter((organization) => {
       return !users
         .filter((user: any) => user.role === 'sales-manager')
         .find((user: any) => user.orgId === organization.id)
@@ -310,7 +310,7 @@ const Users = {
       .then((result: any) => {
         return result.data.listUsers
       })
-      .catch(error => {
+      .catch((error) => {
         logger.error({
           error,
           message: 'getUsers-getUsers-error',
@@ -375,7 +375,7 @@ const Users = {
       .then((result: any) => {
         return result.data.listUsersPaginated
       })
-      .catch(error => {
+      .catch((error) => {
         logger.error({
           error,
           message: 'getUsers-error',

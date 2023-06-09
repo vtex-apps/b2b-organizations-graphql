@@ -144,9 +144,8 @@ const Index = {
           response.organization = await masterdata.getDocument({
             dataEntity: ORGANIZATION_DATA_ENTITY,
             fields: ['paymentTerms'],
-            id:
-              sessionData.namespaces['storefront-permissions']?.organization
-                ?.value,
+            id: sessionData.namespaces['storefront-permissions']?.organization
+              ?.value,
           })
         }
 
@@ -156,9 +155,8 @@ const Index = {
           response.costcenter = await masterdata.getDocument({
             dataEntity: COST_CENTER_DATA_ENTITY,
             fields: ['addresses'],
-            id:
-              sessionData.namespaces['storefront-permissions']?.costcenter
-                ?.value,
+            id: sessionData.namespaces['storefront-permissions']?.costcenter
+              ?.value,
           })
         }
       }
@@ -219,12 +217,8 @@ const Index = {
       request: { querystring },
     } = ctx
 
-    const {
-      permissions,
-      authEmail,
-      organizationId,
-      costCenterId,
-    } = await getUserAndPermissions(ctx)
+    const { permissions, authEmail, organizationId, costCenterId } =
+      await getUserAndPermissions(ctx)
 
     const filterByPermission = (userPermissions: string[]) => {
       if (userPermissions.includes('all-orders')) {

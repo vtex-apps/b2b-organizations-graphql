@@ -43,3 +43,4 @@ yarn-error.log
 node/package-lock.json
 react/package-lock.json
 cy-runner
+/node/coverage/

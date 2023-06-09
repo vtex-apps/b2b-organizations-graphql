@@ -44,7 +44,7 @@ const checkConfig = async (ctx: Context) => {
       message: 'checkConfig-updatingSchema',
     })
 
-    schemas.forEach(schema => {
+    schemas.forEach((schema) => {
       updates.push(
         masterdata
           .createOrUpdateSchema({
@@ -68,8 +68,8 @@ const checkConfig = async (ctx: Context) => {
       )
     })
     try {
-      await Promise.all(updates).then(results => {
-        if (results.every(res => res === true)) {
+      await Promise.all(updates).then((results) => {
+        if (results.every((res) => res === true)) {
           settings.schemaHash = currSchemaHash
           schemaChanged = true
         }
@@ -91,7 +91,7 @@ const checkConfig = async (ctx: Context) => {
 
     try {
       await Promise.all(
-        templates.map(async template => {
+        templates.map(async (template) => {
           const existingData = await mail.getTemplate(template.Name)
 
           if (!existingData) {
@@ -113,7 +113,7 @@ const checkConfig = async (ctx: Context) => {
         settings.templateHash = currTemplateHash
         templatesChanged = true
       })
-      .catch(error => {
+      .catch((error) => {
         logger.error({
           error,
           message: 'checkConfig-publishTemplateError',

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Setup unit tests and fix lint errors
+
 ## [0.33.1] - 2023-05-31
 
 ### Fixed
@@ -28,6 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.32.1] - 2023-05-11
 
 ### Fixed
+
 - Not able to add User
 
 ## [0.32.0] - 2023-04-24

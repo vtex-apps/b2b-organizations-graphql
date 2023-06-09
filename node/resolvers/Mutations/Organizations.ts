@@ -13,11 +13,11 @@ import {
   ORGANIZATION_STATUSES,
 } from '../../utils/constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-import checkConfig from '../config'
 import message from '../message'
 import B2BSettings from '../Queries/Settings'
 import CostCenters from './CostCenters'
 import MarketingTags from './MarketingTags'
+import checkConfig from '../config'
 
 const createUserAndAttachToOrganization = async ({
   storefrontPermissions,
@@ -145,7 +145,7 @@ const Organizations = {
             _,
             { costId: result.DocumentId, tags: data.marketingTags },
             ctx
-          ).catch(error => {
+          ).catch((error) => {
             logger.error({
               error,
               message: 'setMarketingTags-error',
@@ -238,9 +238,9 @@ const Organizations = {
 
     paymentTerms =
       paymentTerms ??
-      ((settings?.defaultPaymentTerms as unknown) as PaymentTerm[])
+      (settings?.defaultPaymentTerms as unknown as PaymentTerm[])
     priceTables =
-      priceTables ?? ((settings?.defaultPriceTables as unknown) as Price[])
+      priceTables ?? (settings?.defaultPriceTables as unknown as Price[])
 
     if (!defaultCostCenter && costCenters?.length) {
       defaultCostCenter = costCenters.shift()
@@ -401,12 +401,12 @@ const Organizations = {
       await masterdata.updatePartialDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
         fields: {
-          name,
-          ...((tradeName || tradeName === '') && { tradeName }),
           collections,
+          ...((tradeName || tradeName === '') && { tradeName }),
+          customFields,
+          name,
           paymentTerms,
           priceTables,
-          customFields,
           ...(salesChannel && { salesChannel }),
           ...(sellers && { sellers }),
           status,
@@ -495,54 +495,52 @@ const Organizations = {
             costCenters,
           } = organizationRequest
 
-          const {
-            costCenterId,
-            id: organizationId,
-          } = await Organizations.createOrganization(
-            _,
-            {
-              input: {
-                ...(tradeName && {
-                  tradeName,
-                }),
-                b2bCustomerAdmin: {
-                  email,
-                  firstName,
-                  lastName,
+          const { costCenterId, id: organizationId } =
+            await Organizations.createOrganization(
+              _,
+              {
+                input: {
+                  ...(tradeName && {
+                    tradeName,
+                  }),
+                  b2bCustomerAdmin: {
+                    email,
+                    firstName,
+                    lastName,
+                  },
+                  customFields,
+                  defaultCostCenter: {
+                    address: defaultCostCenter.address,
+                    name: defaultCostCenter.name,
+                    ...(defaultCostCenter.phoneNumber && {
+                      phoneNumber: defaultCostCenter.phoneNumber,
+                    }),
+                    ...(defaultCostCenter.businessDocument && {
+                      businessDocument: defaultCostCenter.businessDocument,
+                    }),
+                    ...(defaultCostCenter.stateRegistration && {
+                      stateRegistration: defaultCostCenter.stateRegistration,
+                    }),
+                    ...(defaultCostCenter.customFields && {
+                      customFields: defaultCostCenter.customFields,
+                    }),
+                    ...(defaultCostCenter.sellers && {
+                      sellers: defaultCostCenter.sellers,
+                    }),
+                    ...(defaultCostCenter.marketingTags && {
+                      marketingTags: defaultCostCenter.marketingTags,
+                    }),
+                  },
+                  name,
+                  paymentTerms,
+                  priceTables,
+                  salesChannel,
+                  sellers,
                 },
-                defaultCostCenter: {
-                  address: defaultCostCenter.address,
-                  name: defaultCostCenter.name,
-                  ...(defaultCostCenter.phoneNumber && {
-                    phoneNumber: defaultCostCenter.phoneNumber,
-                  }),
-                  ...(defaultCostCenter.businessDocument && {
-                    businessDocument: defaultCostCenter.businessDocument,
-                  }),
-                  ...(defaultCostCenter.stateRegistration && {
-                    stateRegistration: defaultCostCenter.stateRegistration,
-                  }),
-                  ...(defaultCostCenter.customFields && {
-                    customFields: defaultCostCenter.customFields,
-                  }),
-                  ...(defaultCostCenter.sellers && {
-                    sellers: defaultCostCenter.sellers,
-                  }),
-                  ...(defaultCostCenter.marketingTags && {
-                    marketingTags: defaultCostCenter.marketingTags,
-                  }),
-                },
-                name,
-                paymentTerms,
-                priceTables,
-                salesChannel,
-                sellers,
-                customFields,
+                notifyUsers,
               },
-              notifyUsers,
-            },
-            ctx
-          )
+              ctx
+            )
 
           if (costCenters && costCenters.length > 0) {
             await Promise.all(
