@@ -5,8 +5,6 @@ on:
 jobs:
   cabueta:
     uses: vtex/cabueta/.github/workflows/cabueta.yml@main
-    secrets:
-      target_url: https://www.vtexfaststore.com/
     with:
       dast-check: true
       target-url: https://master--vtex.myvtex.com/_v/private/graphql/v1
