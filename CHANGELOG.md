@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix auth problem when fetching orders history
+
 ## [0.33.2] - 2023-06-09
 
 ### Fixed
@@ -56,11 +60,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Security issue fixed
 
 ### Removed
+
 - [ENGINEERS-1247] - Disable cypress tests in PR level
 
 ## [0.31.1] - 2023-04-05
 
 ### Added
+
 - Added two new boolean values in order to prevent user from changing state and business field in the cost center
 
 ## [0.31.0] - 2023-03-31
@@ -72,6 +78,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.30.4] - 2023-03-29
 
 ### Fixed
+
 - Fixed createOrganization schema to accept customFields
 
 ## [0.30.3] - 2023-03-20
@@ -79,7 +86,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Fixed VtexIdclientAutCookie when send the headers properly
-
 
 ## [0.30.2] - 2023-03-17
 
@@ -90,7 +96,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Bug fix on checking app and api keys
-
 
 ## [0.30.1] - 2023-03-01
 
@@ -104,13 +109,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added the email transactional to the organization request and the options for disabling/enabling them.
 
-
 ## [0.29.1] - 2023-02-20
 
 ### Fixed
 
 - Fixed the adminToken when get the users queries
-
 
 ## [0.29.0] - 2023-02-14
 
@@ -126,13 +129,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - added ui modal options to settings
 - added sellers to organization request
 
-
 ## [0.27.0] - 2023-02-08
 
 ### Added
 
 - Added the apiToken apiKey validation
-
 
 ## [0.26.1] - 2023-02-03
 
