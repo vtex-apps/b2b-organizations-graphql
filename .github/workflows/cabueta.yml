@@ -7,7 +7,7 @@ jobs:
     uses: vtex/cabueta/.github/workflows/cabueta.yml@main
     with:
       dast-check: true
-      target-url: https://master--vtex.myvtex.com/_v/private/graphql/v1
+      target-url: https://b2bstoreqa.myvtex.com/_v/private/graphql/v1
   print:
     runs-on: ubuntu-latest
     needs: cabueta
