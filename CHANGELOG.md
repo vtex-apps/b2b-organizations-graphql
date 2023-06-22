@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Security
 
+- Fix Cabueta config
+
+### Security
+
 - Added security scan on pipeline
 
 ## [0.33.3] - 2023-06-22
