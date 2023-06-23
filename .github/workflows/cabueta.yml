@@ -8,6 +8,9 @@ jobs:
     with:
       dast-check: true
       target-url: https://b2bstoreqa.myvtex.com/_v/private
+            
+      # Configure and turn this on if you want to collect logs in your endpoint
+      upload-logs: false
   print:
     runs-on: ubuntu-latest
     needs: cabueta
