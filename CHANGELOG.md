@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Security
 
+- Added flag for not uploading log on Cabueta execution
+
+### Security
+
 - Fix Cabueta config
 
 ### Security
