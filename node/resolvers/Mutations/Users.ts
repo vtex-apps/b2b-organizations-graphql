@@ -164,11 +164,6 @@ const Users = {
         .then((result: any) => result?.data?.getB2BUser ?? {})
 
     const user = await getB2BUserFromStorefrontPermissions({ id })
-    const { clId } = user
-
-    if (!clId) {
-      throw new GraphQLError('client-not-found')
-    }
 
     if (!adminUserAuthToken) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
@@ -213,7 +208,15 @@ const Users = {
         return { status: 'error', message: error }
       })
 
-    return impersonation?.data?.impersonateUser ?? { status: 'error' }
+    if (impersonation?.errors) {
+      throw new GraphQLError(impersonation?.errors)
+    }
+
+    return (
+      impersonation?.data?.impersonateUser ?? {
+        status: 'error',
+      }
+    )
   },
   /**
    *
