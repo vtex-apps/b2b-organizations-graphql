@@ -17,7 +17,7 @@
       "public": true
     },
     "checkout": {
-      "path": "/_v/private/b2b/oms/user/checkout/",
+      "path": "/b2b/oms/user/checkout/",
       "public": true
     },
     "order": {
