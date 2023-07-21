@@ -13,19 +13,19 @@
   "workers": 1,
   "routes": {
     "orders": {
-      "path": "/b2b/oms/user/orders/",
+      "path": "/_v/private/b2b/oms/user/orders/",
       "public": true
     },
     "checkout": {
-      "path": "/b2b/oms/user/checkout/",
+      "path": "/_v/private/b2b/oms/user/checkout/",
       "public": true
     },
     "order": {
-      "path": "/b2b/oms/user/orders/:orderId",
+      "path": "/_v/private/b2b/oms/user/orders/:orderId",
       "public": true
     },
     "requestCancellation": {
-      "path": "/b2b/checkout/pub/orders/:orderId/user-cancel-request",
+      "path": "/_v/private/b2b/checkout/pub/orders/:orderId/user-cancel-request",
       "public": true
     }
   }
