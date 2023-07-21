@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.34.0] - 2023-07-21
+
 ### Fixed
 
 - Add `/_v/private` prefix to service routes to allow session token to be forwarded to resolver
