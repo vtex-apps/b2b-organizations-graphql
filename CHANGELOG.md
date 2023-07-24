@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added the custom fields to the graphql query
+
 ## [0.34.0] - 2023-07-21
 
 ### Fixed
