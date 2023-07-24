@@ -266,6 +266,7 @@ type OrganizationRequest {
   status: String
   notes: String
   created: String
+  customFields: [CustomField]
 }
 
 type B2BUserSimple {
