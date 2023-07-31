@@ -224,12 +224,6 @@ const Users = {
       email: targetEmail,
     } = user
 
-    const {
-      organization: userOrganizationId,
-      costcenter: userCostCenterId,
-      userId,
-    } = sessionData?.namespaces['storefront-permissions']
-
     const metricParams: ImpersonateMetricParams = {
       account: sessionData?.namespaces?.account?.accountName,
       target: {
@@ -239,10 +233,12 @@ const Users = {
         id: targetId,
       },
       user: {
-        costCenterId: userCostCenterId.value,
-        organizationId: userOrganizationId.value,
+        costCenterId:
+          sessionData?.namespaces['storefront-permissions']?.costcenter.value,
+        organizationId:
+          sessionData?.namespaces['storefront-permissions']?.organization.value,
         email: sessionData?.namespaces?.profile?.email.value,
-        id: userId.value,
+        id: sessionData?.namespaces['storefront-permissions']?.userId.value,
       },
     }
 
