@@ -53,8 +53,6 @@ const message = ({
 
     const promises = []
 
-    // console.log('users', users)
-
     for (const user of users) {
       promises.push(
         mail

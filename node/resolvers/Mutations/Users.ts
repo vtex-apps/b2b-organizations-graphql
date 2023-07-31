@@ -1,5 +1,10 @@
 import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
 import GraphQLError from '../../utils/GraphQLError'
+import type { ImpersonateMetricParams } from '../../utils/metrics/impersonate'
+import {
+  sendImpersonateB2BUserMetric,
+  sendImpersonateUserMetric,
+} from '../../utils/metrics/impersonate'
 
 export const getUserRoleSlug: (
   id: string,
@@ -212,6 +217,37 @@ const Users = {
       throw new GraphQLError(impersonation?.errors)
     }
 
+    const {
+      orgId: targetOrganizationId,
+      costId: targetCostCenterId,
+      id: targetId,
+      email: targetEmail,
+    } = user
+
+    const {
+      organization: userOrganizationId,
+      costcenter: userCostCenterId,
+      userId,
+    } = sessionData?.namespaces['storefront-permissions']
+
+    const metricParams: ImpersonateMetricParams = {
+      account: sessionData?.namespaces?.account?.accountName,
+      target: {
+        costCenterId: targetCostCenterId,
+        organizationId: targetOrganizationId,
+        email: targetEmail,
+        id: targetId,
+      },
+      user: {
+        costCenterId: userCostCenterId.value,
+        organizationId: userOrganizationId.value,
+        email: sessionData?.namespaces?.profile?.email.value,
+        id: userId.value,
+      },
+    }
+
+    sendImpersonateB2BUserMetric(metricParams)
+
     return (
       impersonation?.data?.impersonateUser ?? {
         status: 'error',
@@ -321,17 +357,15 @@ const Users = {
       }
     }
 
-    return storefrontPermissionsClient
-      .impersonateUser({ userId })
-      .catch((error: any) => {
-        logger.error({
-          error,
-          message: 'impersonateUser-impersonateUserError',
-        })
-
-        return { status: 'error', message: error }
-      })
+    return impersonateUser(
+      storefrontPermissionsClient,
+      userId!,
+      logger,
+      sessionData?.namespaces?.account?.accountName,
+      sessionData?.namespaces['storefront-permissions']
+    )
   },
+
   /**
    *
    * Mutation to remove a user
@@ -612,3 +646,45 @@ const Users = {
 }
 
 export default Users
+
+async function impersonateUser(
+  storefrontPermissionsClient: any,
+  id: string,
+  logger: any,
+  accountName: string,
+  storefrontPermissions: {
+    costcenter: { value: string }
+    userId: { value: string }
+    organization: { value: string }
+    storeUserEmail: { value: string }
+  }
+) {
+  const result = await storefrontPermissionsClient
+    .impersonateUser({ id })
+    .catch((error: any) => {
+      logger.error({
+        error,
+        message: 'impersonateUser-impersonateUserError',
+      })
+
+      return { status: 'error', message: error }
+    })
+
+  const { costcenter, userId, organization, storeUserEmail } =
+    storefrontPermissions
+
+  const metricParams: ImpersonateMetricParams = {
+    account: accountName,
+    target: {
+      costCenterId: costcenter.value,
+      organizationId: organization.value,
+      email: storeUserEmail.value,
+      id: userId.value,
+    },
+    user: undefined, // no information about original user at this point
+  }
+
+  await sendImpersonateUserMetric(metricParams)
+
+  return result
+}

@@ -378,7 +378,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }: {
     userId?: string
   }): Promise<any> => {
-    return this.graphql.mutate(
+    const graphqlResult = this.graphql.mutate(
       {
         mutate: impersonateUser,
         variables: {
@@ -399,5 +399,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         },
       }
     )
+
+    return graphqlResult
   }
 }
