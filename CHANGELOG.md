@@ -9,7 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Update roleSlug
+- Fixed error when fetching a user's role slug
+
+## [0.35.1] - 2023-08-01
+
+### Fixed
+
+- Fix auth problem when fetching orders history
 
 ## [0.35.0] - 2023-07-24
 
