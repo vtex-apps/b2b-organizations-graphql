@@ -170,10 +170,8 @@ const Users = {
         throw new GraphQLError('organization-data-not-found')
       }
 
-      const roleSlug = await storefrontPermissionsClient.getRole(user.roleId)
-        .then((result: any) => {
-          return result?.data?.getRole?.slug
-        })
+      const result = await storefrontPermissionsClient.getRole(user.roleId)
+      const roleSlug = result?.data?.getRole?.slug
 
       let permitted = false
 
