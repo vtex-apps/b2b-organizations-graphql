@@ -3,7 +3,7 @@ import { sendMetric } from './metrics'
 
 type ImpersonatePerson = {
   email: string
-  buy_org_id: string
+  buyer_org_id: string
   cost_center_id: string
   person_id: string
 }
@@ -35,7 +35,7 @@ const buildMetric = (metricParams: ImpersonateMetricParams) => {
   const userParam = user
     ? {
         email: user?.email,
-        buy_org_id: user?.organizationId,
+        buyer_org_id: user?.organizationId,
         cost_center_id: user?.costCenterId,
         person_id: user?.id,
       }
@@ -48,7 +48,7 @@ const buildMetric = (metricParams: ImpersonateMetricParams) => {
       user: userParam,
       target: {
         email: target.email,
-        buy_org_id: target.organizationId,
+        buyer_org_id: target.organizationId,
         cost_center_id: target.costCenterId,
         person_id: target.id,
       },
