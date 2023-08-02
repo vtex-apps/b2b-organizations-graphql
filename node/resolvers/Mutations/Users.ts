@@ -355,7 +355,7 @@ const Users = {
 
     return impersonateUser(
       storefrontPermissionsClient,
-      userId!,
+      userId,
       logger,
       sessionData?.namespaces?.account?.accountName,
       sessionData?.namespaces['storefront-permissions']
@@ -645,7 +645,7 @@ export default Users
 
 async function impersonateUser(
   storefrontPermissionsClient: any,
-  id: string,
+  userId: string | undefined,
   logger: any,
   accountName: string,
   storefrontPermissions: {
@@ -656,7 +656,7 @@ async function impersonateUser(
   }
 ) {
   const result = await storefrontPermissionsClient
-    .impersonateUser({ id })
+    .impersonateUser({ userId })
     .catch((error: any) => {
       logger.error({
         error,
@@ -666,8 +666,12 @@ async function impersonateUser(
       return { status: 'error', message: error }
     })
 
-  const { costcenter, userId, organization, storeUserEmail } =
-    storefrontPermissions
+  const {
+    costcenter,
+    userId: userTargetId,
+    organization,
+    storeUserEmail,
+  } = storefrontPermissions
 
   const metricParams: ImpersonateMetricParams = {
     account: accountName,
@@ -675,7 +679,7 @@ async function impersonateUser(
       costCenterId: costcenter.value,
       organizationId: organization.value,
       email: storeUserEmail.value,
-      id: userId.value,
+      id: userTargetId.value,
     },
     user: undefined, // no information about original user at this point
   }
