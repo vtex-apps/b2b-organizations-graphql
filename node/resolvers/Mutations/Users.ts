@@ -655,8 +655,29 @@ async function impersonateUser(
     storeUserEmail: { value: string }
   }
 ) {
-  const result = await storefrontPermissionsClient
+  return storefrontPermissionsClient
     .impersonateUser({ userId })
+    .then((_: any) => {
+      const {
+        costcenter,
+        userId: userTargetId,
+        organization,
+        storeUserEmail,
+      } = storefrontPermissions
+
+      const metricParams: ImpersonateMetricParams = {
+        account: accountName,
+        target: {
+          costCenterId: costcenter.value,
+          organizationId: organization.value,
+          email: storeUserEmail.value,
+          id: userTargetId.value,
+        },
+        user: undefined, // no information about original user at this point
+      }
+
+      sendImpersonateUserMetric(metricParams)
+    })
     .catch((error: any) => {
       logger.error({
         error,
@@ -665,26 +686,4 @@ async function impersonateUser(
 
       return { status: 'error', message: error }
     })
-
-  const {
-    costcenter,
-    userId: userTargetId,
-    organization,
-    storeUserEmail,
-  } = storefrontPermissions
-
-  const metricParams: ImpersonateMetricParams = {
-    account: accountName,
-    target: {
-      costCenterId: costcenter.value,
-      organizationId: organization.value,
-      email: storeUserEmail.value,
-      id: userTargetId.value,
-    },
-    user: undefined, // no information about original user at this point
-  }
-
-  await sendImpersonateUserMetric(metricParams)
-
-  return result
 }
