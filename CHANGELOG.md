@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Load impersonated user email when using OOTB impersonation
+
 ## [0.35.2] - 2023-08-01
 
 ### Fixed

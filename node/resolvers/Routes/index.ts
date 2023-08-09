@@ -13,12 +13,6 @@ const getUserAndPermissions = async (ctx: Context) => {
 
   const token: any = storeUserAuthToken
 
-  if (!token) {
-    throw new ForbiddenError('Access denied')
-  }
-
-  const authUser = await vtexId.getAuthenticatedUser(token)
-
   const sessionData = await session
     .getSession(sessionToken as string, ['*'])
     .then((currentSession: any) => {
@@ -34,6 +28,12 @@ const getUserAndPermissions = async (ctx: Context) => {
     })
 
   const profileEmail = sessionData?.namespaces?.profile?.email?.value
+  const impersonatedEmail =
+    sessionData?.namespaces?.impersonate?.storeUserEmail?.value
+
+  if (!impersonatedEmail && !token) {
+    throw new ForbiddenError('Access denied')
+  }
 
   const {
     data: { checkUserPermission },
@@ -58,8 +58,13 @@ const getUserAndPermissions = async (ctx: Context) => {
   const costCenterId =
     sessionData?.namespaces['storefront-permissions']?.costcenter?.value
 
+  const authUser = impersonatedEmail
+    ? { user: impersonatedEmail }
+    : await vtexId.getAuthenticatedUser(token)
+
   return {
     authEmail: authUser?.user,
+    impersonatedEmail,
     profileEmail,
     permissions: checkUserPermission?.permissions,
     organizationId,
@@ -144,8 +149,9 @@ const Index = {
           response.organization = await masterdata.getDocument({
             dataEntity: ORGANIZATION_DATA_ENTITY,
             fields: ['paymentTerms'],
-            id: sessionData.namespaces['storefront-permissions']?.organization
-              ?.value,
+            id:
+              sessionData.namespaces['storefront-permissions']?.organization
+                ?.value,
           })
         }
 
@@ -155,8 +161,9 @@ const Index = {
           response.costcenter = await masterdata.getDocument({
             dataEntity: COST_CENTER_DATA_ENTITY,
             fields: ['addresses'],
-            id: sessionData.namespaces['storefront-permissions']?.costcenter
-              ?.value,
+            id:
+              sessionData.namespaces['storefront-permissions']?.costcenter
+                ?.value,
           })
         }
       }
@@ -186,6 +193,7 @@ const Index = {
     const {
       permissions,
       authEmail,
+      impersonatedEmail,
       profileEmail,
       organizationId,
       costCenterId,
@@ -194,7 +202,7 @@ const Index = {
     const permitted = checkPermissionAgainstOrder({
       permissions,
       orderData: order,
-      authEmail,
+      authEmail: impersonatedEmail ?? authEmail,
       profileEmail,
       organizationId,
       costCenterId,
@@ -217,8 +225,13 @@ const Index = {
       request: { querystring },
     } = ctx
 
-    const { permissions, authEmail, organizationId, costCenterId } =
-      await getUserAndPermissions(ctx)
+    const {
+      permissions,
+      authEmail,
+      impersonatedEmail,
+      organizationId,
+      costCenterId,
+    } = await getUserAndPermissions(ctx)
 
     const filterByPermission = (userPermissions: string[]) => {
       if (userPermissions.includes('all-orders')) {
@@ -233,7 +246,7 @@ const Index = {
         return `&f_UtmMedium=${costCenterId}`
       }
 
-      return `&clientEmail=${authEmail}`
+      return `&clientEmail=${impersonatedEmail ?? authEmail}`
     }
 
     const pastYear: any = new Date()
@@ -246,7 +259,7 @@ const Index = {
     if (permissions?.length) {
       query += filterByPermission(permissions)
     } else {
-      query += `&clientEmail=${authEmail}`
+      query += `&clientEmail=${impersonatedEmail ?? authEmail}`
     }
 
     const orders: any = await oms.search(query)
@@ -277,6 +290,7 @@ const Index = {
     const {
       permissions,
       authEmail,
+      impersonatedEmail,
       profileEmail,
       organizationId,
       costCenterId,
@@ -285,7 +299,7 @@ const Index = {
     const permitted = checkPermissionAgainstOrder({
       permissions,
       orderData: order,
-      authEmail,
+      authEmail: impersonatedEmail ?? authEmail,
       profileEmail,
       organizationId,
       costCenterId,
