@@ -128,7 +128,7 @@ const Index = {
     ctx.response.status = !token ? 403 : 200
 
     if (token) {
-      const sessionData = await session
+      const sd = await session
         .getSession(sessionToken as string, ['*'])
         .then((currentSession: any) => {
           return currentSession.sessionData
@@ -142,28 +142,20 @@ const Index = {
           return null
         })
 
-      if (sessionData?.namespaces['storefront-permissions']) {
-        if (
-          sessionData.namespaces['storefront-permissions']?.organization?.value
-        ) {
+      if (sd?.namespaces['storefront-permissions']) {
+        if (sd.namespaces['storefront-permissions']?.organization?.value) {
           response.organization = await masterdata.getDocument({
             dataEntity: ORGANIZATION_DATA_ENTITY,
             fields: ['paymentTerms'],
-            id:
-              sessionData.namespaces['storefront-permissions']?.organization
-                ?.value,
+            id: sd.namespaces['storefront-permissions']?.organization?.value,
           })
         }
 
-        if (
-          sessionData.namespaces['storefront-permissions']?.costcenter?.value
-        ) {
+        if (sd.namespaces['storefront-permissions']?.costcenter?.value) {
           response.costcenter = await masterdata.getDocument({
             dataEntity: COST_CENTER_DATA_ENTITY,
             fields: ['addresses'],
-            id:
-              sessionData.namespaces['storefront-permissions']?.costcenter
-                ?.value,
+            id: sd.namespaces['storefront-permissions']?.costcenter?.value,
           })
         }
       }
