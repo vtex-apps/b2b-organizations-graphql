@@ -1,5 +1,10 @@
 import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
 import GraphQLError from '../../utils/GraphQLError'
+import type { ImpersonateMetricParams } from '../../utils/metrics/impersonate'
+import {
+  sendImpersonateB2BUserMetric,
+  sendImpersonateUserMetric,
+} from '../../utils/metrics/impersonate'
 
 export const getUserRoleSlug: (
   id: string,
@@ -212,6 +217,33 @@ const Users = {
       throw new GraphQLError(impersonation?.errors)
     }
 
+    const {
+      orgId: targetOrganizationId,
+      costId: targetCostCenterId,
+      id: targetId,
+      email: targetEmail,
+    } = user
+
+    const metricParams: ImpersonateMetricParams = {
+      account: sessionData?.namespaces?.account?.accountName,
+      target: {
+        costCenterId: targetCostCenterId,
+        organizationId: targetOrganizationId,
+        email: targetEmail,
+        id: targetId,
+      },
+      user: {
+        costCenterId:
+          sessionData?.namespaces['storefront-permissions']?.costcenter.value,
+        organizationId:
+          sessionData?.namespaces['storefront-permissions']?.organization.value,
+        email: sessionData?.namespaces?.profile?.email.value,
+        id: sessionData?.namespaces['storefront-permissions']?.userId.value,
+      },
+    }
+
+    sendImpersonateB2BUserMetric(metricParams)
+
     return (
       impersonation?.data?.impersonateUser ?? {
         status: 'error',
@@ -321,17 +353,15 @@ const Users = {
       }
     }
 
-    return storefrontPermissionsClient
-      .impersonateUser({ userId })
-      .catch((error: any) => {
-        logger.error({
-          error,
-          message: 'impersonateUser-impersonateUserError',
-        })
-
-        return { status: 'error', message: error }
-      })
+    return impersonateUser(
+      storefrontPermissionsClient,
+      userId,
+      logger,
+      sessionData?.namespaces?.account?.accountName,
+      sessionData?.namespaces['storefront-permissions']
+    )
   },
+
   /**
    *
    * Mutation to remove a user
@@ -612,3 +642,48 @@ const Users = {
 }
 
 export default Users
+
+async function impersonateUser(
+  storefrontPermissionsClient: any,
+  userId: string | undefined,
+  logger: any,
+  accountName: string,
+  storefrontPermissions: {
+    costcenter: { value: string }
+    userId: { value: string }
+    organization: { value: string }
+    storeUserEmail: { value: string }
+  }
+) {
+  return storefrontPermissionsClient
+    .impersonateUser({ userId })
+    .then((_: any) => {
+      const {
+        costcenter,
+        userId: userTargetId,
+        organization,
+        storeUserEmail,
+      } = storefrontPermissions
+
+      const metricParams: ImpersonateMetricParams = {
+        account: accountName,
+        target: {
+          costCenterId: costcenter.value,
+          organizationId: organization.value,
+          email: storeUserEmail.value,
+          id: userTargetId.value,
+        },
+        user: undefined, // no information about original user at this point
+      }
+
+      sendImpersonateUserMetric(metricParams)
+    })
+    .catch((error: any) => {
+      logger.error({
+        error,
+        message: 'impersonateUser-impersonateUserError',
+      })
+
+      return { status: 'error', message: error }
+    })
+}

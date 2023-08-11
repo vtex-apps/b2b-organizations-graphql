@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added metrics for impersonate user
+- 
 ## [0.35.3] - 2023-08-09
 
 ### Fixed
@@ -24,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Fix auth problem when fetching orders history
+
 
 ## [0.35.0] - 2023-07-24
 
