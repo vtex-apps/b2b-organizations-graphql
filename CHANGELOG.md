@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix OMS route used to retrieve order info
+
 ## [0.36.0] - 2023-08-11
 
 ### Added
