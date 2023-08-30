@@ -32,7 +32,7 @@ export default class OMSClient extends JanusClient {
     const base = '/api/oms'
 
     return {
-      order: (id: string) => `${base}/pvt/admin/orders/${id}`,
+      order: (id: string) => `${base}/pvt/orders/${id}`,
       search: (query: string) => `${base}/pvt/orders?${query}`,
     }
   }
