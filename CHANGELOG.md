@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.36.1] - 2023-09-15
+
+### Added
+
+- Added event trigger on delete a user
+
 ## [0.36.0] - 2023-08-11
 
 ### Added

@@ -18,6 +18,9 @@
   },
   "policies": [
     {
+      "name": "colossus-fire-event"
+    },
+    {
       "name": "update-app-settings"
     },
     {

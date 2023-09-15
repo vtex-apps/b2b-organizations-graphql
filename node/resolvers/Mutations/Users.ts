@@ -379,7 +379,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient },
+      clients: { events, storefrontPermissions: storefrontPermissionsClient },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as Context | any
 
@@ -412,7 +412,8 @@ const Users = {
         id,
         userId,
       })
-      .then((result: any) => {
+      .then(async (result: any) => {
+        await new Promise(events.sendEvent('', 'b2b-organizations-graphql.removeUser', { id, email }))
         return result.data.deleteUser
       })
       .catch((error: any) => {
