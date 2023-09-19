@@ -22,6 +22,7 @@ const buildUpdateOrganizationMetric = (
     description: 'Update Organization Action - Graphql',
     fields: updateOrganizationFields,
     kind: 'update-organization-graphql-event',
+    name: 'b2b-suite-buyerorg-data',
   } as UpdateOrganization
 }
 

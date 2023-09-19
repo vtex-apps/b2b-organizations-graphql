@@ -68,6 +68,7 @@ describe('given an organization to update data', () => {
           },
         },
         kind: 'update-organization-graphql-event',
+        name: 'b2b-suite-buyerorg-data',
       }
 
       expect(sendMetric).toHaveBeenCalledWith(metricParam)
@@ -131,6 +132,7 @@ describe('given an organization to update data', () => {
           },
         },
         kind: 'update-organization-graphql-event',
+        name: 'b2b-suite-buyerorg-data',
       }
 
       expect(sendMetric).toHaveBeenCalledWith(metricParam)
@@ -183,6 +185,7 @@ describe('given an organization to update data', () => {
           },
         },
         kind: 'update-organization-graphql-event',
+        name: 'b2b-suite-buyerorg-data',
       }
 
       expect(sendMetric).toHaveBeenCalledWith(metricParam)
