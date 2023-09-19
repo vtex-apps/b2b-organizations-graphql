@@ -3,6 +3,7 @@ import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
 import type { Seller } from '../../clients/sellers'
 import { sendMetric } from './metrics'
+import type { UpdateOrganizationParams } from './organization'
 import { sendUpdateOrganizationMetric } from './organization'
 
 jest.mock('./metrics')
@@ -13,6 +14,8 @@ afterEach(() => {
 describe('given an organization to update data', () => {
   describe('when change all properties data', () => {
     const logger = jest.fn() as unknown as Logger
+
+    const account = randWord()
 
     const currentOrganization: Organization = {
       collections: [{ name: randWord() } as Collection],
@@ -41,16 +44,19 @@ describe('given an organization to update data', () => {
       tradeName: randWord(),
     }
 
+    const updateOrganizationParams: UpdateOrganizationParams = {
+      account,
+      currentOrganizationData: currentOrganization,
+      updatedProperties: fieldsUpdated,
+    }
+
     beforeEach(async () => {
-      await sendUpdateOrganizationMetric(
-        logger,
-        fieldsUpdated,
-        currentOrganization
-      )
+      await sendUpdateOrganizationMetric(logger, updateOrganizationParams)
     })
 
     it('should metric the all properties changed', () => {
       const metricParam = {
+        account,
         description: 'Update Organization Action - Graphql',
         fields: {
           update_details: {
@@ -77,6 +83,8 @@ describe('given an organization to update data', () => {
 
   describe('when no change properties data', () => {
     const logger = jest.fn() as unknown as Logger
+
+    const account = randWord()
 
     const collections = [{ name: randWord() } as Collection]
     const customFields = [{ name: randWord() } as CustomField]
@@ -115,16 +123,19 @@ describe('given an organization to update data', () => {
       tradeName,
     }
 
+    const updateOrganizationParams: UpdateOrganizationParams = {
+      account,
+      currentOrganizationData: currentOrganization,
+      updatedProperties: fieldsUpdated,
+    }
+
     beforeEach(async () => {
-      await sendUpdateOrganizationMetric(
-        logger,
-        fieldsUpdated,
-        currentOrganization
-      )
+      await sendUpdateOrganizationMetric(logger, updateOrganizationParams)
     })
 
     it('should metric no properties changed', () => {
       const metricParam = {
+        account,
         description: 'Update Organization Action - Graphql',
         fields: {
           update_details: {
@@ -140,6 +151,8 @@ describe('given an organization to update data', () => {
   })
   describe('when just the name, status and tradeName', () => {
     const logger = jest.fn() as unknown as Logger
+
+    const account = randWord()
 
     const currentOrganization: Organization = {
       collections: [{ id: '149', name: 'Teste 2 Jay' }],
@@ -168,16 +181,19 @@ describe('given an organization to update data', () => {
       tradeName: 'Depois',
     }
 
+    const updateOrganizationParams: UpdateOrganizationParams = {
+      account,
+      currentOrganizationData: currentOrganization,
+      updatedProperties: fieldsUpdated,
+    }
+
     beforeEach(async () => {
-      await sendUpdateOrganizationMetric(
-        logger,
-        fieldsUpdated,
-        currentOrganization
-      )
+      await sendUpdateOrganizationMetric(logger, updateOrganizationParams)
     })
 
     it('should metric just the properties changed', () => {
       const metricParam = {
+        account,
         description: 'Update Organization Action - Graphql',
         fields: {
           update_details: {

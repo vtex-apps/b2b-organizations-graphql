@@ -419,7 +419,11 @@ const Organizations = {
         id,
       })
 
-      sendUpdateOrganizationMetric(logger, fields, currentOrganizationData)
+      sendUpdateOrganizationMetric(logger, {
+        account: ctx.vtex.account,
+        currentOrganizationData,
+        updatedProperties: fields,
+      })
 
       return { status: 'success', message: '' }
     } catch (error) {

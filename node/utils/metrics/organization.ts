@@ -11,7 +11,14 @@ type UpdateOrganization = Metric & {
   fields: UpdateOrganizationFieldsMetric
 }
 
+export interface UpdateOrganizationParams {
+  account: string
+  currentOrganizationData: Organization
+  updatedProperties: UpdatedOrganizationProps
+}
+
 const buildUpdateOrganizationMetric = (
+  account: string,
   updatedProperties: string[]
 ): UpdateOrganization => {
   const updateOrganizationFields: UpdateOrganizationFieldsMetric = {
@@ -19,6 +26,7 @@ const buildUpdateOrganizationMetric = (
   }
 
   return {
+    account,
     description: 'Update Organization Action - Graphql',
     fields: updateOrganizationFields,
     kind: 'update-organization-graphql-event',
@@ -27,10 +35,12 @@ const buildUpdateOrganizationMetric = (
 }
 
 const getFieldsNamesByFieldsUpdated = (
-  currentOrganizationData: Organization,
-  updatedProperties: UpdatedOrganizationProps
+  updateOrganizationParams: UpdateOrganizationParams
 ): string[] => {
   const updatedPropName: string[] = []
+
+  const { currentOrganizationData, updatedProperties } =
+    updateOrganizationParams
 
   for (const key in updatedProperties) {
     if (Object.prototype.hasOwnProperty.call(updatedProperties, key)) {
@@ -64,16 +74,17 @@ export interface UpdatedOrganizationProps {
 
 export const sendUpdateOrganizationMetric = async (
   logger: Logger,
-  fieldsUpdated: UpdatedOrganizationProps,
-  currentOrganizationData: Organization
+  updateOrganizationParams: UpdateOrganizationParams
 ) => {
   try {
     const fieldsNamesUpdated = getFieldsNamesByFieldsUpdated(
-      currentOrganizationData,
-      fieldsUpdated
+      updateOrganizationParams
     )
 
-    const metric = buildUpdateOrganizationMetric(fieldsNamesUpdated)
+    const metric = buildUpdateOrganizationMetric(
+      updateOrganizationParams.account,
+      fieldsNamesUpdated
+    )
 
     await sendMetric(metric)
   } catch (error) {
