@@ -412,8 +412,8 @@ const Users = {
         id,
         userId,
       })
-      .then(async (result: any) => {
-        await events.sendEvent('', 'b2b-organizations-graphql.removeUser', {
+      .then((result: any) => {
+        events.sendEvent('', 'b2b-organizations-graphql.removeUser', {
           id,
           email,
         })
