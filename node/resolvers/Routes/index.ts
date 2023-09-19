@@ -115,6 +115,31 @@ const checkPermissionAgainstOrder = ({
   return false
 }
 
+const getOrder = async (ctx: Context) => {
+  const {
+    vtex: {
+      route: {
+        params: { orderId },
+      },
+    },
+    clients: { orders },
+  } = ctx
+
+  if (!orderId) {
+    throw new UserInputError('Order ID is required')
+  }
+
+  const order: any = await orders.order(String(orderId))
+
+  // Some dependencies rely on this property not being null but an empty array instead.
+  // The new orders endpoint might return null for this property instead of an empty array,
+  // so we make sure to set it to an empty array to avoid breaking dependencies.
+  // For more info: https://vtex-dev.atlassian.net/browse/B2BTEAM-1376
+  order.marketplaceItems = order.marketplaceItems ?? []
+
+  return order
+}
+
 const Index = {
   checkout: async (ctx: Context) => {
     const {
@@ -167,20 +192,7 @@ const Index = {
     ctx.response.body = response
   },
   order: async (ctx: Context) => {
-    const {
-      vtex: {
-        route: {
-          params: { orderId },
-        },
-      },
-      clients: { oms },
-    } = ctx
-
-    if (!orderId) {
-      throw new UserInputError('Order ID is required')
-    }
-
-    const order: any = await oms.order(String(orderId))
+    const order = await getOrder(ctx)
 
     const {
       permissions,
@@ -270,14 +282,10 @@ const Index = {
           params: { orderId },
         },
       },
-      clients: { checkout, oms },
+      clients: { checkout },
     } = ctx
 
-    if (!orderId) {
-      throw new UserInputError('Order ID is required')
-    }
-
-    const order: any = await oms.order(String(orderId))
+    const order = await getOrder(ctx)
 
     const {
       permissions,
