@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.36.1] - 2023-09-19
+
 ### Fixed
 
 - Use Orders endpoint instead of OMS to obtain order information
