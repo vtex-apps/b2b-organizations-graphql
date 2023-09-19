@@ -18,6 +18,7 @@ import B2BSettings from '../Queries/Settings'
 import CostCenters from './CostCenters'
 import MarketingTags from './MarketingTags'
 import checkConfig from '../config'
+import { sendUpdateOrganizationMetric } from '../../utils/metrics/organization'
 
 const createUserAndAttachToOrganization = async ({
   storefrontPermissions,
@@ -372,15 +373,17 @@ const Organizations = {
       ctx
     )) as B2BSettingsInput
 
+    let currentOrganizationData: Organization = {} as Organization
+
     try {
-      const currentData: Organization = await masterdata.getDocument({
+      currentOrganizationData = await masterdata.getDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
         fields: ORGANIZATION_FIELDS,
         id,
       })
 
       if (
-        currentData.status !== status &&
+        currentOrganizationData.status !== status &&
         notifyUsers &&
         settings?.transactionEmailSettings?.organizationStatusChanged
       ) {
@@ -398,21 +401,25 @@ const Organizations = {
     }
 
     try {
+      const fields = {
+        collections,
+        ...((tradeName || tradeName === '') && { tradeName }),
+        customFields,
+        name,
+        paymentTerms,
+        priceTables,
+        ...(salesChannel && { salesChannel }),
+        ...(sellers && { sellers }),
+        status,
+      }
+
       await masterdata.updatePartialDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
-        fields: {
-          collections,
-          ...((tradeName || tradeName === '') && { tradeName }),
-          customFields,
-          name,
-          paymentTerms,
-          priceTables,
-          ...(salesChannel && { salesChannel }),
-          ...(sellers && { sellers }),
-          status,
-        },
+        fields,
         id,
       })
+
+      sendUpdateOrganizationMetric(logger, fields, currentOrganizationData)
 
       return { status: 'success', message: '' }
     } catch (error) {
