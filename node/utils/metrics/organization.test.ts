@@ -136,4 +136,56 @@ describe('given an organization to update data', () => {
       expect(sendMetric).toHaveBeenCalledWith(metricParam)
     })
   })
+  describe('when just the name, status and tradeName', () => {
+    const logger = jest.fn() as unknown as Logger
+
+    const currentOrganization: Organization = {
+      collections: [{ id: '149', name: 'Teste 2 Jay' }],
+      costCenters: [],
+      created: '2023-05-26T17:59:51.665Z',
+      customFields: [],
+      id: '166d3921-fbef-11ed-83ab-16759f4a0add',
+      name: 'Antes',
+      paymentTerms: [],
+      priceTables: [],
+      salesChannel: '1',
+      sellers: [],
+      status: 'inactive',
+      tradeName: 'Antes',
+    }
+
+    const fieldsUpdated = {
+      collections: [{ id: '149', name: 'Teste 2 Jay' }],
+      customFields: [],
+      name: 'Depois',
+      paymentTerms: [],
+      priceTables: [],
+      salesChannel: '1',
+      sellers: [],
+      status: 'active',
+      tradeName: 'Depois',
+    }
+
+    beforeEach(async () => {
+      await sendUpdateOrganizationMetric(
+        logger,
+        fieldsUpdated,
+        currentOrganization
+      )
+    })
+
+    it('should metric just the properties changed', () => {
+      const metricParam = {
+        description: 'Update Organization Action - Graphql',
+        fields: {
+          update_details: {
+            properties: ['name', 'status', 'tradeName'],
+          },
+        },
+        kind: 'update-organization-graphql-event',
+      }
+
+      expect(sendMetric).toHaveBeenCalledWith(metricParam)
+    })
+  })
 })

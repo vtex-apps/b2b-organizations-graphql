@@ -35,7 +35,12 @@ const getFieldsNamesByFieldsUpdated = (
     if (Object.prototype.hasOwnProperty.call(updatedProperties, key)) {
       const value = updatedProperties[key as keyof typeof updatedProperties]
 
-      if (value !== currentOrganizationData[key as keyof Organization]) {
+      // I tried to compare the objects value !== currentOrganizationData[key as keyof Organization,
+      // but it was not working, so I use JSON.stringify
+      if (
+        JSON.stringify(value) !==
+        JSON.stringify(currentOrganizationData[key as keyof Organization])
+      ) {
         updatedPropName.push(key)
       }
     }
