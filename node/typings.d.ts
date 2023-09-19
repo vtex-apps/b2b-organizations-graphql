@@ -119,11 +119,20 @@ interface Organization {
   id: string
   name: string
   tradeName?: string
+  collections: Collection[]
   costCenters: string[]
   paymentTerms: PaymentTerm[]
+  priceTables?: Price[]
   status: string
   created: string
   customFields?: CustomField[]
+  salesChannel?: string
+  sellers?: Seller[]
+}
+
+interface Collection {
+  id: string
+  name: string
 }
 
 interface CostCenter {
