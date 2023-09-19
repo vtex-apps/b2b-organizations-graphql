@@ -5,6 +5,7 @@ import PaymentsClient from './payments'
 import MailClient from './email'
 import Checkout from './checkout'
 import OMSClient from './Oms'
+import OrdersClient from './Orders'
 import StorefrontPermissions from './storefrontPermissions'
 import IdentityClient from './IdentityClient'
 import Catalog from './catalog'
@@ -26,6 +27,10 @@ export class Clients extends IOClients {
 
   public get oms() {
     return this.getOrSet('oms', OMSClient)
+  }
+
+  public get orders() {
+    return this.getOrSet('orders', OrdersClient)
   }
 
   public get storefrontPermissions() {
