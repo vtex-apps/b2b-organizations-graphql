@@ -373,7 +373,7 @@ const Organizations = {
       ctx
     )) as B2BSettingsInput
 
-    let currentOrganizationData: Organization = {} as Organization
+    let currentOrganizationData: Organization | undefined
 
     try {
       currentOrganizationData = await masterdata.getDocument({
@@ -383,7 +383,7 @@ const Organizations = {
       })
 
       if (
-        currentOrganizationData.status !== status &&
+        currentOrganizationData?.status !== status &&
         notifyUsers &&
         settings?.transactionEmailSettings?.organizationStatusChanged
       ) {

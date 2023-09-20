@@ -13,8 +13,8 @@ type UpdateOrganization = Metric & {
 
 export interface UpdateOrganizationParams {
   account: string
-  currentOrganizationData: Organization
-  updatedProperties: UpdatedOrganizationProps
+  currentOrganizationData?: Organization
+  updatedProperties: Partial<Organization>
 }
 
 const buildUpdateOrganizationMetric = (
@@ -50,7 +50,10 @@ const getFieldsNamesByFieldsUpdated = (
       // but it was not working, so I use JSON.stringify
       if (
         JSON.stringify(value) !==
-        JSON.stringify(currentOrganizationData[key as keyof Organization])
+        JSON.stringify(
+          !currentOrganizationData ||
+            currentOrganizationData[key as keyof Organization]
+        )
       ) {
         updatedPropName.push(key)
       }
@@ -58,18 +61,6 @@ const getFieldsNamesByFieldsUpdated = (
   }
 
   return updatedPropName
-}
-
-export interface UpdatedOrganizationProps {
-  priceTables: any[]
-  collections: any[]
-  customFields: any[]
-  name: string
-  paymentTerms: any[]
-  salesChannel?: string
-  sellers?: any[]
-  status: string
-  tradeName?: string
 }
 
 export const sendUpdateOrganizationMetric = async (

@@ -32,14 +32,14 @@ describe('given an organization to update data', () => {
       tradeName: randWord(),
     }
 
-    const fieldsUpdated = {
-      collections: [randWord()],
-      customFields: [randWord()],
+    const fieldsUpdated: Partial<Organization> = {
+      collections: [{ name: randWord() } as Collection],
+      customFields: [{ name: randWord() } as CustomField],
       name: randWord(),
-      paymentTerms: [randWord()],
-      priceTables: [randWord()],
+      paymentTerms: [{ name: randWord() } as PaymentTerm],
+      priceTables: [{ name: randWord() } as Price],
       salesChannel: randWord(),
-      sellers: [randWord()],
+      sellers: [{ name: randWord() } as Seller],
       status: randWord(),
       tradeName: randWord(),
     }
