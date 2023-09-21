@@ -1,4 +1,5 @@
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
+import { isEqual } from 'lodash'
 
 import type { Metric } from './metrics'
 import { sendMetric } from './metrics'
@@ -49,11 +50,9 @@ const getFieldsNamesByFieldsUpdated = (
   Object.entries(updatedProperties).forEach(
     ([updatedPropertyKey, updatedPropertyValue]) => {
       if (updatedPropertyValue instanceof Array) {
-        // I tried to compare the objects value !== currentOrganizationData[key as keyof Organization,
-        // but it was not working, so I use JSON.stringify
         if (
-          JSON.stringify(updatedPropertyValue) !==
-          JSON.stringify(
+          !isEqual(
+            updatedPropertyValue,
             currentOrganizationData[updatedPropertyKey as keyof Organization]
           )
         ) {

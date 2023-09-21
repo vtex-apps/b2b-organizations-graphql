@@ -2,6 +2,7 @@
   "name": "vtex.b2b-organizations",
   "version": "0.37.0",
   "dependencies": {
+    "@types/lodash.isequal": "^4.5.6",
     "@vtex/api": "6.45.20",
     "atob": "^2.1.2",
     "co-body": "^6.0.0",
