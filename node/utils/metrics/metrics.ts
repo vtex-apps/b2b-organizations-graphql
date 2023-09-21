@@ -2,29 +2,12 @@ import axios from 'axios'
 
 const ANALYTICS_URL = 'https://rc.vtex.com/api/analytics/schemaless-events'
 
-type ImpersonateUserMetric = {
-  kind: 'impersonate-user-graphql-event'
-  description: 'Impersonate User Action - Graphql'
+export interface Metric {
+  readonly account: string
+  readonly kind: string
+  readonly description: string
+  readonly name: 'b2b-suite-buyerorg-data'
 }
-
-type ImpersonateB2BUserMetric = {
-  kind: 'impersonate-b2b-user-graphql-event'
-  description: 'Impersonate B2B User Action - Graphql'
-}
-
-interface UpdateOrganizationMetric {
-  kind: 'update-organization-graphql-event'
-  description: 'Update Organization Action - Graphql'
-}
-
-export type Metric = {
-  name: 'b2b-suite-buyerorg-data'
-  account: string
-} & (
-  | ImpersonateUserMetric
-  | ImpersonateB2BUserMetric
-  | UpdateOrganizationMetric
-)
 
 export const sendMetric = async (metric: Metric) => {
   try {
