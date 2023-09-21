@@ -10,9 +10,5 @@ export interface Metric {
 }
 
 export const sendMetric = async (metric: Metric) => {
-  try {
-    await axios.post(ANALYTICS_URL, metric)
-  } catch (error) {
-    console.warn('Unable to log metrics', error)
-  }
+  await axios.post(ANALYTICS_URL, metric)
 }
