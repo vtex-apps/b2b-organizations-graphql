@@ -1,4 +1,11 @@
-import { randWord } from '@ngneat/falso'
+import {
+  randAlphaNumeric,
+  randCompanyName,
+  randFullName,
+  randPastDate,
+  randStatus,
+  randWord,
+} from '@ngneat/falso'
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
 import type { Seller } from '../../clients/sellers'
@@ -12,36 +19,39 @@ afterEach(() => {
 })
 
 describe('given an organization to update data', () => {
-  describe('when change all properties data', () => {
+  describe('when change all properties', () => {
     const logger = jest.fn() as unknown as Logger
 
     const account = randWord()
 
     const currentOrganization: Organization = {
-      collections: [{ name: randWord() } as Collection],
+      collections: [{ name: randAlphaNumeric() } as Collection],
       costCenters: [],
-      created: randWord(),
-      customFields: [{ name: randWord() } as CustomField],
-      id: randWord(),
-      name: randWord(),
+      created: randPastDate().toISOString(),
+      customFields: [{ name: randAlphaNumeric() } as CustomField],
+      id: randAlphaNumeric().toString(),
+      name: randCompanyName(),
       paymentTerms: [{ name: randWord() } as PaymentTerm],
       priceTables: [{ name: randWord() } as Price],
       salesChannel: randWord(),
-      sellers: [{ name: randWord() } as Seller],
-      status: randWord(),
-      tradeName: randWord(),
+      sellers: [{ name: randFullName() } as Seller],
+      status: randStatus(),
+      tradeName: randCompanyName(),
     }
 
     const fieldsUpdated: Partial<Organization> = {
-      collections: [{ name: randWord() } as Collection],
-      customFields: [{ name: randWord() } as CustomField],
-      name: randWord(),
+      collections: [{ name: randAlphaNumeric() } as Collection],
+      costCenters: [],
+      created: randPastDate().toISOString(),
+      customFields: [{ name: randAlphaNumeric() } as CustomField],
+      id: randAlphaNumeric().toString(),
+      name: randCompanyName(),
       paymentTerms: [{ name: randWord() } as PaymentTerm],
       priceTables: [{ name: randWord() } as Price],
       salesChannel: randWord(),
-      sellers: [{ name: randWord() } as Seller],
-      status: randWord(),
-      tradeName: randWord(),
+      sellers: [{ name: randFullName() } as Seller],
+      status: randStatus(),
+      tradeName: randCompanyName(),
     }
 
     const updateOrganizationParams: UpdateOrganizationParams = {
@@ -54,7 +64,7 @@ describe('given an organization to update data', () => {
       await sendUpdateOrganizationMetric(logger, updateOrganizationParams)
     })
 
-    it('should metric the all properties changed', () => {
+    it('should metrify that all properties changed', () => {
       const metricParam = {
         account,
         description: 'Update Organization Action - Graphql',
@@ -92,7 +102,7 @@ describe('given an organization to update data', () => {
     const paymentTerms = [{ name: randWord() } as PaymentTerm]
     const priceTables = [{ name: randWord() } as Price]
     const salesChannel = randWord()
-    const sellers = [{ name: randWord() } as Seller]
+    const sellers = [{ name: randFullName() } as Seller]
     const status = randWord()
     const tradeName = randWord()
 
