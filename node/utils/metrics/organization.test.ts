@@ -42,9 +42,7 @@ describe('given an organization to update data', () => {
     const fieldsUpdated: Partial<Organization> = {
       collections: [{ name: randAlphaNumeric() } as Collection],
       costCenters: [],
-      created: randPastDate().toISOString(),
       customFields: [{ name: randAlphaNumeric() } as CustomField],
-      id: randAlphaNumeric().toString(),
       name: randCompanyName(),
       paymentTerms: [{ name: randWord() } as PaymentTerm],
       priceTables: [{ name: randWord() } as Price],
