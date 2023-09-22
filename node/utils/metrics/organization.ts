@@ -35,7 +35,7 @@ const buildUpdateOrganizationMetric = (
   } as UpdateOrganization
 }
 
-const getFieldsNamesByFieldsUpdated = (
+const getPropNamesByUpdateParams = (
   updateOrganizationParams: UpdateOrganizationParams
 ): string[] => {
   const updatedPropName: string[] = []
@@ -49,18 +49,11 @@ const getFieldsNamesByFieldsUpdated = (
 
   Object.entries(updatedProperties).forEach(
     ([updatedPropertyKey, updatedPropertyValue]) => {
-      if (updatedPropertyValue instanceof Array) {
-        if (
-          !isEqual(
-            updatedPropertyValue,
-            currentOrganizationData[updatedPropertyKey as keyof Organization]
-          )
-        ) {
-          updatedPropName.push(updatedPropertyKey)
-        }
-      } else if (
-        updatedPropertyValue !==
-        currentOrganizationData[updatedPropertyKey as keyof Organization]
+      if (
+        !isEqual(
+          updatedPropertyValue,
+          currentOrganizationData[updatedPropertyKey as keyof Organization]
+        )
       ) {
         updatedPropName.push(updatedPropertyKey)
       }
@@ -75,7 +68,7 @@ export const sendUpdateOrganizationMetric = async (
   updateOrganizationParams: UpdateOrganizationParams
 ) => {
   try {
-    const fieldsNamesUpdated = getFieldsNamesByFieldsUpdated(
+    const fieldsNamesUpdated = getPropNamesByUpdateParams(
       updateOrganizationParams
     )
 

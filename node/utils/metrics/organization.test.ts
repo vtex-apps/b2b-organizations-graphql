@@ -40,7 +40,7 @@ describe('given an organization to update data', () => {
       priceTables: [randAlpha()],
       salesChannel: randAlpha(),
       sellers: [{ name: randFullName() } as Seller],
-      status: randStatus(),
+      status: randAlpha(),
       tradeName: randCompanyName(),
     }
 
