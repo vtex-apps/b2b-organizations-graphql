@@ -1,9 +1,14 @@
 import {
+  randAirportName,
+  randAlpha,
   randAlphaNumeric,
   randCompanyName,
+  randFirstName,
   randFullName,
+  randLastName,
   randPastDate,
   randStatus,
+  randSuperheroName,
   randWord,
 } from '@ngneat/falso'
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
@@ -25,28 +30,28 @@ describe('given an organization to update data', () => {
     const account = randWord()
 
     const currentOrganization: Organization = {
-      collections: [{ name: randAlphaNumeric() } as Collection],
+      collections: [{ name: randWord() } as Collection],
       costCenters: [],
       created: randPastDate().toISOString(),
-      customFields: [{ name: randAlphaNumeric() } as CustomField],
+      customFields: [{ name: randWord() } as CustomField],
       id: randAlphaNumeric().toString(),
       name: randCompanyName(),
-      paymentTerms: [{ name: randWord() } as PaymentTerm],
-      priceTables: [{ name: randWord() } as Price],
-      salesChannel: randWord(),
+      paymentTerms: [{ name: randAlphaNumeric() } as PaymentTerm],
+      priceTables: [{ name: randAlphaNumeric() } as Price],
+      salesChannel: randAlpha(),
       sellers: [{ name: randFullName() } as Seller],
       status: randStatus(),
       tradeName: randCompanyName(),
     }
 
     const fieldsUpdated: Partial<Organization> = {
-      collections: [{ name: randAlphaNumeric() } as Collection],
+      collections: [{ name: randSuperheroName() } as Collection],
       costCenters: [],
-      customFields: [{ name: randAlphaNumeric() } as CustomField],
+      customFields: [{ name: randAirportName() } as CustomField],
       name: randCompanyName(),
-      paymentTerms: [{ name: randWord() } as PaymentTerm],
-      priceTables: [{ name: randWord() } as Price],
-      salesChannel: randWord(),
+      paymentTerms: [{ name: randLastName() } as PaymentTerm],
+      priceTables: [{ name: randFirstName() } as Price],
+      salesChannel: randAirportName(),
       sellers: [{ name: randFullName() } as Seller],
       status: randStatus(),
       tradeName: randCompanyName(),
