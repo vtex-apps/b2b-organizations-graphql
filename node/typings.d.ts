@@ -122,7 +122,7 @@ interface Organization {
   collections: Collection[]
   costCenters: string[]
   paymentTerms: PaymentTerm[]
-  priceTables?: Price[]
+  priceTables?: string[]
   status: string
   created: string
   customFields?: CustomField[]

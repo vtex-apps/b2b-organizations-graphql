@@ -37,7 +37,7 @@ describe('given an organization to update data', () => {
       id: randAlphaNumeric().toString(),
       name: randCompanyName(),
       paymentTerms: [{ name: randAlphaNumeric() } as PaymentTerm],
-      priceTables: [{ name: randAlphaNumeric() } as Price],
+      priceTables: [randAlpha()],
       salesChannel: randAlpha(),
       sellers: [{ name: randFullName() } as Seller],
       status: randStatus(),
@@ -50,7 +50,7 @@ describe('given an organization to update data', () => {
       customFields: [{ name: randAirportName() } as CustomField],
       name: randCompanyName(),
       paymentTerms: [{ name: randLastName() } as PaymentTerm],
-      priceTables: [{ name: randFirstName() } as Price],
+      priceTables: [randFirstName()],
       salesChannel: randAirportName(),
       sellers: [{ name: randFullName() } as Seller],
       status: randStatus(),
@@ -103,7 +103,7 @@ describe('given an organization to update data', () => {
     const customFields = [{ name: randWord() } as CustomField]
     const name = randWord()
     const paymentTerms = [{ name: randWord() } as PaymentTerm]
-    const priceTables = [{ name: randWord() } as Price]
+    const priceTables = [randWord()]
     const salesChannel = randWord()
     const sellers = [{ name: randFullName() } as Seller]
     const status = randWord()
