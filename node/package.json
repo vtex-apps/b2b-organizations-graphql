@@ -1,7 +1,8 @@
 {
   "name": "vtex.b2b-organizations",
-  "version": "0.37.0",
+  "version": "0.38.0",
   "dependencies": {
+    "@types/lodash": "4.14.74",
     "@vtex/api": "6.45.20",
     "atob": "^2.1.2",
     "co-body": "^6.0.0",
@@ -29,8 +30,7 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-config-vtex": "^2.1.0",
     "typescript": "3.9.7",
-    "vtex.b2b-organizations-graphql": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.b2b-organizations-graphql@0.36.0/public/@types/vtex.b2b-organizations-graphql",
-    "vtex.storefront-permissions": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.36.0/public/@types/vtex.storefront-permissions"
+    "vtex.storefront-permissions": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.35.3/public/@types/vtex.storefront-permissions"
   },
   "scripts": {
     "lint": "tsc --noEmit && tslint -c tslint.json './**/*.ts'",

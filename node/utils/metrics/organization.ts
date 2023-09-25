@@ -1,4 +1,5 @@
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
+import { isEqual } from 'lodash'
 
 import type { Metric } from './metrics'
 import { sendMetric } from './metrics'
@@ -41,7 +42,7 @@ const buildUpdateOrganizationMetric = (
   return new UpdateOrganizationMetric(account, updateOrganizationFields)
 }
 
-const getFieldsNamesByFieldsUpdated = (
+const getPropNamesByUpdateParams = (
   updateOrganizationParams: UpdateOrganizationParams
 ): string[] => {
   const updatedPropName: string[] = []
@@ -49,23 +50,22 @@ const getFieldsNamesByFieldsUpdated = (
   const { currentOrganizationData, updatedProperties } =
     updateOrganizationParams
 
-  for (const key in updatedProperties) {
-    if (Object.prototype.hasOwnProperty.call(updatedProperties, key)) {
-      const value = updatedProperties[key as keyof typeof updatedProperties]
+  if (!currentOrganizationData) {
+    return updatedPropName
+  }
 
-      // I tried to compare the objects value !== currentOrganizationData[key as keyof Organization,
-      // but it was not working, so I use JSON.stringify
+  Object.entries(updatedProperties).forEach(
+    ([updatedPropertyKey, updatedPropertyValue]) => {
       if (
-        JSON.stringify(value) !==
-        JSON.stringify(
-          !currentOrganizationData ||
-            currentOrganizationData[key as keyof Organization]
+        !isEqual(
+          updatedPropertyValue,
+          currentOrganizationData[updatedPropertyKey as keyof Organization]
         )
       ) {
-        updatedPropName.push(key)
+        updatedPropName.push(updatedPropertyKey)
       }
     }
-  }
+  )
 
   return updatedPropName
 }
@@ -75,7 +75,7 @@ export const sendUpdateOrganizationMetric = async (
   updateOrganizationParams: UpdateOrganizationParams
 ) => {
   try {
-    const fieldsNamesUpdated = getFieldsNamesByFieldsUpdated(
+    const fieldsNamesUpdated = getPropNamesByUpdateParams(
       updateOrganizationParams
     )
 
