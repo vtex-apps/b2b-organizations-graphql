@@ -5,6 +5,11 @@ import {
   sendImpersonateB2BUserMetric,
   sendImpersonateUserMetric,
 } from '../../utils/metrics/impersonate'
+import {
+  sendAddUserMetric,
+  sendRemoveUserMetric,
+  sendUpdateUserMetric,
+} from '../../utils/metrics/user'
 
 export const getUserRoleSlug: (
   id: string,
@@ -406,17 +411,21 @@ const Users = {
       }
     }
 
+    const fields = {
+      email,
+      id,
+      userId,
+    }
+
     return storefrontPermissionsClient
-      .deleteUser({
-        email,
-        id,
-        userId,
-      })
+      .deleteUser(fields)
       .then((result: any) => {
         events.sendEvent('', 'b2b-organizations-graphql.removeUser', {
           id,
           email,
         })
+
+        sendRemoveUserMetric(logger, ctx.vtex.account, fields)
 
         return result.data.deleteUser
       })
@@ -460,17 +469,21 @@ const Users = {
       throw error
     }
 
+    const fields = {
+      costId,
+      email,
+      id,
+      name,
+      orgId,
+      roleId,
+      userId,
+    }
+
     return storefrontPermissionsClient
-      .addUser({
-        costId,
-        email,
-        id,
-        name,
-        orgId,
-        roleId,
-        userId,
-      })
+      .addUser(fields)
       .then((result: any) => {
+        sendAddUserMetric(logger, ctx.vtex.account, fields)
+
         return result.data.addUser
       })
       .catch((error: any) => {
@@ -538,18 +551,22 @@ const Users = {
       })
     }
 
+    const fields = {
+      clId,
+      costId,
+      email,
+      id,
+      name,
+      orgId,
+      roleId,
+      userId,
+    }
+
     return storefrontPermissionsClient
-      .updateUser({
-        clId,
-        costId,
-        email,
-        id,
-        name,
-        orgId,
-        roleId,
-        userId,
-      })
+      .updateUser(fields)
       .then((result: any) => {
+        sendUpdateUserMetric(logger, ctx.vtex.account, fields)
+
         return result.data.updateUser
       })
       .catch((error: any) => {

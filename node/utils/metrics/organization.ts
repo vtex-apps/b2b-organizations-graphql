@@ -18,6 +18,19 @@ export interface UpdateOrganizationParams {
   updatedProperties: Partial<Organization>
 }
 
+class UpdateOrganizationMetric implements Metric {
+  public readonly description = 'Update Organization Action - Graphql'
+  public readonly kind = 'update-organization-graphql-event'
+  public readonly account: string
+  public readonly fields: UpdateOrganizationFieldsMetric
+  public readonly name = 'b2b-suite-buyerorg-data'
+
+  constructor(account: string, fields: UpdateOrganizationFieldsMetric) {
+    this.account = account
+    this.fields = fields
+  }
+}
+
 const buildUpdateOrganizationMetric = (
   account: string,
   updatedProperties: string[]
@@ -26,13 +39,7 @@ const buildUpdateOrganizationMetric = (
     update_details: { properties: updatedProperties },
   }
 
-  return {
-    account,
-    description: 'Update Organization Action - Graphql',
-    fields: updateOrganizationFields,
-    kind: 'update-organization-graphql-event',
-    name: 'b2b-suite-buyerorg-data',
-  } as UpdateOrganization
+  return new UpdateOrganizationMetric(account, updateOrganizationFields)
 }
 
 const getPropNamesByUpdateParams = (

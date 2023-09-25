@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Add metrics to maintain buyer organization users
+
 ## [0.38.0] - 2023-09-25
 
 ### Added
