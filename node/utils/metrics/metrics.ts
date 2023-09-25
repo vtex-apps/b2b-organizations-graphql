@@ -12,10 +12,19 @@ type ImpersonateB2BUserMetric = {
   description: 'Impersonate B2B User Action - Graphql'
 }
 
+interface UpdateOrganizationMetric {
+  kind: 'update-organization-graphql-event'
+  description: 'Update Organization Action - Graphql'
+}
+
 export type Metric = {
   name: 'b2b-suite-buyerorg-data'
   account: string
-} & (ImpersonateUserMetric | ImpersonateB2BUserMetric)
+} & (
+  | ImpersonateUserMetric
+  | ImpersonateB2BUserMetric
+  | UpdateOrganizationMetric
+)
 
 export const sendMetric = async (metric: Metric) => {
   try {
