@@ -1,5 +1,5 @@
 import type { Metric } from './metrics'
-import { sendMetric } from './metrics'
+import { B2B_METRIC_NAME, sendMetric } from './metrics'
 
 type ImpersonatePerson = {
   email: string
@@ -42,7 +42,7 @@ const buildMetric = (metricParams: ImpersonateMetricParams) => {
     : undefined
 
   const metric = {
-    name: 'b2b-suite-buyerorg-data' as const,
+    name: B2B_METRIC_NAME,
     account,
     fields: {
       user: userParam,

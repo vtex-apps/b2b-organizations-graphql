@@ -2,7 +2,7 @@ import type { Logger } from '@vtex/api/lib/service/logger/logger'
 import { isEqual } from 'lodash'
 
 import type { Metric } from './metrics'
-import { sendMetric } from './metrics'
+import { B2B_METRIC_NAME, sendMetric } from './metrics'
 
 interface UpdateOrganizationFieldsMetric {
   update_details: { properties: string[] }
@@ -23,7 +23,7 @@ class UpdateOrganizationMetric implements Metric {
   public readonly kind = 'update-organization-graphql-event'
   public readonly account: string
   public readonly fields: UpdateOrganizationFieldsMetric
-  public readonly name = 'b2b-suite-buyerorg-data'
+  public readonly name = B2B_METRIC_NAME
 
   constructor(account: string, fields: UpdateOrganizationFieldsMetric) {
     this.account = account

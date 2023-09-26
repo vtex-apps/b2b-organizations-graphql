@@ -14,9 +14,16 @@ import {
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
 import type { Seller } from '../../clients/sellers'
-import { sendMetric } from './metrics'
-import type { UpdateOrganizationParams } from './organization'
-import { sendUpdateOrganizationMetric } from './organization'
+import { ORGANIZATION_REQUEST_STATUSES } from '../constants'
+import { B2B_METRIC_NAME, sendMetric } from './metrics'
+import type {
+  OrganizationStatusParams,
+  UpdateOrganizationParams,
+} from './organization'
+import {
+  sendOrganizationStatusMetric,
+  sendUpdateOrganizationMetric,
+} from './organization'
 
 jest.mock('./metrics')
 afterEach(() => {
@@ -87,7 +94,7 @@ describe('given an organization to update data', () => {
           },
         },
         kind: 'update-organization-graphql-event',
-        name: 'b2b-suite-buyerorg-data',
+        name: B2B_METRIC_NAME,
       }
 
       expect(sendMetric).toHaveBeenCalledWith(metricParam)
@@ -156,7 +163,7 @@ describe('given an organization to update data', () => {
           },
         },
         kind: 'update-organization-graphql-event',
-        name: 'b2b-suite-buyerorg-data',
+        name: B2B_METRIC_NAME,
       }
 
       expect(sendMetric).toHaveBeenCalledWith(metricParam)
@@ -214,7 +221,7 @@ describe('given an organization to update data', () => {
           },
         },
         kind: 'update-organization-graphql-event',
-        name: 'b2b-suite-buyerorg-data',
+        name: B2B_METRIC_NAME,
       }
 
       expect(sendMetric).toHaveBeenCalledWith(metricParam)
