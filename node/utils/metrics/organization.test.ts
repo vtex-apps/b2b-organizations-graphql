@@ -227,4 +227,33 @@ describe('given an organization to update data', () => {
       expect(sendMetric).toHaveBeenCalledWith(metricParam)
     })
   })
+
+  describe('when need to update status', () => {
+    const logger = jest.fn() as unknown as Logger
+
+    const account = randWord()
+
+    const updateOrganizationParams: OrganizationStatusParams = {
+      account,
+      status: ORGANIZATION_REQUEST_STATUSES.APPROVED,
+    }
+
+    beforeEach(async () => {
+      await sendOrganizationStatusMetric(logger, updateOrganizationParams)
+    })
+
+    it('should metrify the status changed', () => {
+      const metricParam = {
+        account,
+        description: 'Change Organization Status Action - Graphql',
+        fields: {
+          status: ORGANIZATION_REQUEST_STATUSES.APPROVED,
+        },
+        kind: 'change-organization-status-graphql-event',
+        name: B2B_METRIC_NAME,
+      }
+
+      expect(sendMetric).toHaveBeenCalledWith(metricParam)
+    })
+  })
 })

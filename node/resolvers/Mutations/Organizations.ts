@@ -18,7 +18,10 @@ import B2BSettings from '../Queries/Settings'
 import CostCenters from './CostCenters'
 import MarketingTags from './MarketingTags'
 import checkConfig from '../config'
-import { sendUpdateOrganizationMetric } from '../../utils/metrics/organization'
+import {
+  sendOrganizationStatusMetric,
+  sendUpdateOrganizationMetric,
+} from '../../utils/metrics/organization'
 
 const createUserAndAttachToOrganization = async ({
   storefrontPermissions,
@@ -620,6 +623,11 @@ const Organizations = {
             id,
           })
 
+          sendOrganizationStatusMetric(logger, {
+            account: ctx.vtex.account,
+            status: ORGANIZATION_REQUEST_STATUSES.APPROVED,
+          })
+
           return { status: 'success', message: '', id: organizationId }
         } catch (e) {
           logger.error({
@@ -654,6 +662,11 @@ const Organizations = {
           notes
         )
       }
+
+      sendOrganizationStatusMetric(logger, {
+        account: ctx.vtex.account,
+        status: ORGANIZATION_REQUEST_STATUSES.DECLINED,
+      })
 
       return { status: 'success', message: '' }
     } catch (e) {

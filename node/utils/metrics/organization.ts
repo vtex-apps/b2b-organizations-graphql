@@ -18,6 +18,11 @@ export interface UpdateOrganizationParams {
   updatedProperties: Partial<Organization>
 }
 
+export interface OrganizationStatusParams {
+  account: string
+  status: string
+}
+
 class UpdateOrganizationMetric implements Metric {
   public readonly description = 'Update Organization Action - Graphql'
   public readonly kind = 'update-organization-graphql-event'
@@ -89,6 +94,28 @@ export const sendUpdateOrganizationMetric = async (
     logger.error({
       error,
       message: 'Error to send metrics from updateOrganization',
+    })
+  }
+}
+
+export const sendOrganizationStatusMetric = async (
+  logger: Logger,
+  statusParams: OrganizationStatusParams
+) => {
+  try {
+    await sendMetric({
+      account: statusParams.account,
+      description: 'Change Organization Status Action - Graphql',
+      fields: {
+        status: statusParams.status,
+      },
+      kind: 'change-organization-status-graphql-event',
+      name: B2B_METRIC_NAME,
+    } as unknown as Metric)
+  } catch (error) {
+    logger.error({
+      error,
+      message: 'Error to send metrics from organization status change',
     })
   }
 }
