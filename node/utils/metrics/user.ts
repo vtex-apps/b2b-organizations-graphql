@@ -1,7 +1,7 @@
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
 import type { Metric } from './metrics'
-import { sendMetric } from './metrics'
+import { B2B_METRIC_NAME, sendMetric } from './metrics'
 
 interface UserMetricType {
   description: string
@@ -28,7 +28,7 @@ class UserMetric implements Metric {
   public readonly kind: string
   public readonly account: string
   public readonly fields: Partial<UserArgs>
-  public readonly name = 'b2b-suite-buyerorg-data'
+  public readonly name = B2B_METRIC_NAME
 
   constructor(
     account: string,

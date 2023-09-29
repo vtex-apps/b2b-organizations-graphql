@@ -1,5 +1,5 @@
 import type { Metric } from './metrics'
-import { sendMetric } from './metrics'
+import { B2B_METRIC_NAME, sendMetric } from './metrics'
 
 type ImpersonatePerson = {
   email: string
@@ -42,7 +42,7 @@ const buildMetric = (metricParams: ImpersonateMetricParams) => {
     : undefined
 
   const metric = {
-    name: 'b2b-suite-buyerorg-data' as const,
+    name: B2B_METRIC_NAME,
     account,
     fields: {
       user: userParam,
@@ -62,25 +62,21 @@ const buildMetric = (metricParams: ImpersonateMetricParams) => {
 const buildImpersonateUserMetric = (
   metricParams: ImpersonateMetricParams
 ): ImpersonateMetric => {
-  const metric: ImpersonateMetric = {
+  return {
     kind: 'impersonate-user-graphql-event',
     description: 'Impersonate User Action - Graphql',
     ...buildMetric(metricParams),
-  }
-
-  return metric
+  } as ImpersonateMetric
 }
 
 const buildImpersonateB2BUserMetric = (
   metricParams: ImpersonateMetricParams
 ): ImpersonateMetric => {
-  const metric: ImpersonateMetric = {
+  return {
     kind: 'impersonate-b2b-user-graphql-event',
     description: 'Impersonate B2B User Action - Graphql',
     ...buildMetric(metricParams),
-  }
-
-  return metric
+  } as ImpersonateMetric
 }
 
 export const sendImpersonateUserMetric = async (

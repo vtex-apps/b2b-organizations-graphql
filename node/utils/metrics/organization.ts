@@ -2,7 +2,7 @@ import type { Logger } from '@vtex/api/lib/service/logger/logger'
 import { isEqual } from 'lodash'
 
 import type { Metric } from './metrics'
-import { sendMetric } from './metrics'
+import { B2B_METRIC_NAME, sendMetric } from './metrics'
 
 interface UpdateOrganizationFieldsMetric {
   update_details: { properties: string[] }
@@ -18,12 +18,17 @@ export interface UpdateOrganizationParams {
   updatedProperties: Partial<Organization>
 }
 
+export interface OrganizationStatusParams {
+  account: string
+  status: string
+}
+
 class UpdateOrganizationMetric implements Metric {
   public readonly description = 'Update Organization Action - Graphql'
   public readonly kind = 'update-organization-graphql-event'
   public readonly account: string
   public readonly fields: UpdateOrganizationFieldsMetric
-  public readonly name = 'b2b-suite-buyerorg-data'
+  public readonly name = B2B_METRIC_NAME
 
   constructor(account: string, fields: UpdateOrganizationFieldsMetric) {
     this.account = account
@@ -89,6 +94,28 @@ export const sendUpdateOrganizationMetric = async (
     logger.error({
       error,
       message: 'Error to send metrics from updateOrganization',
+    })
+  }
+}
+
+export const sendOrganizationStatusMetric = async (
+  logger: Logger,
+  statusParams: OrganizationStatusParams
+) => {
+  try {
+    await sendMetric({
+      account: statusParams.account,
+      description: 'Change Organization Status Action - Graphql',
+      fields: {
+        status: statusParams.status,
+      },
+      kind: 'change-organization-status-graphql-event',
+      name: B2B_METRIC_NAME,
+    } as unknown as Metric)
+  } catch (error) {
+    logger.error({
+      error,
+      message: 'Error to send metrics from organization status change',
     })
   }
 }

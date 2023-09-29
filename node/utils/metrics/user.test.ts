@@ -1,7 +1,7 @@
 import { randEmail, randWord } from '@ngneat/falso'
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
-import { sendMetric } from './metrics'
+import { B2B_METRIC_NAME, sendMetric } from './metrics'
 import {
   sendAddUserMetric,
   sendRemoveUserMetric,
@@ -35,7 +35,7 @@ describe('given an action for a user', () => {
         description: 'Add User Action - Graphql',
         fields: userArgs,
         kind: 'add-user-graphql-event',
-        name: 'b2b-suite-buyerorg-data',
+        name: B2B_METRIC_NAME,
       }
 
       expect(sendMetric).toHaveBeenCalledWith(metricParam)
@@ -63,7 +63,7 @@ describe('given an action for a user', () => {
         description: 'Remove User Action - Graphql',
         fields: userArgs,
         kind: 'remove-user-graphql-event',
-        name: 'b2b-suite-buyerorg-data',
+        name: B2B_METRIC_NAME,
       }
 
       expect(sendMetric).toHaveBeenCalledWith(metricParam)
@@ -91,7 +91,7 @@ describe('given an action for a user', () => {
         description: 'Update User Action - Graphql',
         fields: userArgs,
         kind: 'update-user-graphql-event',
-        name: 'b2b-suite-buyerorg-data',
+        name: B2B_METRIC_NAME,
       }
 
       expect(sendMetric).toHaveBeenCalledWith(metricParam)
