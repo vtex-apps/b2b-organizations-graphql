@@ -199,10 +199,8 @@ const Users = {
           sessionData?.namespaces['storefront-permissions']?.organization?.value
 
       if (
-        !(
-          hasImpersonateUsersCostCenterPermission ||
-          hasImpersonateUsersOrganizationPermission
-        )
+        !hasImpersonateUsersCostCenterPermission &&
+        !hasImpersonateUsersOrganizationPermission
       ) {
         throw new GraphQLError('operation-not-permitted')
       }
