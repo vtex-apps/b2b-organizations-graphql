@@ -48,7 +48,7 @@ const isUserPermitted = ({
   roleSlug,
 }: any) =>
   (storefrontPermissions?.permissions?.includes('add-users-organization') &&
-    sessionData.namespaces['storefront-permissions'].organization.value ===
+    sessionData.namespaces['storefront-permissions']?.organization?.value ===
       orgId &&
     !roleSlug.includes('sales')) ||
   (storefrontPermissions?.permissions?.includes('add-sales-users-all') &&
@@ -183,26 +183,27 @@ const Users = {
       const result = await storefrontPermissionsClient.getRole(user.roleId)
       const roleSlug = result?.data?.getRole?.slug
 
-      let permitted = false
+      const hasImpersonateUsersCostCenterPermission =
+        !roleSlug.includes('admin') &&
+        storefrontPermissions?.permissions?.includes(
+          'impersonate-users-costcenter'
+        ) &&
+        user?.costId ===
+          sessionData?.namespaces['storefront-permissions']?.costcenter?.value
 
-      if (!roleSlug.includes('sales')) {
-        permitted =
-          (storefrontPermissions?.permissions?.includes(
-            'impersonate-users-costcenter'
-          ) &&
-            !roleSlug.includes('admin') &&
-            user?.costId ===
-              sessionData?.namespaces['storefront-permissions']?.costcenter) ||
-          (storefrontPermissions?.permissions?.includes(
-            'impersonate-users-organization'
-          ) &&
-            user?.orgId ===
-              sessionData?.namespaces['storefront-permissions']
-                ?.organization) ||
-          storefrontPermissions?.permissions?.includes('impersonate-users-all')
-      }
+      const hasImpersonateUsersOrganizationPermission =
+        storefrontPermissions?.permissions?.includes(
+          'impersonate-users-organization'
+        ) &&
+        user?.orgId ===
+          sessionData?.namespaces['storefront-permissions']?.organization?.value
 
-      if (!permitted) {
+      if (
+        !(
+          hasImpersonateUsersCostCenterPermission ||
+          hasImpersonateUsersOrganizationPermission
+        )
+      ) {
         throw new GraphQLError('operation-not-permitted')
       }
     }
@@ -300,13 +301,14 @@ const Users = {
           ) &&
             !roleSlug.includes('admin') &&
             userInfo?.costId ===
-              sessionData?.namespaces['storefront-permissions']?.costcenter) ||
+              sessionData?.namespaces['storefront-permissions']?.costcenter
+                ?.value) ||
           (storefrontPermissions?.permissions?.includes(
             'impersonate-users-organization'
           ) &&
             userInfo?.orgId ===
-              sessionData?.namespaces['storefront-permissions']
-                ?.organization) ||
+              sessionData?.namespaces['storefront-permissions']?.organization
+                ?.value) ||
           storefrontPermissions?.permissions?.includes('impersonate-users-all')
       }
 
