@@ -183,7 +183,7 @@ const Users = {
       const result = await storefrontPermissionsClient.getRole(user.roleId)
       const roleSlug = result?.data?.getRole?.slug
 
-      const hasImpersonateUsersCostCenterPermission =
+      const canImpersonateUsersWithCostCenterPermission =
         !roleSlug.includes('admin') &&
         storefrontPermissions?.permissions?.includes(
           'impersonate-users-costcenter'
@@ -191,16 +191,20 @@ const Users = {
         user?.costId ===
           sessionData?.namespaces['storefront-permissions']?.costcenter?.value
 
-      const hasImpersonateUsersOrganizationPermission =
+      const canImpersonateUsersWithOrganizationPermission =
         storefrontPermissions?.permissions?.includes(
           'impersonate-users-organization'
         ) &&
         user?.orgId ===
           sessionData?.namespaces['storefront-permissions']?.organization?.value
 
+      const canImpersonateUsersWithAllPermission =
+        storefrontPermissions?.permissions?.includes('impersonate-users-all')
+
       if (
-        !hasImpersonateUsersCostCenterPermission &&
-        !hasImpersonateUsersOrganizationPermission
+        !canImpersonateUsersWithCostCenterPermission &&
+        !canImpersonateUsersWithOrganizationPermission &&
+        !canImpersonateUsersWithAllPermission
       ) {
         throw new GraphQLError('operation-not-permitted')
       }
