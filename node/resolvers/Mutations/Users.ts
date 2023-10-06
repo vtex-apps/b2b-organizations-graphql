@@ -282,35 +282,34 @@ const Users = {
         throw new GraphQLError('organization-data-not-found')
       }
 
-      let permitted = false
-      // check the role of the user to be impersonated
-      const roleSlug = await getUserRoleSlug(clId, ctx)
+      const userInfo = await getUserFromStorefrontPermissions({
+        clId,
+        logger,
+        storefrontPermissionsClient,
+      })
 
-      if (!roleSlug.includes('sales')) {
-        const userInfo = await getUserFromStorefrontPermissions({
-          clId,
-          logger,
-          storefrontPermissionsClient,
-        })
+      const canImpersonateUsersWithCostCenterPermission =
+        storefrontPermissions?.permissions?.includes(
+          'impersonate-users-costcenter'
+        ) &&
+        userInfo?.costId ===
+          sessionData?.namespaces['storefront-permissions']?.costcenter?.value
 
-        permitted =
-          (storefrontPermissions?.permissions?.includes(
-            'impersonate-users-costcenter'
-          ) &&
-            !roleSlug.includes('admin') &&
-            userInfo?.costId ===
-              sessionData?.namespaces['storefront-permissions']?.costcenter
-                ?.value) ||
-          (storefrontPermissions?.permissions?.includes(
-            'impersonate-users-organization'
-          ) &&
-            userInfo?.orgId ===
-              sessionData?.namespaces['storefront-permissions']?.organization
-                ?.value) ||
-          storefrontPermissions?.permissions?.includes('impersonate-users-all')
-      }
+      const canImpersonateUsersWithOrganizationPermission =
+        storefrontPermissions?.permissions?.includes(
+          'impersonate-users-organization'
+        ) &&
+        userInfo?.orgId ===
+          sessionData?.namespaces['storefront-permissions']?.organization?.value
 
-      if (!permitted) {
+      const canImpersonateUsersWithAllPermission =
+        storefrontPermissions?.permissions?.includes('impersonate-users-all')
+
+      if (
+        !canImpersonateUsersWithCostCenterPermission &&
+        !canImpersonateUsersWithOrganizationPermission &&
+        !canImpersonateUsersWithAllPermission
+      ) {
         throw new GraphQLError('operation-not-permitted')
       }
     }
