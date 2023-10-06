@@ -180,11 +180,7 @@ const Users = {
         throw new GraphQLError('organization-data-not-found')
       }
 
-      const result = await storefrontPermissionsClient.getRole(user.roleId)
-      const roleSlug = result?.data?.getRole?.slug
-
       const canImpersonateUsersWithCostCenterPermission =
-        !roleSlug.includes('admin') &&
         storefrontPermissions?.permissions?.includes(
           'impersonate-users-costcenter'
         ) &&
