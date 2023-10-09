@@ -48,7 +48,7 @@ const isUserPermitted = ({
   roleSlug,
 }: any) =>
   (storefrontPermissions?.permissions?.includes('add-users-organization') &&
-    sessionData.namespaces['storefront-permissions'].organization.value ===
+    sessionData.namespaces['storefront-permissions']?.organization?.value ===
       orgId &&
     !roleSlug.includes('sales')) ||
   (storefrontPermissions?.permissions?.includes('add-sales-users-all') &&
@@ -180,29 +180,28 @@ const Users = {
         throw new GraphQLError('organization-data-not-found')
       }
 
-      const result = await storefrontPermissionsClient.getRole(user.roleId)
-      const roleSlug = result?.data?.getRole?.slug
+      const canImpersonateUsersWithCostCenterPermission =
+        storefrontPermissions?.permissions?.includes(
+          'impersonate-users-costcenter'
+        ) &&
+        user?.costId ===
+          sessionData?.namespaces['storefront-permissions']?.costcenter?.value
 
-      let permitted = false
+      const canImpersonateUsersWithOrganizationPermission =
+        storefrontPermissions?.permissions?.includes(
+          'impersonate-users-organization'
+        ) &&
+        user?.orgId ===
+          sessionData?.namespaces['storefront-permissions']?.organization?.value
 
-      if (!roleSlug.includes('sales')) {
-        permitted =
-          (storefrontPermissions?.permissions?.includes(
-            'impersonate-users-costcenter'
-          ) &&
-            !roleSlug.includes('admin') &&
-            user?.costId ===
-              sessionData?.namespaces['storefront-permissions']?.costcenter) ||
-          (storefrontPermissions?.permissions?.includes(
-            'impersonate-users-organization'
-          ) &&
-            user?.orgId ===
-              sessionData?.namespaces['storefront-permissions']
-                ?.organization) ||
-          storefrontPermissions?.permissions?.includes('impersonate-users-all')
-      }
+      const canImpersonateUsersWithAllPermission =
+        storefrontPermissions?.permissions?.includes('impersonate-users-all')
 
-      if (!permitted) {
+      if (
+        !canImpersonateUsersWithCostCenterPermission &&
+        !canImpersonateUsersWithOrganizationPermission &&
+        !canImpersonateUsersWithAllPermission
+      ) {
         throw new GraphQLError('operation-not-permitted')
       }
     }
@@ -283,34 +282,34 @@ const Users = {
         throw new GraphQLError('organization-data-not-found')
       }
 
-      let permitted = false
-      // check the role of the user to be impersonated
-      const roleSlug = await getUserRoleSlug(clId, ctx)
+      const userInfo = await getUserFromStorefrontPermissions({
+        clId,
+        logger,
+        storefrontPermissionsClient,
+      })
 
-      if (!roleSlug.includes('sales')) {
-        const userInfo = await getUserFromStorefrontPermissions({
-          clId,
-          logger,
-          storefrontPermissionsClient,
-        })
+      const canImpersonateUsersWithCostCenterPermission =
+        storefrontPermissions?.permissions?.includes(
+          'impersonate-users-costcenter'
+        ) &&
+        userInfo?.costId ===
+          sessionData?.namespaces['storefront-permissions']?.costcenter?.value
 
-        permitted =
-          (storefrontPermissions?.permissions?.includes(
-            'impersonate-users-costcenter'
-          ) &&
-            !roleSlug.includes('admin') &&
-            userInfo?.costId ===
-              sessionData?.namespaces['storefront-permissions']?.costcenter) ||
-          (storefrontPermissions?.permissions?.includes(
-            'impersonate-users-organization'
-          ) &&
-            userInfo?.orgId ===
-              sessionData?.namespaces['storefront-permissions']
-                ?.organization) ||
-          storefrontPermissions?.permissions?.includes('impersonate-users-all')
-      }
+      const canImpersonateUsersWithOrganizationPermission =
+        storefrontPermissions?.permissions?.includes(
+          'impersonate-users-organization'
+        ) &&
+        userInfo?.orgId ===
+          sessionData?.namespaces['storefront-permissions']?.organization?.value
 
-      if (!permitted) {
+      const canImpersonateUsersWithAllPermission =
+        storefrontPermissions?.permissions?.includes('impersonate-users-all')
+
+      if (
+        !canImpersonateUsersWithCostCenterPermission &&
+        !canImpersonateUsersWithOrganizationPermission &&
+        !canImpersonateUsersWithAllPermission
+      ) {
         throw new GraphQLError('operation-not-permitted')
       }
     }
