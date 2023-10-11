@@ -3,9 +3,71 @@ import {
   COST_CENTER_SCHEMA_VERSION,
   ORGANIZATION_DATA_ENTITY,
 } from '../../mdSchema'
+import type { AddressInput, CostCenterInput, Result } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import MarketingTags from './MarketingTags'
+
+const createCostCenter = async (
+  _: void,
+  organizationId: string,
+  {
+    id,
+    addresses,
+    name,
+    paymentTerms,
+    phoneNumber,
+    businessDocument,
+    stateRegistration,
+    customFields,
+    sellers,
+    marketingTags,
+  }: CostCenterInput,
+  ctx: Context
+): Promise<Result> => {
+  const {
+    clients: { masterdata },
+    vtex: { logger },
+  } = ctx
+
+  const costCenter = {
+    addresses,
+    id,
+    name,
+    organization: organizationId,
+    ...(paymentTerms && { paymentTerms }),
+    ...(phoneNumber && { phoneNumber }),
+    ...(businessDocument && { businessDocument }),
+    ...(stateRegistration && { stateRegistration }),
+    ...(customFields && { customFields }),
+    ...(sellers && { sellers }),
+  }
+
+  const createCostCenterResult = await masterdata.createDocument({
+    dataEntity: COST_CENTER_DATA_ENTITY,
+    fields: costCenter,
+    schema: COST_CENTER_SCHEMA_VERSION,
+  })
+
+  if (marketingTags && marketingTags?.length > 0) {
+    MarketingTags.setMarketingTags(
+      _,
+      { costId: createCostCenterResult.DocumentId, tags: marketingTags },
+      ctx
+    ).catch((error) => {
+      logger.error({
+        error,
+        message: 'setMarketingTags-error',
+      })
+    })
+  }
+
+  return {
+    href: createCostCenterResult.Href,
+    id: createCostCenterResult.DocumentId,
+    status: '',
+  }
+}
 
 const CostCenters = {
   createCostCenter: async (
@@ -26,7 +88,6 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
       vtex,
       vtex: { logger },
     } = ctx
@@ -54,41 +115,18 @@ const CostCenters = {
     }
 
     try {
-      const costCenter = {
+      const costCenter: CostCenterInput = {
         addresses,
+        businessDocument,
+        customFields,
+        marketingTags,
         name,
-        organization: organizationId,
-        ...(phoneNumber && { phoneNumber }),
-        ...(businessDocument && { businessDocument }),
-        ...(stateRegistration && { stateRegistration }),
-        ...(customFields && { customFields }),
-        ...(sellers && { sellers }),
+        phoneNumber,
+        sellers,
+        stateRegistration,
       }
 
-      const createCostCenterResult = await masterdata.createDocument({
-        dataEntity: COST_CENTER_DATA_ENTITY,
-        fields: costCenter,
-        schema: COST_CENTER_SCHEMA_VERSION,
-      })
-
-      if (marketingTags && marketingTags?.length > 0) {
-        MarketingTags.setMarketingTags(
-          _,
-          { costId: createCostCenterResult.DocumentId, tags: marketingTags },
-          ctx
-        ).catch((error) => {
-          logger.error({
-            error,
-            message: 'setMarketingTags-error',
-          })
-        })
-      }
-
-      return {
-        href: createCostCenterResult.Href,
-        id: createCostCenterResult.DocumentId,
-        status: '',
-      }
+      return await createCostCenter(_, organizationId, costCenter, ctx)
     } catch (error) {
       logger.error({
         error,
@@ -277,4 +315,4 @@ const CostCenters = {
   },
 }
 
-export default CostCenters
+export default { createCostCenter, CostCenters }
