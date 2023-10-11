@@ -1,6 +1,4 @@
 import {
-  COST_CENTER_DATA_ENTITY,
-  COST_CENTER_SCHEMA_VERSION,
   ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_FIELDS,
   ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -8,20 +6,28 @@ import {
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
+import type {
+  B2BSettingsInput,
+  DefaultCostCenterInput,
+  Organization,
+  OrganizationInput,
+  OrganizationRequest,
+  PaymentTerm,
+  Price,
+} from '../../typings'
 import {
   ORGANIZATION_REQUEST_STATUSES,
   ORGANIZATION_STATUSES,
 } from '../../utils/constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-import message from '../message'
-import B2BSettings from '../Queries/Settings'
-import CostCenters from './CostCenters'
-import MarketingTags from './MarketingTags'
-import checkConfig from '../config'
 import {
   sendOrganizationStatusMetric,
   sendUpdateOrganizationMetric,
 } from '../../utils/metrics/organization'
+import checkConfig from '../config'
+import message from '../message'
+import B2BSettings from '../Queries/Settings'
+import CostCenters from './CostCenters'
 
 const createUserAndAttachToOrganization = async ({
   storefrontPermissions,
@@ -62,6 +68,130 @@ const createUserAndAttachToOrganization = async ({
     })
 }
 
+const createOrganization = async (
+  _: void,
+  {
+    id,
+    name,
+    tradeName,
+    paymentTerms,
+    priceTables,
+    salesChannel,
+    sellers,
+    customFields,
+  }: OrganizationInput,
+  ctx: Context
+): Promise<{
+  Id: string
+  Href: string
+  DocumentId: string
+}> => {
+  const {
+    clients: { masterdata },
+  } = ctx
+
+  const organization = {
+    id,
+    name,
+    ...(tradeName && { tradeName }),
+    collections: [],
+    created: new Date(),
+    ...(paymentTerms?.length && { paymentTerms }),
+    ...(priceTables?.length && { priceTables }),
+    ...(salesChannel && { salesChannel }),
+    ...(sellers && { sellers }),
+    customFields: customFields ?? [],
+    status: ORGANIZATION_STATUSES.ACTIVE,
+  }
+
+  return masterdata.createDocument({
+    dataEntity: ORGANIZATION_DATA_ENTITY,
+    fields: organization,
+    schema: ORGANIZATION_SCHEMA_VERSION,
+  })
+}
+
+const createOrganizationAndCostCenterWithAdminUser = async (
+  _: void,
+  organization: OrganizationInput,
+  ctx: Context
+) => {
+  const {
+    clients: { storefrontPermissions },
+    vtex: { logger },
+  } = ctx
+
+  // create schema if it doesn't exist
+  await checkConfig(ctx)
+
+  try {
+    // create organization
+    const createOrganizationResult = await createOrganization(
+      _,
+      organization,
+      ctx
+    )
+
+    const organizationId = createOrganizationResult.DocumentId
+
+    const { defaultCostCenter, costCenters } = organization
+    const { email, firstName, lastName } = organization.b2bCustomerAdmin
+
+    if (costCenters?.length) {
+      await Promise.all(
+        costCenters?.map(async (costCenter: DefaultCostCenterInput) => {
+          CostCenters.createCostCenter(_, organizationId, costCenter, ctx)
+          const userToAdd = costCenter.user ?? {
+            email,
+            firstName,
+            lastName,
+          }
+
+          createUserAndAttachToOrganization({
+            costCenterId: costCenter.id,
+            email: userToAdd.email,
+            firstName: userToAdd.firstName,
+            lastName: userToAdd.lastName,
+            logger,
+            organizationId,
+            storefrontPermissions,
+          })
+        })
+      )
+    }
+
+    if (defaultCostCenter) {
+      await CostCenters.createCostCenter(
+        _,
+        organizationId,
+        defaultCostCenter,
+        ctx
+      )
+      await createUserAndAttachToOrganization({
+        costCenterId: defaultCostCenter.id,
+        email,
+        firstName,
+        lastName,
+        logger,
+        organizationId,
+        storefrontPermissions,
+      })
+    }
+
+    return {
+      href: createOrganizationResult.Href,
+      organizationId: createOrganizationResult.DocumentId,
+      status: '',
+    }
+  } catch (error) {
+    logger.error({
+      error,
+      message: 'createOrganization-error',
+    })
+    throw new GraphQLError(getErrorMessage(error))
+  }
+}
+
 const Organizations = {
   createOrganization: async (
     _: void,
@@ -82,94 +212,50 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, storefrontPermissions, mail },
+      clients: { storefrontPermissions, mail },
       vtex: { logger },
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    const now = new Date()
-
     try {
-      // create organization
       const organization = {
+        customFields,
         name,
-        ...(tradeName && { tradeName }),
-        collections: [],
-        costCenters: [],
-        created: now,
-        ...(paymentTerms?.length && { paymentTerms }),
-        ...(priceTables?.length && { priceTables }),
-        ...(salesChannel && { salesChannel }),
-        ...(sellers && { sellers }),
-        customFields: customFields ?? [],
-        status: ORGANIZATION_STATUSES.ACTIVE,
-      }
+        paymentTerms,
+        priceTables,
+        salesChannel,
+        sellers,
+        tradeName,
+      } as OrganizationInput
 
-      const createOrganizationResult = await masterdata.createDocument({
-        dataEntity: ORGANIZATION_DATA_ENTITY,
-        fields: organization,
-        schema: ORGANIZATION_SCHEMA_VERSION,
-      })
+      // create organization
+      const createOrganizationResult = await createOrganization(
+        _,
+        organization,
+        ctx
+      )
 
       const organizationId = createOrganizationResult.DocumentId
-
-      const createCostCenter = async (data: any) => {
-        // create cost center
-        const costCenter = {
-          addresses: [data?.address],
-          name: data?.name,
-          organization: organizationId,
-          ...(data?.phoneNumber && {
-            phoneNumber: data?.phoneNumber,
-          }),
-          ...(data?.businessDocument && {
-            businessDocument: data?.businessDocument,
-          }),
-          ...(defaultCostCenter?.customFields && {
-            customFields: defaultCostCenter.customFields,
-          }),
-          ...(data?.stateRegistration && {
-            stateRegistration: data?.stateRegistration,
-          }),
-          ...(data?.sellers && {
-            sellers: data?.sellers,
-          }),
-        }
-
-        const result = await masterdata.createDocument({
-          dataEntity: COST_CENTER_DATA_ENTITY,
-          fields: costCenter,
-          schema: COST_CENTER_SCHEMA_VERSION,
-        })
-
-        if (data.marketingTags && data.marketingTags?.length > 0) {
-          MarketingTags.setMarketingTags(
-            _,
-            { costId: result.DocumentId, tags: data.marketingTags },
-            ctx
-          ).catch((error) => {
-            logger.error({
-              error,
-              message: 'setMarketingTags-error',
-            })
-          })
-        }
-
-        return result
-      }
 
       let costCenterResult: any[] = []
 
       if (!defaultCostCenter && costCenters?.length) {
         costCenterResult = await Promise.all(
           costCenters?.map(async (costCenter: any) =>
-            createCostCenter(costCenter)
+            CostCenters.createCostCenter(_, organizationId, costCenter, ctx)
           )
         )
-      } else {
-        costCenterResult = [await createCostCenter(defaultCostCenter)]
+      } else if (defaultCostCenter) {
+        costCenterResult = [
+          await CostCenters.createCostCenter(
+            _,
+            organizationId,
+            defaultCostCenter,
+            ctx
+          ),
+        ]
       }
 
       const settings = (await B2BSettings.getB2BSettings(
@@ -308,6 +394,39 @@ const Organizations = {
       logger.error({
         error,
         message: 'createOrganizationRequest-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
+    }
+  },
+
+  createOrganizationAndCostCentersWithId: async (
+    _: void,
+    { input }: { input: OrganizationInput },
+    ctx: Context
+  ): Promise<{
+    href: string
+    organizationId: string
+  }> => {
+    const {
+      vtex: { logger },
+    } = ctx
+
+    // create schema if it doesn't exist
+    await checkConfig(ctx)
+
+    try {
+      // create organization
+      const { href, organizationId } =
+        await createOrganizationAndCostCenterWithAdminUser(_, input, ctx)
+
+      return {
+        href,
+        organizationId,
+      }
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'createOrganizationWitId-error',
       })
       throw new GraphQLError(getErrorMessage(error))
     }
@@ -491,117 +610,20 @@ const Organizations = {
       throw new GraphQLError('Organization request already processed')
     }
 
-    const { email, firstName, lastName } = organizationRequest.b2bCustomerAdmin
+    const { email, firstName } = organizationRequest.b2bCustomerAdmin
 
     // if we reach this block, status is declined
     try {
       if (status === ORGANIZATION_REQUEST_STATUSES.APPROVED) {
         try {
-          const {
-            paymentTerms,
-            priceTables,
-            salesChannel,
-            defaultCostCenter,
-            name,
-            tradeName,
-            sellers,
-            customFields,
-            costCenters,
-          } = organizationRequest
-
-          const { costCenterId, id: organizationId } =
-            await Organizations.createOrganization(
+          const { organizationId } =
+            await createOrganizationAndCostCenterWithAdminUser(
               _,
-              {
-                input: {
-                  ...(tradeName && {
-                    tradeName,
-                  }),
-                  b2bCustomerAdmin: {
-                    email,
-                    firstName,
-                    lastName,
-                  },
-                  customFields,
-                  defaultCostCenter: {
-                    address: defaultCostCenter.address,
-                    name: defaultCostCenter.name,
-                    ...(defaultCostCenter.phoneNumber && {
-                      phoneNumber: defaultCostCenter.phoneNumber,
-                    }),
-                    ...(defaultCostCenter.businessDocument && {
-                      businessDocument: defaultCostCenter.businessDocument,
-                    }),
-                    ...(defaultCostCenter.stateRegistration && {
-                      stateRegistration: defaultCostCenter.stateRegistration,
-                    }),
-                    ...(defaultCostCenter.customFields && {
-                      customFields: defaultCostCenter.customFields,
-                    }),
-                    ...(defaultCostCenter.sellers && {
-                      sellers: defaultCostCenter.sellers,
-                    }),
-                    ...(defaultCostCenter.marketingTags && {
-                      marketingTags: defaultCostCenter.marketingTags,
-                    }),
-                  },
-                  name,
-                  paymentTerms,
-                  priceTables,
-                  salesChannel,
-                  sellers,
-                },
-                notifyUsers,
-              },
+              organizationRequest,
               ctx
             )
 
-          if (costCenters && costCenters.length > 0) {
-            await Promise.all(
-              costCenters.map(async (costCenter: any) => {
-                const { id: costId } = await CostCenters.createCostCenter(
-                  _,
-                  {
-                    input: {
-                      ...costCenter,
-                      addresses: [costCenter.address],
-                    },
-                    organizationId,
-                  },
-                  ctx
-                )
-
-                const userToAdd = costCenter.user ?? {
-                  email,
-                  firstName,
-                  lastName,
-                }
-
-                await createUserAndAttachToOrganization({
-                  storefrontPermissions,
-                  email: userToAdd.email,
-                  costCenterId: costId,
-                  organizationId,
-                  firstName: userToAdd.firstName,
-                  lastName: userToAdd.lastName,
-                  logger,
-                })
-              })
-            )
-          }
-
-          const addUserResult = await createUserAndAttachToOrganization({
-            storefrontPermissions,
-            email,
-            costCenterId,
-            organizationId,
-            firstName,
-            lastName,
-            logger,
-          })
-
           if (
-            addUserResult?.status === 'success' &&
             notifyUsers &&
             settings?.transactionEmailSettings?.organizationApproved
           ) {
