@@ -1,3 +1,4 @@
+import type { B2BSettingsInput } from '../../typings'
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
 

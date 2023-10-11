@@ -1,3 +1,5 @@
+import type { Logger } from '@vtex/api/lib/service/logger/logger'
+
 interface ReqContext {
   account: string
   workspace: string
@@ -5,10 +7,6 @@ interface ReqContext {
   region: string
   production: boolean
   userAgent: string
-}
-
-interface Logger {
-  log(content: string, level: LogLevel, details?: any): PromiseLike<void>
 }
 
 interface OperationState {
@@ -43,6 +41,7 @@ interface Seller {
 }
 
 interface OrganizationInput {
+  id?: string
   name: string
   tradeName?: string
   b2bCustomerAdmin: B2BCustomerInput
@@ -62,6 +61,7 @@ interface B2BCustomerInput {
 }
 
 interface DefaultCostCenterInput {
+  id?: string
   name: string
   address: AddressInput
   phoneNumber?: string
@@ -70,9 +70,11 @@ interface DefaultCostCenterInput {
   stateRegistration?: string
   sellers?: Seller[]
   marketingTags?: string[]
+  user?: B2BUserInput
 }
 
 interface CostCenterInput {
+  id?: string
   name: string
   addresses?: AddressInput[]
   paymentTerms?: PaymentTerm[]
@@ -241,4 +243,10 @@ interface B2BSettingsInput {
   organizationCustomFields: CustomFieldSetting[]
   costCenterCustomFields: CustomFieldSetting[]
   transactionEmailSettings: TransactionEmailSetting
+}
+
+interface Result {
+  href: string
+  id: string
+  status: string
 }
