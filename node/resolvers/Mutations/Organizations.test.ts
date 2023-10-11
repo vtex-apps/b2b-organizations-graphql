@@ -23,12 +23,21 @@ import Organizations from './Organizations'
 jest.mock('../config')
 jest.mock('../Queries/Settings')
 
-const mockedOrganizations = Organizations as jest.Mocked<typeof Organizations>
+const mockGetDocument = jest.fn().mockResolvedValue({
+  b2bCustomerAdmin: {
+    email: randEmail(),
+    firstName: randFirstName(),
+    lastName: randLastName(),
+  },
+  defaultCostCenter: {
+    address: {},
+  },
+  status: ORGANIZATION_REQUEST_STATUSES.PENDING,
+} as OrganizationRequest)
 
 const mockContext = (
   createdId: string = randUuid(),
-  roleId: string = randUuid(),
-  stateRegistration?: string
+  roleId: string = randUuid()
 ) => {
   return {
     clients: {
@@ -36,18 +45,7 @@ const mockContext = (
         createDocument: jest.fn().mockResolvedValue({
           DocumentId: createdId,
         }),
-        getDocument: jest.fn().mockResolvedValueOnce({
-          b2bCustomerAdmin: {
-            email: randEmail(),
-            firstName: randFirstName(),
-            lastName: randLastName(),
-          },
-          defaultCostCenter: {
-            address: {},
-            stateRegistration,
-          },
-          status: ORGANIZATION_REQUEST_STATUSES.PENDING,
-        } as OrganizationRequest),
+        getDocument: mockGetDocument,
         searchDocuments: jest.fn().mockResolvedValue({}),
         updatePartialDocument: jest.fn().mockResolvedValueOnce({}),
       },
@@ -83,22 +81,31 @@ describe('given an Organization Mutation', () => {
     let result: { id?: string; message: string; status: string }
     let mockedContext: Context
 
-    beforeEach(() => {
-      jest
-        .spyOn(mockedOrganizations, 'createOrganization')
-        .mockResolvedValueOnce({
-          costCenterId: randUuid(),
-          href: '',
-          id: orgId,
-          status: '',
-        })
-    })
+    const createDate = new Date('2023-10-10')
 
     describe('with status APPROVED and state registration', () => {
       const stateRegistration = randWord()
 
+      const organization = {
+        b2bCustomerAdmin: {
+          email: randEmail(),
+          firstName: randFirstName(),
+          lastName: randLastName(),
+        },
+        defaultCostCenter: {
+          stateRegistration,
+        },
+        id: orgId,
+        name: randCompanyName(),
+        stateRegistration,
+        status: ORGANIZATION_REQUEST_STATUSES.PENDING,
+        tradeName: randAirportName(),
+      } as unknown as OrganizationInput
+
       beforeEach(async () => {
-        mockedContext = mockContext(stateRegistration)
+        mockGetDocument.mockResolvedValueOnce(organization)
+        jest.useFakeTimers().setSystemTime(createDate)
+        mockedContext = mockContext(orgId)
         result = await Organizations.updateOrganizationRequest(
           jest.fn() as never,
           input,
@@ -112,12 +119,17 @@ describe('given an Organization Mutation', () => {
       })
 
       it('should call create organization with data', () => {
-        expect(mockedOrganizations.createOrganization).toHaveBeenCalledTimes(1)
-
         expect(
-          mockedOrganizations.createOrganization.mock.calls[0]?.[1]?.input
-            ?.defaultCostCenter?.stateRegistration
-        ).toEqual(stateRegistration)
+          mockedContext.clients.masterdata.createDocument
+        ).toHaveBeenNthCalledWith(2, {
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: {
+            addresses: undefined,
+            organization: orgId,
+            stateRegistration,
+          },
+          schema: COST_CENTER_SCHEMA_VERSION,
+        })
       })
 
       it('should save the user in store front permission', () => {
@@ -128,8 +140,23 @@ describe('given an Organization Mutation', () => {
     })
 
     describe('with status APPROVED and without state registration', () => {
+      const organization = {
+        b2bCustomerAdmin: {
+          email: randEmail(),
+          firstName: randFirstName(),
+          lastName: randLastName(),
+        },
+        defaultCostCenter: {},
+        id: orgId,
+        name: randCompanyName(),
+        status: ORGANIZATION_REQUEST_STATUSES.PENDING,
+        tradeName: randAirportName(),
+      } as unknown as OrganizationInput
+
       beforeEach(async () => {
-        mockedContext = mockContext()
+        mockGetDocument.mockResolvedValueOnce(organization)
+        mockedContext = mockContext(orgId)
+
         result = await Organizations.updateOrganizationRequest(
           jest.fn() as never,
           input,
@@ -143,12 +170,16 @@ describe('given an Organization Mutation', () => {
       })
 
       it('should call create organization without state registration', () => {
-        expect(mockedOrganizations.createOrganization).toHaveBeenCalledTimes(1)
-
         expect(
-          mockedOrganizations.createOrganization.mock.calls[0]?.[1]?.input
-            ?.defaultCostCenter?.stateRegistration
-        ).toBeUndefined()
+          mockedContext.clients.masterdata.createDocument
+        ).toHaveBeenNthCalledWith(2, {
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: {
+            addresses: undefined,
+            organization: orgId,
+          },
+          schema: COST_CENTER_SCHEMA_VERSION,
+        })
       })
 
       it('should save the user in store front permission', () => {
@@ -185,13 +216,12 @@ describe('given an Organization Mutation', () => {
       let result: { href: any; organizationId: any }
       let mockedContext: Context
 
-      const createDate = new Date('2020-01-01')
-
       const roleId = randUuid()
 
-      jest.useFakeTimers().setSystemTime(createDate)
+      const createDate = new Date('2020-01-01')
 
       beforeEach(async () => {
+        jest.useFakeTimers().setSystemTime(createDate)
         mockedContext = mockContext(orgId, roleId)
         result = await Organizations.createOrganizationAndCostCentersWithId(
           jest.fn() as never,
@@ -289,9 +319,8 @@ describe('given an Organization Mutation', () => {
 
       const roleId = randUuid()
 
-      jest.useFakeTimers().setSystemTime(createDate)
-
       beforeEach(async () => {
+        jest.useFakeTimers().setSystemTime(createDate)
         mockedContext = mockContext(orgId, roleId)
         result = await Organizations.createOrganizationAndCostCentersWithId(
           jest.fn() as never,
