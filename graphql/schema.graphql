@@ -107,7 +107,7 @@ type Mutation {
   ): OrganizationCostCenterResponse
     @checkAdminAccess
     @cacheControl(scope: PRIVATE)
-  createOrganizationAndCostCenterWithAdminUser(
+  createOrganizationAndCostCentersWithId(
     input: OrganizationInput!
   ): MasterDataResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   createCostCenter(
