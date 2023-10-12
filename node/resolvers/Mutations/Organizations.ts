@@ -27,7 +27,7 @@ import {
 import checkConfig from '../config'
 import message from '../message'
 import B2BSettings from '../Queries/Settings'
-import CostCenters from './CostCenters'
+import CostCenterRepository from '../repository/CostCenterRepository'
 
 const createUserAndAttachToOrganization = async ({
   storefrontPermissions,
@@ -140,7 +140,15 @@ const createOrganizationAndCostCenterWithAdminUser = async (
     if (costCenters?.length) {
       await Promise.all(
         costCenters?.map(async (costCenter: DefaultCostCenterInput) => {
-          CostCenters.createCostCenter(_, organizationId, costCenter, ctx)
+          CostCenterRepository.saveCostCenter(
+            _,
+            organizationId,
+            {
+              addresses: [costCenter.address],
+              ...costCenter,
+            },
+            ctx
+          )
           const userToAdd = costCenter.user ?? {
             email,
             firstName,
@@ -161,10 +169,13 @@ const createOrganizationAndCostCenterWithAdminUser = async (
     }
 
     if (defaultCostCenter) {
-      await CostCenters.createCostCenter(
+      await CostCenterRepository.saveCostCenter(
         _,
         organizationId,
-        defaultCostCenter,
+        {
+          addresses: [defaultCostCenter.address],
+          ...defaultCostCenter,
+        },
         ctx
       )
       await createUserAndAttachToOrganization({
@@ -244,15 +255,26 @@ const Organizations = {
       if (!defaultCostCenter && costCenters?.length) {
         costCenterResult = await Promise.all(
           costCenters?.map(async (costCenter: any) =>
-            CostCenters.createCostCenter(_, organizationId, costCenter, ctx)
+            CostCenterRepository.saveCostCenter(
+              _,
+              organizationId,
+              {
+                addresses: [costCenter.address],
+                ...costCenter,
+              },
+              ctx
+            )
           )
         )
       } else if (defaultCostCenter) {
         costCenterResult = [
-          await CostCenters.createCostCenter(
+          await CostCenterRepository.saveCostCenter(
             _,
             organizationId,
-            defaultCostCenter,
+            {
+              addresses: [defaultCostCenter.address],
+              ...defaultCostCenter,
+            },
             ctx
           ),
         ]

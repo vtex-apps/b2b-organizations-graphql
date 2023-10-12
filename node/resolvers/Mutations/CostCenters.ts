@@ -1,73 +1,11 @@
 import {
   COST_CENTER_DATA_ENTITY,
-  COST_CENTER_SCHEMA_VERSION,
   ORGANIZATION_DATA_ENTITY,
 } from '../../mdSchema'
-import type { AddressInput, CostCenterInput, Result } from '../../typings'
+import type { AddressInput, CostCenterInput } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
-import MarketingTags from './MarketingTags'
-
-const createCostCenter = async (
-  _: void,
-  organizationId: string,
-  {
-    id,
-    addresses,
-    name,
-    paymentTerms,
-    phoneNumber,
-    businessDocument,
-    stateRegistration,
-    customFields,
-    sellers,
-    marketingTags,
-  }: CostCenterInput,
-  ctx: Context
-): Promise<Result> => {
-  const {
-    clients: { masterdata },
-    vtex: { logger },
-  } = ctx
-
-  const costCenter = {
-    addresses,
-    id,
-    name,
-    organization: organizationId,
-    ...(paymentTerms && { paymentTerms }),
-    ...(phoneNumber && { phoneNumber }),
-    ...(businessDocument && { businessDocument }),
-    ...(stateRegistration && { stateRegistration }),
-    ...(customFields && { customFields }),
-    ...(sellers && { sellers }),
-  }
-
-  const createCostCenterResult = await masterdata.createDocument({
-    dataEntity: COST_CENTER_DATA_ENTITY,
-    fields: costCenter,
-    schema: COST_CENTER_SCHEMA_VERSION,
-  })
-
-  if (marketingTags && marketingTags?.length > 0) {
-    MarketingTags.setMarketingTags(
-      _,
-      { costId: createCostCenterResult.DocumentId, tags: marketingTags },
-      ctx
-    ).catch((error) => {
-      logger.error({
-        error,
-        message: 'setMarketingTags-error',
-      })
-    })
-  }
-
-  return {
-    href: createCostCenterResult.Href,
-    id: createCostCenterResult.DocumentId,
-    status: '',
-  }
-}
+import CostCenterRepository from '../repository/CostCenterRepository'
 
 const CostCenters = {
   createCostCenter: async (
@@ -126,7 +64,12 @@ const CostCenters = {
         stateRegistration,
       }
 
-      return await createCostCenter(_, organizationId, costCenter, ctx)
+      return await CostCenterRepository.saveCostCenter(
+        _,
+        organizationId,
+        costCenter,
+        ctx
+      )
     } catch (error) {
       logger.error({
         error,
@@ -315,4 +258,4 @@ const CostCenters = {
   },
 }
 
-export default { createCostCenter, CostCenters }
+export default CostCenters
