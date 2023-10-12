@@ -5,6 +5,7 @@ import {
   ORGANIZATION_FIELDS,
 } from '../mdSchema'
 import GraphQLError, { getErrorMessage } from '../utils/GraphQLError'
+import type { CostCenter, Organization } from '../typings'
 
 export const organizationName = async (
   { orgId }: { orgId: string },

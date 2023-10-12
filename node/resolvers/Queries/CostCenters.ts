@@ -4,6 +4,7 @@ import {
   COST_CENTER_FIELDS,
   COST_CENTER_SCHEMA_VERSION,
 } from '../../mdSchema'
+import type { Address, CostCenter } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import Organizations from './Organizations'

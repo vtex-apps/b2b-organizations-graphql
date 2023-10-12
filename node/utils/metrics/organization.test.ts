@@ -24,6 +24,12 @@ import {
   sendOrganizationStatusMetric,
   sendUpdateOrganizationMetric,
 } from './organization'
+import type {
+  Collection,
+  CustomField,
+  Organization,
+  PaymentTerm,
+} from '../../typings'
 
 jest.mock('./metrics')
 afterEach(() => {

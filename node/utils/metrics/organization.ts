@@ -3,6 +3,7 @@ import { isEqual } from 'lodash'
 
 import type { Metric } from './metrics'
 import { B2B_METRIC_NAME, sendMetric } from './metrics'
+import type { Organization } from '../../typings'
 
 interface UpdateOrganizationFieldsMetric {
   update_details: { properties: string[] }
