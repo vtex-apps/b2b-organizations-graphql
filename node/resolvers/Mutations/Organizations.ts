@@ -140,11 +140,13 @@ const createOrganizationAndCostCenterWithAdminUser = async (
     if (costCenters?.length) {
       await Promise.all(
         costCenters?.map(async (costCenter: DefaultCostCenterInput) => {
+          const addresses = costCenter.address ? [costCenter.address] : []
+
           CostCenterRepository.saveCostCenter(
             _,
             organizationId,
             {
-              addresses: [costCenter.address],
+              addresses,
               ...costCenter,
             },
             ctx
@@ -169,11 +171,15 @@ const createOrganizationAndCostCenterWithAdminUser = async (
     }
 
     if (defaultCostCenter) {
+      const addresses = defaultCostCenter.address
+        ? [defaultCostCenter.address]
+        : []
+
       await CostCenterRepository.saveCostCenter(
         _,
         organizationId,
         {
-          addresses: [defaultCostCenter.address],
+          addresses,
           ...defaultCostCenter,
         },
         ctx
@@ -254,25 +260,31 @@ const Organizations = {
 
       if (!defaultCostCenter && costCenters?.length) {
         costCenterResult = await Promise.all(
-          costCenters?.map(async (costCenter: any) =>
+          costCenters?.map(async (costCenter: any) => {
+            const addresses = costCenter.address ? [costCenter.address] : []
+
             CostCenterRepository.saveCostCenter(
               _,
               organizationId,
               {
-                addresses: [costCenter.address],
+                addresses,
                 ...costCenter,
               },
               ctx
             )
-          )
+          })
         )
       } else if (defaultCostCenter) {
+        const addresses = defaultCostCenter.address
+          ? [defaultCostCenter.address]
+          : []
+
         costCenterResult = [
           await CostCenterRepository.saveCostCenter(
             _,
             organizationId,
             {
-              addresses: [defaultCostCenter.address],
+              addresses,
               ...defaultCostCenter,
             },
             ctx

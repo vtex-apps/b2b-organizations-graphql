@@ -1,4 +1,5 @@
 import {
+  randAddress,
   randAirportName,
   randCompanyName,
   randEmail,
@@ -16,7 +17,11 @@ import {
   ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
-import type { OrganizationInput, OrganizationRequest } from '../../typings'
+import type {
+  AddressInput,
+  OrganizationInput,
+  OrganizationRequest,
+} from '../../typings'
 import { ORGANIZATION_REQUEST_STATUSES } from '../../utils/constants'
 import Organizations from './Organizations'
 
@@ -93,6 +98,7 @@ describe('given an Organization Mutation', () => {
           lastName: randLastName(),
         },
         defaultCostCenter: {
+          address: randAddress(),
           stateRegistration,
         },
         id: orgId,
@@ -124,7 +130,7 @@ describe('given an Organization Mutation', () => {
         ).toHaveBeenNthCalledWith(2, {
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: {
-            addresses: undefined,
+            addresses: [organization.defaultCostCenter?.address],
             organization: orgId,
             stateRegistration,
           },
@@ -175,7 +181,7 @@ describe('given an Organization Mutation', () => {
         ).toHaveBeenNthCalledWith(2, {
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: {
-            addresses: undefined,
+            addresses: [],
             organization: orgId,
           },
           schema: COST_CENTER_SCHEMA_VERSION,
@@ -194,10 +200,12 @@ describe('given an Organization Mutation', () => {
 
     describe('with organization id and without cost center id', () => {
       const costCenter = {
+        address: randAddress() as unknown as AddressInput,
         name: randLastName(),
       }
 
       const defaultCostCenter = {
+        address: randAddress() as unknown as AddressInput,
         name: randSuperheroName(),
       }
 
@@ -253,9 +261,10 @@ describe('given an Organization Mutation', () => {
         ).toHaveBeenNthCalledWith(2, {
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: {
-            addresses: undefined,
+            addresses: [costCenter.address],
+            id: undefined,
+            name: costCenter.name,
             organization: orgId,
-            ...costCenter,
           },
           schema: COST_CENTER_SCHEMA_VERSION,
         })
@@ -266,9 +275,9 @@ describe('given an Organization Mutation', () => {
         ).toHaveBeenNthCalledWith(3, {
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: {
-            addresses: undefined,
+            addresses: [defaultCostCenter.address],
+            name: defaultCostCenter.name,
             organization: orgId,
-            ...defaultCostCenter,
           },
           schema: COST_CENTER_SCHEMA_VERSION,
         })
@@ -352,7 +361,7 @@ describe('given an Organization Mutation', () => {
         ).toHaveBeenNthCalledWith(2, {
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: {
-            addresses: undefined,
+            addresses: [],
             organization: orgId,
             ...costCenter,
           },
@@ -365,7 +374,7 @@ describe('given an Organization Mutation', () => {
         ).toHaveBeenNthCalledWith(3, {
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: {
-            addresses: undefined,
+            addresses: [],
             organization: orgId,
             ...defaultCostCenter,
           },
