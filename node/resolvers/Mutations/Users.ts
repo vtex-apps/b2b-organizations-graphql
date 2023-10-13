@@ -10,6 +10,7 @@ import {
   sendRemoveUserMetric,
   sendUpdateUserMetric,
 } from '../../utils/metrics/user'
+import type { UserArgs } from '../../typings'
 
 export const getUserRoleSlug: (
   id: string,

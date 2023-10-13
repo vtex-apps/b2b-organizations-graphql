@@ -107,6 +107,9 @@ type Mutation {
   ): OrganizationCostCenterResponse
     @checkAdminAccess
     @cacheControl(scope: PRIVATE)
+  createOrganizationAndCostCentersWithId(
+    input: OrganizationInput!
+  ): MasterDataResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   createCostCenter(
     organizationId: ID
     input: CostCenterInput!
@@ -440,6 +443,7 @@ type UISettings {
 scalar Data
 
 input OrganizationInput {
+  id: String
   name: String
   tradeName: String
   b2bCustomerAdmin: B2BUserInput
@@ -459,6 +463,7 @@ input B2BUserInput {
 }
 
 input DefaultCostCenterInput {
+  id: String
   name: String
   address: AddressInput
   phoneNumber: String

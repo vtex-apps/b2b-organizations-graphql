@@ -2,6 +2,7 @@ import { randAlphaNumeric, randEmail, randUser, randUuid } from '@ngneat/falso'
 import { GraphQLError } from 'graphql'
 
 import Users from './Users'
+import type { UserArgs } from '../../typings'
 
 jest.mock('../config')
 jest.mock('../../utils/metrics/impersonate')

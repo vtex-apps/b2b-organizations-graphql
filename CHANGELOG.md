@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- add new mutation to create organization and cost center specifying the id
+
 ## [0.41.0] - 2023-10-09
 
 ### Fixed

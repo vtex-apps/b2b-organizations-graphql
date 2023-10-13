@@ -1,11 +1,11 @@
 import {
   COST_CENTER_DATA_ENTITY,
-  COST_CENTER_SCHEMA_VERSION,
   ORGANIZATION_DATA_ENTITY,
 } from '../../mdSchema'
+import type { AddressInput, CostCenterInput } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
-import MarketingTags from './MarketingTags'
+import CostCenterRepository from '../repository/CostCenterRepository'
 
 const CostCenters = {
   createCostCenter: async (
@@ -26,7 +26,6 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
       vtex,
       vtex: { logger },
     } = ctx
@@ -54,41 +53,23 @@ const CostCenters = {
     }
 
     try {
-      const costCenter = {
+      const costCenter: CostCenterInput = {
         addresses,
+        businessDocument,
+        customFields,
+        marketingTags,
         name,
-        organization: organizationId,
-        ...(phoneNumber && { phoneNumber }),
-        ...(businessDocument && { businessDocument }),
-        ...(stateRegistration && { stateRegistration }),
-        ...(customFields && { customFields }),
-        ...(sellers && { sellers }),
+        phoneNumber,
+        sellers,
+        stateRegistration,
       }
 
-      const createCostCenterResult = await masterdata.createDocument({
-        dataEntity: COST_CENTER_DATA_ENTITY,
-        fields: costCenter,
-        schema: COST_CENTER_SCHEMA_VERSION,
-      })
-
-      if (marketingTags && marketingTags?.length > 0) {
-        MarketingTags.setMarketingTags(
-          _,
-          { costId: createCostCenterResult.DocumentId, tags: marketingTags },
-          ctx
-        ).catch((error) => {
-          logger.error({
-            error,
-            message: 'setMarketingTags-error',
-          })
-        })
-      }
-
-      return {
-        href: createCostCenterResult.Href,
-        id: createCostCenterResult.DocumentId,
-        status: '',
-      }
+      return await CostCenterRepository.createCostCenter(
+        _,
+        organizationId,
+        costCenter,
+        ctx
+      )
     } catch (error) {
       logger.error({
         error,

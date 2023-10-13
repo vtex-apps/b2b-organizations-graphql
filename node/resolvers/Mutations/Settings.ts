@@ -1,5 +1,6 @@
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig, { getAppId } from '../config'
+import type { B2BSettingsInput } from '../../typings'
 
 export const B2B_SETTINGS_DOCUMENT_ID = 'b2bSettings'
 

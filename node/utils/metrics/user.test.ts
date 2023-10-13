@@ -7,6 +7,7 @@ import {
   sendRemoveUserMetric,
   sendUpdateUserMetric,
 } from './user'
+import type { UserArgs } from '../../typings'
 
 jest.mock('./metrics')
 afterEach(() => {
