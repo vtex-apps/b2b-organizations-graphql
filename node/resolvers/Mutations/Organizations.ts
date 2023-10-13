@@ -197,7 +197,7 @@ const createOrganizationAndCostCenterWithAdminUser = async (
 
     return {
       href: createOrganizationResult.Href,
-      organizationId: createOrganizationResult.DocumentId,
+      id: organizationId,
       status: '',
     }
   } catch (error) {
@@ -439,7 +439,7 @@ const Organizations = {
     ctx: Context
   ): Promise<{
     href: string
-    organizationId: string
+    id: string
   }> => {
     const {
       vtex: { logger },
@@ -450,12 +450,15 @@ const Organizations = {
 
     try {
       // create organization
-      const { href, organizationId } =
-        await createOrganizationAndCostCenterWithAdminUser(_, input, ctx)
+      const { href, id } = await createOrganizationAndCostCenterWithAdminUser(
+        _,
+        input,
+        ctx
+      )
 
       return {
         href,
-        organizationId,
+        id,
       }
     } catch (error) {
       logger.error({
@@ -650,7 +653,7 @@ const Organizations = {
     try {
       if (status === ORGANIZATION_REQUEST_STATUSES.APPROVED) {
         try {
-          const { organizationId } =
+          const { id: organizationId } =
             await createOrganizationAndCostCenterWithAdminUser(
               _,
               organizationRequest,

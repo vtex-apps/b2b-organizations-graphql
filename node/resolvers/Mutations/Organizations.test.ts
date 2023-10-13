@@ -221,7 +221,7 @@ describe('given an Organization Mutation', () => {
         tradeName: randAirportName(),
       } as OrganizationInput
 
-      let result: { href: any; organizationId: any }
+      let result: { href: any; id: any }
       let mockedContext: Context
 
       const roleId = randUuid()
@@ -295,7 +295,7 @@ describe('given an Organization Mutation', () => {
         })
       })
       it('should create the organization with the id specified', () => {
-        expect(result.organizationId).toEqual(orgId)
+        expect(result.id).toEqual(orgId)
       })
     })
     describe('with organization id and cost center id', () => {
@@ -321,7 +321,7 @@ describe('given an Organization Mutation', () => {
         tradeName: randAirportName(),
       } as OrganizationInput
 
-      let result: { href: any; organizationId: any }
+      let result: { href: any; id: any }
       let mockedContext: Context
 
       const createDate = new Date('2020-01-01')
@@ -404,7 +404,7 @@ describe('given an Organization Mutation', () => {
         })
       })
       it('should create the organization with the id specified', () => {
-        expect(result.organizationId).toEqual(orgId)
+        expect(result.id).toEqual(orgId)
       })
     })
   })
