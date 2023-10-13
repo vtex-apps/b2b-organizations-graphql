@@ -64,7 +64,7 @@ const CostCenters = {
         stateRegistration,
       }
 
-      return await CostCenterRepository.saveCostCenter(
+      return await CostCenterRepository.createCostCenter(
         _,
         organizationId,
         costCenter,

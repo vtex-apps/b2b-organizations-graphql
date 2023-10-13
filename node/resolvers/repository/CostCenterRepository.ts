@@ -6,7 +6,7 @@ import {
 import MarketingTags from '../Mutations/MarketingTags'
 
 const CostCenterRepository = {
-  saveCostCenter: async (
+  createCostCenter: async (
     _: void,
     organizationId: string,
     {
