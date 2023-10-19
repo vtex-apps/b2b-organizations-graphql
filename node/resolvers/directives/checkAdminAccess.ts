@@ -18,7 +18,8 @@ export class CheckAdminAccess extends SchemaDirectiveVisitor {
         clients: { identity },
       } = context
 
-      let token = adminUserAuthToken
+      let token =
+        adminUserAuthToken ?? (context?.headers.vtexidclientautcookie as string)
 
       const apiToken = context?.headers['vtex-api-apptoken'] as string
       const appKey = context?.headers['vtex-api-appkey'] as string
