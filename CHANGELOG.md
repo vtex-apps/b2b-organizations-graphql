@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- fallback to check an admin token on the header
+
 ## [0.42.0] - 2023-10-13
 
 ### Added
