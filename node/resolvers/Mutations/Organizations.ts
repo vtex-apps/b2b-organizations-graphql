@@ -142,15 +142,17 @@ const createOrganizationAndCostCenterWithAdminUser = async (
         costCenters?.map(async (costCenter: DefaultCostCenterInput) => {
           const addresses = costCenter.address ? [costCenter.address] : []
 
-          CostCenterRepository.createCostCenter(
-            _,
-            organizationId,
-            {
-              addresses,
-              ...costCenter,
-            },
-            ctx
-          )
+          const { id: costCenterId } =
+            await CostCenterRepository.createCostCenter(
+              _,
+              organizationId,
+              {
+                addresses,
+                ...costCenter,
+              },
+              ctx
+            )
+
           const userToAdd = costCenter.user ?? {
             email,
             firstName,
@@ -158,7 +160,7 @@ const createOrganizationAndCostCenterWithAdminUser = async (
           }
 
           createUserAndAttachToOrganization({
-            costCenterId: costCenter.id,
+            costCenterId,
             email: userToAdd.email,
             firstName: userToAdd.firstName,
             lastName: userToAdd.lastName,
@@ -175,7 +177,7 @@ const createOrganizationAndCostCenterWithAdminUser = async (
         ? [defaultCostCenter.address]
         : []
 
-      await CostCenterRepository.createCostCenter(
+      const { id: costCenterId } = await CostCenterRepository.createCostCenter(
         _,
         organizationId,
         {
@@ -184,8 +186,9 @@ const createOrganizationAndCostCenterWithAdminUser = async (
         },
         ctx
       )
+
       await createUserAndAttachToOrganization({
-        costCenterId: defaultCostCenter.id,
+        costCenterId,
         email,
         firstName,
         lastName,
