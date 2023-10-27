@@ -41,15 +41,21 @@ const mockGetDocument = jest.fn().mockResolvedValue({
 } as OrganizationRequest)
 
 const mockContext = (
-  createdId: string = randUuid(),
-  roleId: string = randUuid()
+  orgId: string = randUuid(),
+  roleId: string = randUuid(),
+  costId: string = randUuid()
 ) => {
   return {
     clients: {
       masterdata: {
-        createDocument: jest.fn().mockResolvedValue({
-          DocumentId: createdId,
-        }),
+        createDocument: jest
+          .fn()
+          .mockResolvedValueOnce({
+            DocumentId: orgId,
+          })
+          .mockResolvedValue({
+            DocumentId: costId,
+          }),
         getDocument: mockGetDocument,
         searchDocuments: jest.fn().mockResolvedValue({}),
         updatePartialDocument: jest.fn().mockResolvedValueOnce({}),
@@ -225,12 +231,13 @@ describe('given an Organization Mutation', () => {
       let mockedContext: Context
 
       const roleId = randUuid()
+      const costId = randUuid()
 
       const createDate = new Date('2020-01-01')
 
       beforeEach(async () => {
         jest.useFakeTimers().setSystemTime(createDate)
-        mockedContext = mockContext(orgId, roleId)
+        mockedContext = mockContext(orgId, roleId, costId)
         result = await Organizations.createOrganizationAndCostCentersWithId(
           jest.fn() as never,
           { input },
@@ -287,7 +294,7 @@ describe('given an Organization Mutation', () => {
           mockedContext.clients.storefrontPermissions.saveUser
         ).toBeCalledWith({
           clId: null,
-          costId: undefined,
+          costId,
           email: input.b2bCustomerAdmin.email,
           name: `${input.b2bCustomerAdmin.firstName} ${input.b2bCustomerAdmin.lastName}`,
           orgId,
@@ -299,13 +306,14 @@ describe('given an Organization Mutation', () => {
       })
     })
     describe('with organization id and cost center id', () => {
+      const costId = randUuid()
       const costCenter = {
-        id: randUuid(),
+        id: costId,
         name: randLastName(),
       }
 
       const defaultCostCenter = {
-        id: randUuid(),
+        id: costId,
         name: randSuperheroName(),
       }
 
@@ -330,7 +338,7 @@ describe('given an Organization Mutation', () => {
 
       beforeEach(async () => {
         jest.useFakeTimers().setSystemTime(createDate)
-        mockedContext = mockContext(orgId, roleId)
+        mockedContext = mockContext(orgId, roleId, costId)
         result = await Organizations.createOrganizationAndCostCentersWithId(
           jest.fn() as never,
           { input },
