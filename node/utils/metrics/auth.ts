@@ -4,7 +4,6 @@ import type { Metric } from './metrics'
 import { B2B_METRIC_NAME, sendMetric } from './metrics'
 
 export interface AuthAuditMetric {
-  app: 'b2b-organizations'
   operation: string
   forwardedHost: string
   caller: string
@@ -25,7 +24,7 @@ export class AuthMetric implements Metric {
   constructor(account: string, fields: AuthAuditMetric) {
     this.account = account
     this.fields = fields
-    this.kind = 'auth-event'
+    this.kind = 'b2b-organization-auth-event'
     this.description = 'Auth metric event'
   }
 }
