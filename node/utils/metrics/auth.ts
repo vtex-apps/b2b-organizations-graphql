@@ -4,6 +4,7 @@ import type { Metric } from './metrics'
 import { B2B_METRIC_NAME, sendMetric } from './metrics'
 
 export interface AuthAuditMetric {
+  app: 'b2b-organizations'
   operation: string
   forwardedHost: string
   caller: string
