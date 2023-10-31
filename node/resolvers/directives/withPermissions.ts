@@ -6,11 +6,13 @@ import { SchemaDirectiveVisitor } from 'graphql-tools'
 
 import type StorefrontPermissions from '../../clients/storefrontPermissions'
 
-export const getCheckUserPermission = async (
+export const getUserPermission = async (
   storefrontPermissions: StorefrontPermissions
-) =>
+) => {
   const result = await storefrontPermissions.checkUserPermission()
+
   return result?.data?.checkUserPermission ?? null
+}
 
 export class WithPermissions extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -29,7 +31,7 @@ export class WithPermissions extends SchemaDirectiveVisitor {
 
       const appClients = context.vtex as any
 
-      appClients.storefrontPermissions = await getCheckUserPermission(
+      appClients.storefrontPermissions = await getUserPermission(
         storefrontPermissions
       ).catch((error: any) => {
         if (!adminUserAuthToken) {

@@ -3,7 +3,7 @@ import { defaultFieldResolver } from 'graphql'
 import { SchemaDirectiveVisitor } from 'graphql-tools'
 
 import sendAuthMetric, { AuthMetric } from '../../utils/metrics/auth'
-import { getCheckUserPermission } from './withPermissions'
+import { getUserPermission } from './withPermissions'
 
 export class AuditAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -36,12 +36,12 @@ export class AuditAccess extends SchemaDirectiveVisitor {
       let permissions = []
 
       if (hasAdminToken || hasStoreToken) {
-        const checkUserPermissions = await getCheckUserPermission(
-          storefrontPermissions
-        )
+        const userPermissions = await getUserPermission(storefrontPermissions)
 
-        role = checkUserPermissions.role.slug
-        permissions = checkUserPermissions.permissions
+        if (userPermissions) {
+          role = userPermissions.role?.slug
+          permissions = userPermissions.permissions
+        }
       }
 
       const authMetric = new AuthMetric(account, {
