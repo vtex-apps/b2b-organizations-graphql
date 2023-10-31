@@ -9,9 +9,8 @@ import type StorefrontPermissions from '../../clients/storefrontPermissions'
 export const getCheckUserPermission = async (
   storefrontPermissions: StorefrontPermissions
 ) =>
-  storefrontPermissions.checkUserPermission().then((result: any) => {
-    return result?.data?.checkUserPermission ?? null
-  })
+  const result = await storefrontPermissions.checkUserPermission()
+  return result?.data?.checkUserPermission ?? null
 
 export class WithPermissions extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
