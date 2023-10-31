@@ -27,9 +27,9 @@ export class AuditAccess extends SchemaDirectiveVisitor {
       const forwardedHost = request.headers['x-forwarded-host'] as string
       const caller = request.headers['x-vtex-caller'] as string
 
-      const hasAdminToken =
-        !!adminUserAuthToken ??
-        (context?.headers.vtexidclientautcookie as string)
+      const hasAdminToken = !!(
+        adminUserAuthToken ?? (context?.headers.vtexidclientautcookie as string)
+      )
 
       const hasStoreToken = !!storeUserAuthToken
       const hasApiToken = !!request.headers['vtex-api-apptoken']
