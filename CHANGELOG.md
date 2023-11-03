@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.43.2] - 2023-11-03
+
 ### Fixed
 
 - Fix costCenterId null in the response when using 'createOrganization' mutation
