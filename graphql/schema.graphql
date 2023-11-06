@@ -17,16 +17,18 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): OrganizationResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  ): OrganizationResult @cacheControl(scope: PUBLIC, maxAge: SHORT) @auditAccess
 
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
 
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
   getOrganizationByIdStorefront(id: ID): Organization
     @withSession
     @cacheControl(scope: PRIVATE)
+    @auditAccess
   getCostCenters(
     search: String
     page: Int = 1
@@ -41,7 +43,7 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): CostCenterResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  ): CostCenterResult @cacheControl(scope: PUBLIC, maxAge: SHORT) @auditAccess
   getCostCentersByOrganizationIdStorefront(
     id: ID
     search: String
@@ -52,9 +54,11 @@ type Query {
   ): CostCenterResult @withSession @cacheControl(scope: PRIVATE)
   getCostCenterById(id: ID!): CostCenter
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
+    @auditAccess
   getUsers(organizationId: ID, costCenterId: ID): [B2BUser]
     @withSession
     @checkUserAccess
@@ -71,20 +75,29 @@ type Query {
     @withSession
     @checkUserAccess
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-  getPaymentTerms: [PaymentTerm] @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getPaymentTerms: [PaymentTerm]
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
 
   getOrganizationsByEmail(email: String): [B2BOrganization]
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
+    @auditAccess
 
   checkOrganizationIsActive(id: String): Boolean @cacheControl(scope: PRIVATE)
-  getSalesChannels: [Channels] @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getSalesChannels: [Channels]
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
   getBinding(email: String!): Boolean
     @withSession
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
   getMarketingTags(costId: ID!): MarketingTags
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
-  getB2BSettings: B2BSettings @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
+  getB2BSettings: B2BSettings
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
   getSellers: [Seller] @checkAdminAccess @cacheControl(scope: PRIVATE)
 }
 
@@ -93,7 +106,7 @@ type Mutation {
   createOrganizationRequest(
     input: OrganizationInput!
     notifyUsers: Boolean
-  ): MasterDataResponse
+  ): MasterDataResponse @auditAccess
   updateOrganizationRequest(
     id: ID!
     status: String!

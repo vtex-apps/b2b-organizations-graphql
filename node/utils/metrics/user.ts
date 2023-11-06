@@ -1,8 +1,8 @@
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
+import type { UserArgs } from '../../typings'
 import type { Metric } from './metrics'
 import { B2B_METRIC_NAME, sendMetric } from './metrics'
-import type { UserArgs } from '../../typings'
 
 interface UserMetricType {
   description: string

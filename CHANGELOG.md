@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- add an authentication metric to check if the access is authenticated
+
 ## [0.43.2] - 2023-11-03
 
 ### Fixed
