@@ -313,7 +313,7 @@ const Organizations = {
       }
 
       return {
-        costCenterId: costCenterResult[0].DocumentId,
+        costCenterId: costCenterResult[0].id,
         href: createOrganizationResult.Href,
         id: createOrganizationResult.DocumentId,
         status: '',

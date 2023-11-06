@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - add an authentication metric to check if the access is authenticated
 
+## [0.43.2] - 2023-11-03
+
+### Fixed
+
+- Fix costCenterId null in the response when using 'createOrganization' mutation
+
 ## [0.43.1] - 2023-10-27
 
 ### Fixed
