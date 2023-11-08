@@ -13,6 +13,7 @@ const CostCenters = {
     {
       organizationId,
       input: {
+        id,
         name,
         addresses,
         phoneNumber,
@@ -58,6 +59,7 @@ const CostCenters = {
         businessDocument,
         customFields,
         marketingTags,
+        id,
         name,
         phoneNumber,
         sellers,

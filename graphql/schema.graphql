@@ -489,6 +489,7 @@ input DefaultCostCenterInput {
 }
 
 input CostCenterInput {
+  id: String
   name: String
   addresses: [AddressInput]
   paymentTerms: [PaymentTermInput]
