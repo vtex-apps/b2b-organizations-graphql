@@ -3,7 +3,6 @@ import { defaultFieldResolver } from 'graphql'
 import { SchemaDirectiveVisitor } from 'graphql-tools'
 
 import sendAuthMetric, { AuthMetric } from '../../utils/metrics/auth'
-import { getUserPermission } from './withPermissions'
 
 export class AuditAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -23,7 +22,6 @@ export class AuditAccess extends SchemaDirectiveVisitor {
 
   private async sendAuthMetric(field: GraphQLField<any, any>, context: any) {
     const {
-      clients: { storefrontPermissions },
       vtex: { adminUserAuthToken, storeUserAuthToken, account, logger },
       request,
     } = context
@@ -43,16 +41,6 @@ export class AuditAccess extends SchemaDirectiveVisitor {
     const hasStoreToken = !!storeUserAuthToken
     const hasApiToken = !!request.headers['vtex-api-apptoken']
 
-    let role
-    let permissions
-
-    if (hasAdminToken || hasStoreToken) {
-      const userPermissions = await getUserPermission(storefrontPermissions)
-
-      role = userPermissions?.role?.slug
-      permissions = userPermissions?.permissions
-    }
-
     const authMetric = new AuthMetric(account, {
       caller,
       forwardedHost,
@@ -60,8 +48,6 @@ export class AuditAccess extends SchemaDirectiveVisitor {
       hasApiToken,
       hasStoreToken,
       operation,
-      permissions,
-      role,
     })
 
     await sendAuthMetric(logger, authMetric)
