@@ -17,7 +17,10 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): OrganizationResult @cacheControl(scope: PUBLIC, maxAge: SHORT) @auditAccess
+  ): OrganizationResult
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
+    @checkAccessWithFeatureFlag
 
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
@@ -25,10 +28,12 @@ type Query {
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
+    @checkAccessWithFeatureFlag
   getOrganizationByIdStorefront(id: ID): Organization
     @withSession
     @cacheControl(scope: PRIVATE)
     @auditAccess
+    @checkAccessWithFeatureFlag
   getCostCenters(
     search: String
     page: Int = 1
@@ -43,7 +48,10 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): CostCenterResult @cacheControl(scope: PUBLIC, maxAge: SHORT) @auditAccess
+  ): CostCenterResult
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
+    @checkAccessWithFeatureFlag
   getCostCentersByOrganizationIdStorefront(
     id: ID
     search: String
@@ -55,10 +63,12 @@ type Query {
   getCostCenterById(id: ID!): CostCenter
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
+    @checkAccessWithFeatureFlag
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @auditAccess
+    @checkAccessWithFeatureFlag
   getUsers(organizationId: ID, costCenterId: ID): [B2BUser]
     @withSession
     @checkUserAccess
@@ -78,26 +88,30 @@ type Query {
   getPaymentTerms: [PaymentTerm]
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
-
+    @checkAccessWithFeatureFlag
   getOrganizationsByEmail(email: String): [B2BOrganization]
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
     @auditAccess
-
+    @checkAccessWithFeatureFlag
   checkOrganizationIsActive(id: String): Boolean @cacheControl(scope: PRIVATE)
   getSalesChannels: [Channels]
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
+    @checkAccessWithFeatureFlag
   getBinding(email: String!): Boolean
     @withSession
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
+    @checkAccessWithFeatureFlag
   getMarketingTags(costId: ID!): MarketingTags
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
+    @checkAccessWithFeatureFlag
   getB2BSettings: B2BSettings
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
+    @checkAccessWithFeatureFlag
   getSellers: [Seller] @checkAdminAccess @cacheControl(scope: PRIVATE)
 }
 

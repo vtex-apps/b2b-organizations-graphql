@@ -3,3 +3,4 @@ directive @withPermissions on FIELD | FIELD_DEFINITION
 directive @checkUserAccess on FIELD | FIELD_DEFINITION
 directive @checkAdminAccess on FIELD | FIELD_DEFINITION
 directive @auditAccess on FIELD | FIELD_DEFINITION
+directive @checkAccessWithFeatureFlag on FIELD | FIELD_DEFINITION
