@@ -22,7 +22,7 @@ export class CheckAccessWithFeatureFlag extends SchemaDirectiveVisitor {
       const config: { enable: boolean } = await masterdata.getDocument({
         dataEntity: 'auth_validation_config',
         fields: ['enable'],
-        id: 'config',
+        id: 'b2b-organizations-graphql',
       })
 
       if (config?.enable) {
