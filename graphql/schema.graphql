@@ -93,7 +93,6 @@ type Query {
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
     @auditAccess
-    @checkAccessWithFeatureFlag
   checkOrganizationIsActive(id: String): Boolean @cacheControl(scope: PRIVATE)
   getSalesChannels: [Channels]
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
