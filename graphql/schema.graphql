@@ -247,6 +247,7 @@ type Mutation {
     @withPermissions
     @cacheControl(scope: PRIVATE)
     @auditAccess
+    @checkAccessWithFeatureFlag
   saveSalesChannels(channels: [SalesChannelsInput]!): MutationResponse
     @checkAdminAccess
     @cacheControl(scope: PRIVATE)
