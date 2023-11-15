@@ -5,7 +5,8 @@ import { SchemaDirectiveVisitor } from 'graphql-tools'
 
 export async function checkUserOrAdminTokenAccess(
   ctx: Context,
-  token?: string
+  token?: string,
+  operation?: string
 ) {
   const {
     vtex: { storeUserAuthToken, logger },
@@ -13,6 +14,10 @@ export async function checkUserOrAdminTokenAccess(
   } = ctx
 
   if (!token && !storeUserAuthToken) {
+    logger.warn({
+      message: `CheckUserAccess: No admin or store token was provided for ${operation}`,
+      operation,
+    })
     throw new AuthenticationError('No admin or store token was provided')
   }
 
@@ -22,7 +27,8 @@ export async function checkUserOrAdminTokenAccess(
     } catch (err) {
       logger.warn({
         error: err,
-        message: 'CheckUserAccess: Invalid admin token',
+        message: `CheckUserAccess: Invalid admin token for ${operation}`,
+        operation,
         token,
       })
       throw new ForbiddenError('Unauthorized Access')
@@ -33,12 +39,17 @@ export async function checkUserOrAdminTokenAccess(
     try {
       authUser = await vtexId.getAuthenticatedUser(storeUserAuthToken)
       if (!authUser?.user) {
+        logger.warn({
+          message: `CheckUserAccess: No valid user found by store user token for ${operation}`,
+          operation,
+        })
         authUser = null
       }
     } catch (err) {
       logger.warn({
         error: err,
-        message: 'CheckUserAccess: Invalid store user token',
+        message: `CheckUserAccess: Invalid store user token for ${operation}`,
+        operation,
         token: storeUserAuthToken,
       })
       authUser = null
@@ -78,7 +89,11 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
         context.vtex.adminUserAuthToken = token
       }
 
-      await checkUserOrAdminTokenAccess(context, token)
+      await checkUserOrAdminTokenAccess(
+        context,
+        token,
+        field.astNode?.name?.value
+      )
 
       return resolve(root, args, context, info)
     }
