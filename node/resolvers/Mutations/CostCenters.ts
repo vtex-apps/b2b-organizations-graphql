@@ -2,10 +2,14 @@ import {
   COST_CENTER_DATA_ENTITY,
   ORGANIZATION_DATA_ENTITY,
 } from '../../mdSchema'
-import type { AddressInput, CostCenterInput, CostCenterInputWithId } from '../../typings'
+import type {
+  AddressInput,
+  CostCenterInput,
+  CostCenterInputWithId,
+} from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import Organizations from '../Queries/Organizations'
-import costCenters from "../Queries/CostCenters"
+import costCenters from '../Queries/CostCenters'
 import checkConfig from '../config'
 import CostCenterRepository from '../repository/CostCenterRepository'
 
@@ -118,14 +122,12 @@ const CostCenters = {
     }
 
     // check if cost center id already exists
-    var costCenter = null
+    let costCenter = null
     try {
-      costCenter = (await costCenters.getCostCenterById(
-        _,
-        { id: id },
-        ctx
-      ))
-    } catch (error) { } // cost center does not exist so we don't need to do anything
+      costCenter = await costCenters.getCostCenterById(_, { id }, ctx)
+    } catch (error) {
+      costCenter = null // cost center does not exist so we don't need to do anything
+    }
 
     if (costCenter) {
       throw new Error('Cost Center already exists')
