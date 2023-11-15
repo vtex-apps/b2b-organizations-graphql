@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const ANALYTICS_URL = 'https://rc.vtex.com/api/analytics/schemaless-events'
+const ANALYTICS_URL =
+  'https://analytics.vtex.com/api/analytics/schemaless-events'
 
 export const B2B_METRIC_NAME = 'b2b-suite-buyerorg-data'
 

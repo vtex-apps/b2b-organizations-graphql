@@ -241,10 +241,12 @@ type Mutation {
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)
+    @auditAccess
   impersonateB2BUser(id: ID!): MutationResponse
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)
+    @auditAccess
   saveSalesChannels(channels: [SalesChannelsInput]!): MutationResponse
     @checkAdminAccess
     @cacheControl(scope: PRIVATE)
