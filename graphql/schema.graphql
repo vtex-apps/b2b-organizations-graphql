@@ -203,6 +203,16 @@ type Mutation {
     @withPermissions
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
+  createUser(
+    orgId: ID!
+    costId: ID!
+    roleId: ID!
+    name: String!
+    email: String!
+    canImpersonate: Boolean = false
+  ): MutationResponse
+    @checkAdminAccess
+    @cacheControl(scope: PRIVATE)
   updateUser(
     id: ID
     roleId: ID!
