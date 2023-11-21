@@ -520,12 +520,16 @@ const Users = {
     } = ctx as any
 
     try {
-      const result = await storefrontPermissionsClient
-        .addUser({ orgId, costId, roleId, name, email, canImpersonate })
-
+      const result = await storefrontPermissionsClient.addUser({
+        orgId,
+        costId,
+        roleId,
+        name,
+        email,
+        canImpersonate,
+      })
       return result.data.addUser
-
-    } catch (error: any) {
+    } catch (error) {
       logger.error({
         error,
         message: 'addUser-error',
