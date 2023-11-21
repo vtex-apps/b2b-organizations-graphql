@@ -509,7 +509,7 @@ const Users = {
       })
   },
 
-  createUser: async (
+  createUserWithEmail: async (
     _: void,
     { orgId, costId, roleId, name, email, canImpersonate }: UserArgs,
     ctx: Context
@@ -519,32 +519,30 @@ const Users = {
       vtex: { logger },
     } = ctx as any
 
-    return storefrontPermissionsClient
-      .addUser({ orgId, costId, roleId, name, email, canImpersonate })
-      .then((result: any) => {
-        return result.data.addUser
+    try {
+      const result = await storefrontPermissionsClient
+        .addUser({ orgId, costId, roleId, name, email, canImpersonate })
+
+      return result.data.addUser
+
+    } catch (error: any) {
+      logger.error({
+        error,
+        message: 'addUser-error',
       })
-      .catch((error: any) => {
-        logger.error({
-          error,
-          message: 'addUser-error',
-        })
-
-        const message = error.graphQLErrors[0]?.message ?? error.message
-        let status = ''
-
-        if (message.includes(MessageSFPUserAddError.DUPLICATED)) {
-          status = StatusAddUserError.DUPLICATED
-        } else if (
-          message.includes(MessageSFPUserAddError.DUPLICATED_ORGANIZATION)
-        ) {
-          status = StatusAddUserError.DUPLICATED_ORGANIZATION
-        } else {
-          status = StatusAddUserError.ERROR
-        }
-
-        return { status, message }
-      })
+      const message = error.graphQLErrors[0]?.message ?? error.message
+      let status = ''
+      if (message.includes(MessageSFPUserAddError.DUPLICATED)) {
+        status = StatusAddUserError.DUPLICATED
+      } else if (
+        message.includes(MessageSFPUserAddError.DUPLICATED_ORGANIZATION)
+      ) {
+        status = StatusAddUserError.DUPLICATED_ORGANIZATION
+      } else {
+        status = StatusAddUserError.ERROR
+      }
+      return { status, message }
+    }
   },
 
   updateUser: async (
