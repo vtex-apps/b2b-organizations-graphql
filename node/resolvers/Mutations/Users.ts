@@ -534,7 +534,7 @@ const Users = {
         error,
         message: 'addUser-error',
       })
-      const message = error.graphQLErrors[0]?.message ?? error.message
+      const message = error.graphQLErrors?.[0]?.message ?? error.message
       let status = ''
       if (message.includes(MessageSFPUserAddError.DUPLICATED)) {
         status = StatusAddUserError.DUPLICATED
