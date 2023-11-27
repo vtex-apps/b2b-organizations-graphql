@@ -532,7 +532,7 @@ const Users = {
     } catch (error) {
       logger.error({
         error,
-        message: 'addUser-error',
+        message: 'createUserWithEmail-error',
       })
       const message = error.graphQLErrors?.[0]?.message ?? error.message
       let status = ''
