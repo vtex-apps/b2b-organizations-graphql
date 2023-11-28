@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Add createUserWithEmail graphql API
+- Add new createUserWithEmail graphql API for bulk import use case
 
 ## [0.45.0] - 2023-11-28
 
