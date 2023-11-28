@@ -194,6 +194,13 @@ type Mutation {
     @withPermissions
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
+  """
+    addUser will create an user with the provided parameters.
+    This is called either from the Admin UI or the storefront UI (where
+    the buyer org manager/admin can add a new member to its own org/cost center).
+    Although the mutation allows an id/userId/clId to be provided, these are not
+    exposed/collected on the UIs.
+  """
   addUser(
     id: ID
     roleId: ID!
@@ -208,6 +215,27 @@ type Mutation {
     @withSession
     @withPermissions
     @checkUserAccess
+    @cacheControl(scope: PRIVATE)
+  """
+    createUserWithEmail is a simplified version of addUser. Both
+    mutations will create an user for the org/cost center,
+    but createUserWithEmail expect all fields (except canImpersonate) as
+    required and does not allow the user to provide its own id/userId/clId,
+    which will be automatically created by the mutation. In this case, the
+    email is clearly used as an identifier for the user. This is currently
+    used by the bulk import use case, but could be used by other use cases
+    as well. This function also has stricter permissions to be used by the
+    store admin only, but could have less strict permissions in the future.
+  """
+  createUserWithEmail(
+    orgId: ID!
+    costId: ID!
+    roleId: ID!
+    name: String!
+    email: String!
+    canImpersonate: Boolean = false
+  ): MutationResponse
+    @checkAdminAccess
     @cacheControl(scope: PRIVATE)
   updateUser(
     id: ID

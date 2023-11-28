@@ -509,6 +509,46 @@ const Users = {
       })
   },
 
+  createUserWithEmail: async (
+    _: void,
+    { orgId, costId, roleId, name, email, canImpersonate }: UserArgs,
+    ctx: Context
+  ) => {
+    const {
+      clients: { storefrontPermissions: storefrontPermissionsClient },
+      vtex: { logger },
+    } = ctx as any
+
+    try {
+      const result = await storefrontPermissionsClient.addUser({
+        orgId,
+        costId,
+        roleId,
+        name,
+        email,
+        canImpersonate,
+      })
+      return result.data.addUser
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'createUserWithEmail-error',
+      })
+      const message = error.graphQLErrors?.[0]?.message ?? error.message
+      let status = ''
+      if (message.includes(MessageSFPUserAddError.DUPLICATED)) {
+        status = StatusAddUserError.DUPLICATED
+      } else if (
+        message.includes(MessageSFPUserAddError.DUPLICATED_ORGANIZATION)
+      ) {
+        status = StatusAddUserError.DUPLICATED_ORGANIZATION
+      } else {
+        status = StatusAddUserError.ERROR
+      }
+      return { status, message }
+    }
+  },
+
   updateUser: async (
     _: void,
     { id, roleId, userId, orgId, costId, clId, name, email }: UserArgs,
