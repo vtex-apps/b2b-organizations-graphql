@@ -87,6 +87,20 @@ interface CostCenterInput {
   sellers?: Seller[]
 }
 
+interface CostCenterInputWithId {
+  id: string
+  name: string
+  addresses?: AddressInput[]
+  paymentTerms?: PaymentTerm[]
+  phoneNumber?: string
+  businessDocument?: string
+  customFields?: CustomField[]
+  stateRegistration?: string
+  marketingTags?: string[]
+  user?: B2BCustomerInput
+  sellers?: Seller[]
+}
+
 interface AddressInput {
   addressId: string
   addressType: string

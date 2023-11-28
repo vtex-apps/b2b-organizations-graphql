@@ -2,8 +2,14 @@ import {
   COST_CENTER_DATA_ENTITY,
   ORGANIZATION_DATA_ENTITY,
 } from '../../mdSchema'
-import type { AddressInput, CostCenterInput } from '../../typings'
+import type {
+  AddressInput,
+  CostCenterInput,
+  CostCenterInputWithId,
+} from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import Organizations from '../Queries/Organizations'
+import costCenters from '../Queries/CostCenters'
 import checkConfig from '../config'
 import CostCenterRepository from '../repository/CostCenterRepository'
 
@@ -13,6 +19,7 @@ const CostCenters = {
     {
       organizationId,
       input: {
+        id,
         name,
         addresses,
         phoneNumber,
@@ -58,6 +65,7 @@ const CostCenters = {
         businessDocument,
         customFields,
         marketingTags,
+        id,
         name,
         phoneNumber,
         sellers,
@@ -77,6 +85,75 @@ const CostCenters = {
       })
       throw new GraphQLError(getErrorMessage(error))
     }
+  },
+
+  createCostCenterWithId: async (
+    _: void,
+    {
+      organizationId,
+      input: {
+        id,
+        name,
+        addresses,
+        phoneNumber,
+        businessDocument,
+        stateRegistration,
+        customFields,
+        marketingTags,
+        sellers,
+      },
+    }: { organizationId: string; input: CostCenterInputWithId },
+    ctx: Context
+  ) => {
+    // create schema if it doesn't exist
+    await checkConfig(ctx)
+
+    // check if organization exists
+    const organization = (await Organizations.getOrganizationById(
+      _,
+      { id: organizationId },
+      ctx
+    )) as {
+      status: string
+    }
+
+    if (!organization) {
+      throw new Error('Organization not found')
+    }
+
+    // check if cost center id already exists
+    let costCenter = null
+    try {
+      costCenter = await costCenters.getCostCenterById(_, { id }, ctx)
+    } catch (error) {
+      costCenter = null // cost center does not exist so we don't need to do anything
+    }
+
+    if (costCenter) {
+      throw new Error('Cost Center already exists')
+    }
+
+    // create cost center
+    const newCostCenter: CostCenterInput = {
+      addresses,
+      businessDocument,
+      customFields,
+      marketingTags,
+      id,
+      name,
+      phoneNumber,
+      sellers,
+      stateRegistration,
+    }
+
+    const { id: costCenterId } = await CostCenterRepository.createCostCenter(
+      _,
+      organizationId,
+      newCostCenter,
+      ctx
+    )
+
+    return { id: costCenterId }
   },
 
   createCostCenterAddress: async (
