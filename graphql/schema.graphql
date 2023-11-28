@@ -131,6 +131,12 @@ type Mutation {
     @withPermissions
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
+  createCostCenterWithId(
+    organizationId: ID
+    input: CostCenterInput!
+  ): MasterDataResponse
+    @checkAdminAccess
+    @cacheControl(scope: PRIVATE)
   updateOrganization(
     id: ID!
     name: String!
@@ -489,6 +495,7 @@ input DefaultCostCenterInput {
 }
 
 input CostCenterInput {
+  id: String
   name: String
   addresses: [AddressInput]
   paymentTerms: [PaymentTermInput]

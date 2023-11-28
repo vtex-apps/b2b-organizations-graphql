@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- allow creation of cost center with an user provided id
+
 ## [0.44.1] - 2023-11-09
 
 ### Fixed
