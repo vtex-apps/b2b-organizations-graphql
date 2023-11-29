@@ -26,7 +26,6 @@ type Query {
 
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-    @checkUserAccess
   getOrganizationByIdStorefront(id: ID): Organization
     @withSession
     @cacheControl(scope: PRIVATE)
@@ -58,7 +57,6 @@ type Query {
   ): CostCenterResult @withSession @cacheControl(scope: PRIVATE)
   getCostCenterById(id: ID!): CostCenter
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-    @checkUserAccess
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
@@ -97,10 +95,7 @@ type Query {
     @checkUserAccess
   getMarketingTags(costId: ID!): MarketingTags
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-    @checkUserAccess
-  getB2BSettings: B2BSettings
-    @cacheControl(scope: PRIVATE, maxAge: SHORT)
-    @checkUserAccess
+  getB2BSettings: B2BSettings @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getSellers: [Seller] @checkAdminAccess @cacheControl(scope: PRIVATE)
 }
 
