@@ -1,4 +1,4 @@
-import { UserInputError, ForbiddenError } from '@vtex/api'
+import { ForbiddenError, UserInputError } from '@vtex/api'
 
 import {
   COST_CENTER_DATA_ENTITY,
@@ -38,7 +38,7 @@ const getUserAndPermissions = async (ctx: Context) => {
   const {
     data: { checkUserPermission },
   }: any = await storefrontPermissions
-    .checkUserPermission('vtex.b2b-orders-history@0.x')
+    .checkUserPermission()
     .catch((error: any) => {
       logger.error({
         message: 'checkUserPermission-error',
