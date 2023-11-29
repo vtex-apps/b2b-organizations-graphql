@@ -17,18 +17,20 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): OrganizationResult @cacheControl(scope: PUBLIC, maxAge: SHORT) @auditAccess
+  ): OrganizationResult
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @checkUserAccess
 
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
 
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
-    @auditAccess
+    @checkUserAccess
   getOrganizationByIdStorefront(id: ID): Organization
     @withSession
     @cacheControl(scope: PRIVATE)
-    @auditAccess
+    @checkUserAccess
   getCostCenters(
     search: String
     page: Int = 1
@@ -43,7 +45,9 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): CostCenterResult @cacheControl(scope: PUBLIC, maxAge: SHORT) @auditAccess
+  ): CostCenterResult
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @checkUserAccess
   getCostCentersByOrganizationIdStorefront(
     id: ID
     search: String
@@ -54,11 +58,11 @@ type Query {
   ): CostCenterResult @withSession @cacheControl(scope: PRIVATE)
   getCostCenterById(id: ID!): CostCenter
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
-    @auditAccess
+    @checkUserAccess
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-    @auditAccess
+    @checkUserAccess
   getUsers(organizationId: ID, costCenterId: ID): [B2BUser]
     @withSession
     @checkUserAccess
@@ -77,27 +81,26 @@ type Query {
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm]
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
-    @auditAccess
+    @checkUserAccess
 
   getOrganizationsByEmail(email: String): [B2BOrganization]
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
-    @auditAccess
 
   checkOrganizationIsActive(id: String): Boolean @cacheControl(scope: PRIVATE)
   getSalesChannels: [Channels]
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
-    @auditAccess
+    @checkUserAccess
   getBinding(email: String!): Boolean
     @withSession
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
-    @auditAccess
+    @checkUserAccess
   getMarketingTags(costId: ID!): MarketingTags
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
-    @auditAccess
+    @checkUserAccess
   getB2BSettings: B2BSettings
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
-    @auditAccess
+    @checkUserAccess
   getSellers: [Seller] @checkAdminAccess @cacheControl(scope: PRIVATE)
 }
 
@@ -106,7 +109,7 @@ type Mutation {
   createOrganizationRequest(
     input: OrganizationInput!
     notifyUsers: Boolean
-  ): MasterDataResponse @auditAccess
+  ): MasterDataResponse @checkUserAccess
   updateOrganizationRequest(
     id: ID!
     status: String!
@@ -134,9 +137,7 @@ type Mutation {
   createCostCenterWithId(
     organizationId: ID
     input: CostCenterInput!
-  ): MasterDataResponse
-    @checkAdminAccess
-    @cacheControl(scope: PRIVATE)
+  ): MasterDataResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   updateOrganization(
     id: ID!
     name: String!
@@ -195,11 +196,11 @@ type Mutation {
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
   """
-    addUser will create an user with the provided parameters.
-    This is called either from the Admin UI or the storefront UI (where
-    the buyer org manager/admin can add a new member to its own org/cost center).
-    Although the mutation allows an id/userId/clId to be provided, these are not
-    exposed/collected on the UIs.
+  addUser will create an user with the provided parameters.
+  This is called either from the Admin UI or the storefront UI (where
+  the buyer org manager/admin can add a new member to its own org/cost center).
+  Although the mutation allows an id/userId/clId to be provided, these are not
+  exposed/collected on the UIs.
   """
   addUser(
     id: ID
@@ -217,15 +218,15 @@ type Mutation {
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
   """
-    createUserWithEmail is a simplified version of addUser. Both
-    mutations will create an user for the org/cost center,
-    but createUserWithEmail expect all fields (except canImpersonate) as
-    required and does not allow the user to provide its own id/userId/clId,
-    which will be automatically created by the mutation. In this case, the
-    email is clearly used as an identifier for the user. This is currently
-    used by the bulk import use case, but could be used by other use cases
-    as well. This function also has stricter permissions to be used by the
-    store admin only, but could have less strict permissions in the future.
+  createUserWithEmail is a simplified version of addUser. Both
+  mutations will create an user for the org/cost center,
+  but createUserWithEmail expect all fields (except canImpersonate) as
+  required and does not allow the user to provide its own id/userId/clId,
+  which will be automatically created by the mutation. In this case, the
+  email is clearly used as an identifier for the user. This is currently
+  used by the bulk import use case, but could be used by other use cases
+  as well. This function also has stricter permissions to be used by the
+  store admin only, but could have less strict permissions in the future.
   """
   createUserWithEmail(
     orgId: ID!
@@ -234,9 +235,7 @@ type Mutation {
     name: String!
     email: String!
     canImpersonate: Boolean = false
-  ): MutationResponse
-    @checkAdminAccess
-    @cacheControl(scope: PRIVATE)
+  ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   updateUser(
     id: ID
     roleId: ID!
@@ -266,6 +265,7 @@ type Mutation {
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)
+    @checkUserAccess
   saveSalesChannels(channels: [SalesChannelsInput]!): MutationResponse
     @checkAdminAccess
     @cacheControl(scope: PRIVATE)
