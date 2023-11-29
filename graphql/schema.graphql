@@ -18,14 +18,14 @@ type Query {
     sortOrder: String = "ASC"
     sortedBy: String = "name"
   ): OrganizationResult
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @checkUserAccess
 
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
 
   getOrganizationById(id: ID): Organization
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @checkUserAccess
   getOrganizationByIdStorefront(id: ID): Organization
     @withSession
@@ -46,7 +46,7 @@ type Query {
     sortOrder: String = "ASC"
     sortedBy: String = "name"
   ): CostCenterResult
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @checkUserAccess
   getCostCentersByOrganizationIdStorefront(
     id: ID
@@ -57,7 +57,7 @@ type Query {
     sortedBy: String = "name"
   ): CostCenterResult @withSession @cacheControl(scope: PRIVATE)
   getCostCenterById(id: ID!): CostCenter
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @checkUserAccess
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
@@ -80,7 +80,7 @@ type Query {
     @checkUserAccess
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm]
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @checkUserAccess
 
   getOrganizationsByEmail(email: String): [B2BOrganization]
@@ -89,17 +89,17 @@ type Query {
 
   checkOrganizationIsActive(id: String): Boolean @cacheControl(scope: PRIVATE)
   getSalesChannels: [Channels]
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @checkUserAccess
   getBinding(email: String!): Boolean
     @withSession
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @checkUserAccess
   getMarketingTags(costId: ID!): MarketingTags
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @checkUserAccess
   getB2BSettings: B2BSettings
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @checkUserAccess
   getSellers: [Seller] @checkAdminAccess @cacheControl(scope: PRIVATE)
 }
