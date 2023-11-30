@@ -25,7 +25,8 @@ type Query {
     @cacheControl(scope: PRIVATE)
 
   getOrganizationById(id: ID): Organization
-    @cacheControl(scope: PRIVATE, maxAge: SHORT)
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
   getOrganizationByIdStorefront(id: ID): Organization
     @withSession
     @cacheControl(scope: PRIVATE)
@@ -56,7 +57,8 @@ type Query {
     sortedBy: String = "name"
   ): CostCenterResult @withSession @cacheControl(scope: PRIVATE)
   getCostCenterById(id: ID!): CostCenter
-    @cacheControl(scope: PRIVATE, maxAge: SHORT)
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
@@ -94,8 +96,11 @@ type Query {
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @checkUserAccess
   getMarketingTags(costId: ID!): MarketingTags
-    @cacheControl(scope: PRIVATE, maxAge: SHORT)
-  getB2BSettings: B2BSettings @cacheControl(scope: PRIVATE, maxAge: SHORT)
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
+  getB2BSettings: B2BSettings
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
   getSellers: [Seller] @checkAdminAccess @cacheControl(scope: PRIVATE)
 }
 
@@ -104,7 +109,7 @@ type Mutation {
   createOrganizationRequest(
     input: OrganizationInput!
     notifyUsers: Boolean
-  ): MasterDataResponse @checkUserAccess
+  ): MasterDataResponse
   updateOrganizationRequest(
     id: ID!
     status: String!
