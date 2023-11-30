@@ -23,7 +23,8 @@ export default class StorefrontPermissions extends AppGraphQLClient {
 
   private getTokenToHeader = (ctx: IOContext) => {
     return {
-      VtexIdclientAutCookie: ctx.storeUserAuthToken ?? ctx.adminUserAuthToken,
+      VtexIdclientAutCookie:
+        ctx.storeUserAuthToken ?? ctx.adminUserAuthToken ?? ctx.authToken,
     }
   }
 
