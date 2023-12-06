@@ -119,16 +119,11 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }
 
   public getUser = async (userId: string): Promise<any> => {
-    return this.graphql.query(
-      {
-        extensions: this.getPersistedQuery(),
-        query: getUser,
-        variables: { id: userId },
-      },
-      {
-        headers: this.getTokenToHeader(this.context),
-      }
-    )
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: getUser,
+      variables: { id: userId },
+    })
   }
 
   public getB2BUser = async (id: string): Promise<any> => {
@@ -309,6 +304,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     return {
       VtexIdclientAutCookie:
         ctx.storeUserAuthToken ?? ctx.adminUserAuthToken ?? ctx.authToken,
+      cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
     }
   }
 
