@@ -21,9 +21,9 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     super('vtex.storefront-permissions@1.x', ctx, options)
   }
 
-  public checkUserPermission = async (): Promise<any> => {
+  public checkUserPermission = async (app?: string): Promise<any> => {
     return this.query({
-      extensions: this.getPersistedQuery(),
+      extensions: this.getPersistedQuery(app),
       query: getPermission,
       variables: {},
     })
@@ -312,11 +312,13 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     }
   }
 
-  private getPersistedQuery = () => {
+  private getPersistedQuery = (
+    sender = 'vtex.b2b-organizations-graphql@0.x'
+  ) => {
     return {
       persistedQuery: {
         provider: 'vtex.storefront-permissions@1.x',
-        sender: 'vtex.b2b-organizations-graphql@0.x',
+        sender,
       },
     }
   }
