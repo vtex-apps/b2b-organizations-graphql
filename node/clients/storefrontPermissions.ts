@@ -167,7 +167,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         },
       },
       {
-        headers: this.getTokenToHeader(this.context),
+        headers: this.getTokenToHeader(),
       }
     )
   }
@@ -207,7 +207,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         },
       },
       {
-        headers: this.getTokenToHeader(this.context),
+        headers: this.getTokenToHeader(),
       }
     )
   }
@@ -248,7 +248,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         },
       },
       {
-        headers: this.getTokenToHeader(this.context),
+        headers: this.getTokenToHeader(),
       }
     )
   }
@@ -272,7 +272,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         },
       },
       {
-        headers: this.getTokenToHeader(this.context),
+        headers: this.getTokenToHeader(),
       }
     )
   }
@@ -290,7 +290,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         },
       },
       {
-        headers: this.getTokenToHeader(this.context),
+        headers: this.getTokenToHeader(),
         params: {
           locale: this.context.locale,
         },
@@ -300,11 +300,19 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     return graphqlResult
   }
 
-  private getTokenToHeader = (ctx: IOContext) => {
+  private getTokenToHeader = () => {
+    const token =
+      this.context.storeUserAuthToken ??
+      this.context.adminUserAuthToken ??
+      this.context.authToken
+
+    const { sessionToken } = this.context
+
     return {
-      VtexIdclientAutCookie:
-        ctx.storeUserAuthToken ?? ctx.adminUserAuthToken ?? ctx.authToken,
-      cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
+      'x-vtex-credential': this.context.authToken,
+      VtexIdclientAutCookie: token,
+      cookie: `VtexIdclientAutCookie=${token}`,
+      'x-vtex-session': sessionToken,
     }
   }
 
@@ -333,7 +341,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         variables,
       },
       {
-        headers: this.getTokenToHeader(this.context),
+        headers: this.getTokenToHeader(),
         params: {
           locale: this.context.locale,
         },
