@@ -16,7 +16,7 @@ const MarketingTags = {
     } catch (error) {
       logger.error({
         error,
-        message: 'setMarketingTags.error',
+        message: 'getMarketingTags.error',
       })
 
       return { status: 'error', message: error }
