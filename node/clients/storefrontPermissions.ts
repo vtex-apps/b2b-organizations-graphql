@@ -6,16 +6,15 @@ import deleteUser from '../mutations/deleteUser'
 import impersonateUser from '../mutations/impersonateUser'
 import saveUser from '../mutations/saveUser'
 import updateUser from '../mutations/updateUser'
-import checkImpersonation from '../queries/checkImpersonation'
+import getB2BUser from '../queries/getB2BUser'
+import getOrganizationsByEmail from '../queries/getOrganizationsByEmail'
 import getPermission from '../queries/getPermission'
 import getRole from '../queries/getRole'
 import getUser from '../queries/getUser'
-import getB2BUser from '../queries/getB2BUser'
 import listAllUsers from '../queries/listAllUsers'
 import listRoles from '../queries/listRoles'
 import listUsers from '../queries/listUsers'
 import listUsersPaginated from '../queries/listUsersPaginated'
-import getOrganizationsByEmail from '../queries/getOrganizationsByEmail'
 
 export default class StorefrontPermissions extends AppGraphQLClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
@@ -23,29 +22,16 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }
 
   public checkUserPermission = async (app?: string): Promise<any> => {
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: app ?? 'vtex.b2b-organizations@0.x',
-          },
-        },
-        query: getPermission,
-        variables: {},
-      },
-      {}
-    )
+    return this.query({
+      extensions: this.getPersistedQuery(app),
+      query: getPermission,
+      variables: {},
+    })
   }
 
   public getOrganizationsByEmail = async (email: string): Promise<any> => {
-    return this.graphql.query({
-      extensions: {
-        persistedQuery: {
-          provider: 'vtex.storefront-permissions@1.x',
-          sender: 'vtex.b2b-organizations@0.x',
-        },
-      },
+    return this.query({
+      extensions: this.getPersistedQuery(),
       query: getOrganizationsByEmail,
       variables: {
         email,
@@ -54,51 +40,27 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }
 
   public listRoles = async (): Promise<any> => {
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: 'vtex.b2b-organizations@0.x',
-          },
-        },
-        query: listRoles,
-        variables: {},
-      },
-      {}
-    )
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: listRoles,
+      variables: {},
+    })
   }
 
   public getRole = async (roleId: string): Promise<any> => {
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: 'vtex.b2b-organizations@0.x',
-          },
-        },
-        query: getRole,
-        variables: { id: roleId },
-      },
-      {}
-    )
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: getRole,
+      variables: { id: roleId },
+    })
   }
 
   public listAllUsers = async (): Promise<any> => {
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: 'vtex.b2b-organizations@0.x',
-          },
-        },
-        query: listAllUsers,
-        variables: {},
-      },
-      {}
-    )
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: listAllUsers,
+      variables: {},
+    })
   }
 
   public listUsers = async ({
@@ -110,23 +72,15 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     organizationId?: string
     costCenterId?: string
   }): Promise<any> => {
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: 'vtex.b2b-organizations@0.x',
-          },
-        },
-        query: listUsers,
-        variables: {
-          roleId,
-          ...(organizationId && { organizationId }),
-          ...(costCenterId && { costCenterId }),
-        },
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: listUsers,
+      variables: {
+        roleId,
+        ...(organizationId && { organizationId }),
+        ...(costCenterId && { costCenterId }),
       },
-      {}
-    )
+    })
   }
 
   public listUsersPaginated = async ({
@@ -148,70 +102,36 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     sortOrder?: string
     sortedBy?: string
   }): Promise<any> => {
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: 'vtex.b2b-organizations@0.x',
-          },
-        },
-        query: listUsersPaginated,
-        variables: {
-          page,
-          pageSize,
-          roleId,
-          search,
-          sortOrder,
-          sortedBy,
-          ...(organizationId && { organizationId }),
-          ...(costCenterId && { costCenterId }),
-        },
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: listUsersPaginated,
+      variables: {
+        page,
+        pageSize,
+        roleId,
+        search,
+        sortOrder,
+        sortedBy,
+        ...(organizationId && { organizationId }),
+        ...(costCenterId && { costCenterId }),
       },
-      {}
-    )
+    })
   }
 
   public getUser = async (userId: string): Promise<any> => {
-    return this.graphql.query({
-      extensions: {
-        persistedQuery: {
-          provider: 'vtex.storefront-permissions@1.x',
-          sender: 'vtex.b2b-organizations@0.x',
-        },
-      },
+    return this.query({
+      extensions: this.getPersistedQuery(),
       query: getUser,
       variables: { id: userId },
     })
   }
 
   public getB2BUser = async (id: string): Promise<any> => {
-    return this.graphql.query({
-      extensions: {
-        persistedQuery: {
-          provider: 'vtex.storefront-permissions@1.x',
-          sender: 'vtex.b2b-organizations@0.x',
-        },
-      },
+    return this.query({
+      extensions: this.getPersistedQuery(),
       query: getB2BUser,
       variables: { id },
     })
-  }
-
-  public checkImpersonation = async (): Promise<any> => {
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: 'vtex.b2b-organizations@0.x',
-          },
-        },
-        query: checkImpersonation,
-        variables: {},
-      },
-      {}
-    )
   }
 
   public addUser = async ({
@@ -247,11 +167,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         },
       },
       {
-        headers: {
-          ...(this.context.authToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
-          }),
-        },
+        headers: this.getTokenToHeader(),
       }
     )
   }
@@ -291,11 +207,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         },
       },
       {
-        headers: {
-          ...(this.context.authToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
-          }),
-        },
+        headers: this.getTokenToHeader(),
       }
     )
   }
@@ -336,11 +248,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         },
       },
       {
-        headers: {
-          ...(this.context.authToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
-          }),
-        },
+        headers: this.getTokenToHeader(),
       }
     )
   }
@@ -364,11 +272,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         },
       },
       {
-        headers: {
-          ...(this.context.authToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
-          }),
-        },
+        headers: this.getTokenToHeader(),
       }
     )
   }
@@ -386,14 +290,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
         },
       },
       {
-        headers: {
-          ...(this.context.sessionToken && {
-            sessionToken: this.context.sessionToken,
-          }),
-          ...(this.context.authToken && {
-            cookie: `VtexIdclientAutCookie=${this.context.authToken}`,
-          }),
-        },
+        headers: this.getTokenToHeader(),
         params: {
           locale: this.context.locale,
         },
@@ -401,5 +298,54 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     )
 
     return graphqlResult
+  }
+
+  private getTokenToHeader = () => {
+    const token =
+      this.context.storeUserAuthToken ??
+      this.context.adminUserAuthToken ??
+      this.context.authToken
+
+    const { sessionToken } = this.context
+
+    return {
+      'x-vtex-credential': this.context.authToken,
+      VtexIdclientAutCookie: token,
+      cookie: `VtexIdclientAutCookie=${token}`,
+      'x-vtex-session': sessionToken,
+    }
+  }
+
+  private getPersistedQuery = (
+    sender = 'vtex.b2b-organizations-graphql@0.x'
+  ) => {
+    return {
+      persistedQuery: {
+        provider: 'vtex.storefront-permissions@1.x',
+        sender,
+      },
+    }
+  }
+
+  private query = async (param: {
+    query: string
+    variables: any
+    extensions: any
+  }): Promise<any> => {
+    const { query, variables, extensions } = param
+
+    return this.graphql.query(
+      {
+        extensions,
+        query,
+        variables,
+      },
+      {
+        headers: this.getTokenToHeader(),
+        params: {
+          locale: this.context.locale,
+        },
+      }
+    )
   }
 }
