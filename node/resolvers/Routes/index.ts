@@ -38,7 +38,7 @@ const getUserAndPermissions = async (ctx: Context) => {
   const {
     data: { checkUserPermission },
   }: any = await storefrontPermissions
-    // I don't know why this name sender is necessary, maybe it is some policy or permission.
+    // It is necessary to send the app name, because the check user return the permissions relative to orders-history to access the page.
     .checkUserPermission('vtex.b2b-orders-history@0.x')
     .catch((error: any) => {
       logger.error({
