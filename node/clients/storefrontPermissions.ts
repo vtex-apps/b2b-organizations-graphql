@@ -312,7 +312,9 @@ export default class StorefrontPermissions extends AppGraphQLClient {
       'x-vtex-credential': this.context.authToken,
       VtexIdclientAutCookie: token,
       cookie: `VtexIdclientAutCookie=${token}`,
-      'x-vtex-session': sessionToken,
+      ...(sessionToken && {
+        'x-vtex-session': sessionToken,
+      }), // The axios client http doesn't allow undefined headers
     }
   }
 
