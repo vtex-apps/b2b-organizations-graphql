@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Validate if the session token is not undefined to set as headers to call storefront-permissions
+
 ## [0.47.0] - 2023-12-14
 
 ### Added
