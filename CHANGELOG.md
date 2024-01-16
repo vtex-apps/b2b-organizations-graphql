@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Allow `paymentTerms`, `collections` and `sellers` to be provided by name only on `createOrganizationAndCostCenterWithAdminUser`
 ## [0.47.1] - 2023-12-18
 
 ### Fixed

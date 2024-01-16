@@ -1,3 +1,4 @@
+import { Seller } from '../../clients/sellers'
 import {
   ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_FIELDS,
@@ -11,9 +12,11 @@ import type {
   DefaultCostCenterInput,
   Organization,
   OrganizationInput,
+  NormalizedOrganizationInput,
   OrganizationRequest,
   PaymentTerm,
   Price,
+  Collection,
 } from '../../typings'
 import {
   ORGANIZATION_REQUEST_STATUSES,
@@ -79,6 +82,7 @@ const createOrganization = async (
     salesChannel,
     sellers,
     customFields,
+    collections
   }: OrganizationInput,
   ctx: Context
 ): Promise<{
@@ -100,6 +104,7 @@ const createOrganization = async (
     ...(priceTables?.length && { priceTables }),
     ...(salesChannel && { salesChannel }),
     ...(sellers && { sellers }),
+    ...(collections && { collections }),
     customFields: customFields ?? [],
     status: ORGANIZATION_STATUSES.ACTIVE,
   }
@@ -111,9 +116,76 @@ const createOrganization = async (
   })
 }
 
+const findPaymentTerms = async (paymentTermNames: string[], ctx: Context) => {
+  const {
+    clients: { payments },
+  } = ctx
+  const paymentRules = await payments.getPaymentTerms()
+  const paymentTerms = paymentTermNames?.map((paymentTermName: string) => {
+    const paymentTerm = paymentRules.find(
+      (paymentRule: any) => paymentRule.name === paymentTermName
+    )
+
+    if (paymentTerm) {
+      return {
+        id: paymentTerm.id.toString(),
+        name: paymentTerm.name,
+      } as PaymentTerm;
+    }
+    return null
+  }).filter((paymentTerm: any) => paymentTerm !== null)
+  return paymentTerms
+}
+
+const findSellers = async (sellerNames: string[], ctx: Context) => {
+  const {
+    clients: { sellers },
+  } = ctx
+  const availableSellers = (await sellers.getSellers())?.items
+  const sellersFound = sellerNames?.map((sellerName: string) => {
+    const seller = availableSellers.find(
+      (seller: any) => seller.name === sellerName
+    )
+
+    if (seller) {
+      return {
+        id: seller.id,
+        name: seller.name,
+      } as Seller;
+    }
+    return null
+  }).filter((seller: any) => seller !== null)
+  return sellersFound
+}
+
+const findCollections = async (collectionsNames: string[], ctx: Context) => {
+  const {
+    clients: { catalog },
+  } = ctx
+  // for each collection name, find the collection id going through all available collections
+  let collectionsFound: Collection[] = []
+  for(let collectionName of collectionsNames) {
+    const availableCollections = (await catalog.collectionsAvailable(collectionName))?.items
+    if(!availableCollections) {
+      // collection name not found in available collections, go to next collection name
+      continue
+    }
+    const collection = availableCollections.find(
+      (collection: any) => collection.name === collectionName
+    )
+    if (collection) {
+      collectionsFound.push({
+        id: collection.id.toString(),
+        name: collection.name,
+      } as Collection)
+    }
+  }
+  return collectionsFound
+}
+
 const createOrganizationAndCostCenterWithAdminUser = async (
   _: void,
-  organization: OrganizationInput,
+  organization: NormalizedOrganizationInput,
   ctx: Context
 ) => {
   const {
@@ -125,10 +197,27 @@ const createOrganizationAndCostCenterWithAdminUser = async (
   await checkConfig(ctx)
 
   try {
+    // copy fields from NormalizedOrganizationInput to OrganizationInput
+    // and transform fields that need transformation
+    const organizationInput = {
+      id: organization.id,
+      name: organization.name,
+      tradeName: organization.tradeName,
+      b2bCustomerAdmin: organization.b2bCustomerAdmin,
+      defaultCostCenter: organization.defaultCostCenter,
+      costCenters: organization.costCenters,
+      customFields: organization.customFields,
+      paymentTerms: organization.paymentTerms ? await findPaymentTerms(organization.paymentTerms, ctx) : [],
+      priceTables: organization.priceTables,
+      salesChannel: organization.salesChannel,
+      sellers: organization.sellers ? await findSellers(organization.sellers, ctx) : [],
+      collections: organization.collections ? await findCollections(organization.collections, ctx) : [],
+    } as OrganizationInput
+
     // create organization
     const createOrganizationResult = await createOrganization(
       _,
-      organization,
+      organizationInput,
       ctx
     )
 
@@ -438,7 +527,7 @@ const Organizations = {
 
   createOrganizationAndCostCentersWithId: async (
     _: void,
-    { input }: { input: OrganizationInput },
+    { input }: { input: NormalizedOrganizationInput },
     ctx: Context
   ): Promise<{
     href: string
@@ -656,10 +745,14 @@ const Organizations = {
     try {
       if (status === ORGANIZATION_REQUEST_STATUSES.APPROVED) {
         try {
+          // the following copy is fine as organizationRequest does not contain fields that need transformation
+          const normalizedOrganizationRequest = {
+            ...organizationRequest,
+          } as NormalizedOrganizationInput
           const { id: organizationId } =
             await createOrganizationAndCostCenterWithAdminUser(
               _,
-              organizationRequest,
+              normalizedOrganizationRequest,
               ctx
             )
 
