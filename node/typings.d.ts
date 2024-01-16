@@ -51,7 +51,23 @@ interface OrganizationInput {
   paymentTerms?: PaymentTerm[]
   priceTables?: Price[]
   salesChannel?: string
-  sellers?: Seller[]
+  sellers?: Seller[],
+  collections?: Collection[]
+}
+
+interface NormalizedOrganizationInput {
+  id?: string
+  name: string
+  tradeName?: string
+  b2bCustomerAdmin: B2BCustomerInput
+  defaultCostCenter?: DefaultCostCenterInput
+  costCenters?: DefaultCostCenterInput[]
+  customFields?: CustomField[]
+  paymentTerms?: string[]
+  priceTables?: Price[]
+  salesChannel?: string
+  sellers?: string[]
+  collections?: string[]
 }
 
 interface B2BCustomerInput {

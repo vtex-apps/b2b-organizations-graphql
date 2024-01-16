@@ -1,4 +1,3 @@
-import { CREDIT_CARDS } from '../../constants'
 import {
   COST_CENTER_DATA_ENTITY,
   COST_CENTER_FIELDS,
@@ -178,37 +177,7 @@ const costCenters = {
     } = ctx
 
     try {
-      const paymentRules = await payments.rules()
-
-      const enabledConnectors = paymentRules.filter(
-        (rule) => rule.enabled === true
-      )
-
-      const enabledPaymentSystems = enabledConnectors.map(
-        (connector) => connector.paymentSystem
-      )
-
-      const uniquePaymentSystems = enabledPaymentSystems.filter(
-        (value, index, self) => {
-          return (
-            index ===
-            self.findIndex((t) => t.id === value.id && t.name === value.name)
-          )
-        }
-      )
-
-      const uniquePaymentSystemsWithoutCreditCards =
-        uniquePaymentSystems.filter((value) => {
-          return !CREDIT_CARDS.includes(value.name)
-        })
-
-      uniquePaymentSystemsWithoutCreditCards.unshift({
-        id: 999999,
-        implementation: null,
-        name: 'Credit card',
-      })
-
-      return uniquePaymentSystemsWithoutCreditCards
+      return await payments.getPaymentTerms()
     } catch (error) {
       logger.error({ error, message: 'getPaymentTerms-error' })
       throw new GraphQLError(getErrorMessage(error))

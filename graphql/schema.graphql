@@ -121,7 +121,7 @@ type Mutation {
     @checkAdminAccess
     @cacheControl(scope: PRIVATE)
   createOrganizationAndCostCentersWithId(
-    input: OrganizationInput!
+    input: NormalizedOrganizationInput!
   ): MasterDataResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   createCostCenter(
     organizationId: ID
@@ -496,6 +496,22 @@ input OrganizationInput {
   priceTables: [String]
   salesChannel: String
   sellers: [SellerInput]
+  customFields: [CustomFieldInput]
+  collections: [CollectionInput]
+}
+
+input NormalizedOrganizationInput {
+  id: String
+  name: String
+  tradeName: String
+  b2bCustomerAdmin: B2BUserInput
+  defaultCostCenter: DefaultCostCenterInput
+  costCenters: [DefaultCostCenterInput]
+  paymentTerms: [String]
+  priceTables: [String]
+  salesChannel: String
+  sellers: [String]
+  collections: [String]
   customFields: [CustomFieldInput]
 }
 

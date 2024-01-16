@@ -1,5 +1,6 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
 import { JanusClient } from '@vtex/api'
+import { CREDIT_CARDS } from '../constants'
 
 export default class PaymentsClient extends JanusClient {
   constructor(context: IOContext, options?: InstanceOptions) {
@@ -16,6 +17,40 @@ export default class PaymentsClient extends JanusClient {
     this.http.get<Rule[]>(`api/payments/pvt/rules`, {
       metric: 'payments-get-rules',
     })
+
+  public async getPaymentTerms() {
+    const paymentRules = await this.rules()
+
+    const enabledConnectors = paymentRules.filter(
+      (rule) => rule.enabled === true
+    )
+
+    const enabledPaymentSystems = enabledConnectors.map(
+      (connector) => connector.paymentSystem
+    )
+
+    const uniquePaymentSystems = enabledPaymentSystems.filter(
+      (value, index, self) => {
+        return (
+          index ===
+          self.findIndex((t) => t.id === value.id && t.name === value.name)
+        )
+      }
+    )
+
+    const uniquePaymentSystemsWithoutCreditCards =
+      uniquePaymentSystems.filter((value) => {
+        return !CREDIT_CARDS.includes(value.name)
+      })
+
+    uniquePaymentSystemsWithoutCreditCards.unshift({
+      id: 999999,
+      implementation: null,
+      name: 'Credit card',
+    })
+
+    return uniquePaymentSystemsWithoutCreditCards
+  }
 }
 
 interface Rule {
