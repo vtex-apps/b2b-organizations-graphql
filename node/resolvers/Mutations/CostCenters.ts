@@ -123,6 +123,7 @@ const CostCenters = {
 
     // check if cost center id already exists
     let costCenter = null
+
     try {
       costCenter = await costCenters.getCostCenterById(_, { id }, ctx)
     } catch (error) {

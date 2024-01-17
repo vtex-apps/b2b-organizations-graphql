@@ -1,4 +1,4 @@
-import { Seller } from '../../clients/sellers'
+import type { Seller } from '../../clients/sellers'
 import {
   ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_FIELDS,
@@ -82,7 +82,7 @@ const createOrganization = async (
     salesChannel,
     sellers,
     customFields,
-    collections
+    collections,
   }: OrganizationInput,
   ctx: Context
 ): Promise<{
@@ -120,20 +120,25 @@ const findPaymentTerms = async (paymentTermNames: string[], ctx: Context) => {
   const {
     clients: { payments },
   } = ctx
-  const paymentRules = await payments.getPaymentTerms()
-  const paymentTerms = paymentTermNames?.map((paymentTermName: string) => {
-    const paymentTerm = paymentRules.find(
-      (paymentRule: any) => paymentRule.name === paymentTermName
-    )
 
-    if (paymentTerm) {
-      return {
-        id: paymentTerm.id.toString(),
-        name: paymentTerm.name,
-      } as PaymentTerm;
-    }
-    return null
-  }).filter((paymentTerm: any) => paymentTerm !== null)
+  const paymentRules = await payments.getPaymentTerms()
+  const paymentTerms = paymentTermNames
+    ?.map((paymentTermName: string) => {
+      const paymentTerm = paymentRules.find(
+        (paymentRule: any) => paymentRule.name === paymentTermName
+      )
+
+      if (paymentTerm) {
+        return {
+          id: paymentTerm.id.toString(),
+          name: paymentTerm.name,
+        } as PaymentTerm
+      }
+
+      return null
+    })
+    .filter((paymentTerm: any) => paymentTerm !== null)
+
   return paymentTerms
 }
 
@@ -141,20 +146,23 @@ const findSellers = async (sellerNames: string[], ctx: Context) => {
   const {
     clients: { sellers },
   } = ctx
-  const availableSellers = (await sellers.getSellers())?.items
-  const sellersFound = sellerNames?.map((sellerName: string) => {
-    const seller = availableSellers.find(
-      (seller: any) => seller.name === sellerName
-    )
 
-    if (seller) {
-      return {
-        id: seller.id,
-        name: seller.name,
-      } as Seller;
-    }
-    return null
-  }).filter((seller: any) => seller !== null)
+  const availableSellers = (await sellers.getSellers())?.items
+  const sellersFound = sellerNames
+    ?.map((sellerName: string) => {
+      const seller = availableSellers.find((s: any) => s.name === sellerName)
+
+      if (seller) {
+        return {
+          id: seller.id,
+          name: seller.name,
+        } as Seller
+      }
+
+      return null
+    })
+    .filter((seller: any) => seller !== null)
+
   return sellersFound
 }
 
@@ -162,25 +170,29 @@ const findCollections = async (collectionsNames: string[], ctx: Context) => {
   const {
     clients: { catalog },
   } = ctx
-  // for each collection name, find the collection id going through all available collections
-  let collectionsFound: Collection[] = []
-  for(let collectionName of collectionsNames) {
-    const availableCollections = (await catalog.collectionsAvailable(collectionName))?.items
-    if(!availableCollections) {
-      // collection name not found in available collections, go to next collection name
-      continue
-    }
-    const collection = availableCollections.find(
-      (collection: any) => collection.name === collectionName
-    )
-    if (collection) {
-      collectionsFound.push({
-        id: collection.id.toString(),
-        name: collection.name,
-      } as Collection)
-    }
-  }
-  return collectionsFound
+
+  const collectionsFound = collectionsNames
+    .map(async (collectionName: string) => {
+      const availableCollections = (
+        await catalog.collectionsAvailable(collectionName)
+      )?.items
+
+      const collection = availableCollections.find(
+        (c: any) => c.name === collectionName
+      )
+
+      if (collection) {
+        return {
+          id: collection.id.toString(),
+          name: collection.name,
+        } as Collection
+      }
+
+      return null
+    })
+    .filter((collection: any) => collection !== null)
+
+  return Promise.all(collectionsFound)
 }
 
 const createOrganizationAndCostCenterWithAdminUser = async (
@@ -207,11 +219,17 @@ const createOrganizationAndCostCenterWithAdminUser = async (
       defaultCostCenter: organization.defaultCostCenter,
       costCenters: organization.costCenters,
       customFields: organization.customFields,
-      paymentTerms: organization.paymentTerms ? await findPaymentTerms(organization.paymentTerms, ctx) : [],
+      paymentTerms: organization.paymentTerms
+        ? await findPaymentTerms(organization.paymentTerms, ctx)
+        : [],
       priceTables: organization.priceTables,
       salesChannel: organization.salesChannel,
-      sellers: organization.sellers ? await findSellers(organization.sellers, ctx) : [],
-      collections: organization.collections ? await findCollections(organization.collections, ctx) : [],
+      sellers: organization.sellers
+        ? await findSellers(organization.sellers, ctx)
+        : [],
+      collections: organization.collections
+        ? await findCollections(organization.collections, ctx)
+        : [],
     } as OrganizationInput
 
     // create organization
@@ -749,6 +767,7 @@ const Organizations = {
           const normalizedOrganizationRequest = {
             ...organizationRequest,
           } as NormalizedOrganizationInput
+
           const { id: organizationId } =
             await createOrganizationAndCostCenterWithAdminUser(
               _,

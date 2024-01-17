@@ -51,7 +51,7 @@ interface OrganizationInput {
   paymentTerms?: PaymentTerm[]
   priceTables?: Price[]
   salesChannel?: string
-  sellers?: Seller[],
+  sellers?: Seller[]
   collections?: Collection[]
 }
 
