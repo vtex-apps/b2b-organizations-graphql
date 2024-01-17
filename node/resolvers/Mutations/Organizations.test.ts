@@ -19,6 +19,7 @@ import {
 } from '../../mdSchema'
 import type {
   AddressInput,
+  NormalizedOrganizationInput,
   OrganizationInput,
   OrganizationRequest,
 } from '../../typings'
@@ -225,7 +226,7 @@ describe('given an Organization Mutation', () => {
         id: orgId,
         name: randCompanyName(),
         tradeName: randAirportName(),
-      } as OrganizationInput
+      } as NormalizedOrganizationInput
 
       let result: { href: any; id: any }
       let mockedContext: Context
@@ -252,6 +253,7 @@ describe('given an Organization Mutation', () => {
           dataEntity: ORGANIZATION_DATA_ENTITY,
           fields: {
             collections: [],
+            sellers: [],
             created: createDate,
             customFields: [],
             id: orgId,
@@ -327,7 +329,7 @@ describe('given an Organization Mutation', () => {
         id: orgId,
         name: randCompanyName(),
         tradeName: randAirportName(),
-      } as OrganizationInput
+      } as NormalizedOrganizationInput
 
       let result: { href: any; id: any }
       let mockedContext: Context
@@ -353,6 +355,7 @@ describe('given an Organization Mutation', () => {
           dataEntity: ORGANIZATION_DATA_ENTITY,
           fields: {
             collections: [],
+            sellers: [],
             created: createDate,
             customFields: [],
             id: orgId,
