@@ -1,5 +1,6 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
 import { JanusClient } from '@vtex/api'
+
 import { CREDIT_CARDS } from '../constants'
 
 export default class PaymentsClient extends JanusClient {
@@ -38,10 +39,11 @@ export default class PaymentsClient extends JanusClient {
       }
     )
 
-    const uniquePaymentSystemsWithoutCreditCards =
-      uniquePaymentSystems.filter((value) => {
+    const uniquePaymentSystemsWithoutCreditCards = uniquePaymentSystems.filter(
+      (value) => {
         return !CREDIT_CARDS.includes(value.name)
-      })
+      }
+    )
 
     uniquePaymentSystemsWithoutCreditCards.unshift({
       id: 999999,

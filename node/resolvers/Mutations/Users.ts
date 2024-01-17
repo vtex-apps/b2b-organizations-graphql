@@ -528,6 +528,7 @@ const Users = {
         email,
         canImpersonate,
       })
+
       return result.data.addUser
     } catch (error) {
       logger.error({
@@ -536,6 +537,7 @@ const Users = {
       })
       const message = error.graphQLErrors?.[0]?.message ?? error.message
       let status = ''
+
       if (message.includes(MessageSFPUserAddError.DUPLICATED)) {
         status = StatusAddUserError.DUPLICATED
       } else if (
@@ -545,6 +547,7 @@ const Users = {
       } else {
         status = StatusAddUserError.ERROR
       }
+
       return { status, message }
     }
   },
