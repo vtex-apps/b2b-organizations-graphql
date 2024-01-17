@@ -9,7 +9,7 @@ export default class PaymentsClient extends JanusClient {
       ...options,
       headers: {
         ...options?.headers,
-        VtexIdClientAutCookie: context.authToken,
+        VtexIdclientAutCookie: context.authToken,
       },
     })
   }
