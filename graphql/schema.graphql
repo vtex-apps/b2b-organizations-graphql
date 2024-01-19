@@ -500,6 +500,12 @@ input OrganizationInput {
   collections: [CollectionInput]
 }
 
+"""
+NormalizedOrganizationInput is basically the same as OrganizationInput,
+but with the fields in a normalized format, i.e. the following fields
+are expected as a list of names only instead of objects with id and name:
+paymentTerms, sellers and collections.
+"""
 input NormalizedOrganizationInput {
   id: String
   name: String
