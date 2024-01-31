@@ -1,5 +1,8 @@
 import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
-import { COST_CENTER_DATA_ENTITY, ORGANIZATION_DATA_ENTITY} from '../../mdSchema'
+import {
+  COST_CENTER_DATA_ENTITY,
+  ORGANIZATION_DATA_ENTITY,
+} from '../../mdSchema'
 import GraphQLError from '../../utils/GraphQLError'
 import type { ImpersonateMetricParams } from '../../utils/metrics/impersonate'
 import {
@@ -79,42 +82,41 @@ const getRoleSlug = async ({
           return ''
         })
 
-const getCostCenterDocument = async ( {masterdata, logger, costId} : any) => {
-  return await masterdata
+const getCostCenterDocument = async ( { masterdata, logger, costId } : any) => {
+  return masterdata
     .getDocument({
       dataEntity : COST_CENTER_DATA_ENTITY,
       fields: ['businessDocument'],
-      id: costId
+      id: costId,
     })
     .then((res: any) => {
       return res?.businessDocument ?? undefined
     })
-    .catch(( error : any) => {
+    .catch((error : any) => {
       logger.error({
         error,
         message: 'getCostCenterDocumentError',
       })
-      return undefined;
+      return undefined
     })
 }
 
-const getOranizationDetails = async ( {masterdata, logger, orgId}: any) => {
-  return await masterdata
+const getOranizationDetails = async ( { masterdata, logger, orgId }: any) => {
+  return masterdata
     .getDocument({
       dataEntity : ORGANIZATION_DATA_ENTITY,
       fields: ['tradeName', 'name'],
-      id: orgId
+      id: orgId,
     })
     .then((res: any) => {
       return res ?? undefined
     })
-    .catch(( error : any) => {
+    .catch((error : any) => {
       logger.error({
         error,
         message: 'getOranizationDetailsError',
       })
-
-      return undefined;
+      return undefined
     })
 }
 
@@ -486,7 +488,10 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient, masterdata },
+      clients: { 
+        storefrontPermissions: storefrontPermissionsClient, 
+        masterdata
+      },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as any
 
@@ -510,19 +515,19 @@ const Users = {
       throw error
     }
 
-    let tradeName = '';
-    let corporateName = '';
+    let tradeName = ''
+    let corporateName = ''
     
     if (orgId) {
-      let orgDetails = await getOranizationDetails({masterdata, logger, orgId});
-      tradeName = orgDetails?.tradeName;
-      corporateName = orgDetails?.name;
+      const orgDetails = await getOranizationDetails({ masterdata, logger, orgId })
+      tradeName = orgDetails?.tradeName
+      corporateName = orgDetails?.name
     }
 
-    let corporateDocument = '';
+    let corporateDocument = ''
 
     if (costId) {
-      corporateDocument = await getCostCenterDocument({masterdata, logger, costId});
+      corporateDocument = await getCostCenterDocument({ masterdata, logger, costId })
     }
 
     const fields = {
@@ -535,7 +540,7 @@ const Users = {
       userId,
       tradeName,
       corporateName,
-      corporateDocument
+      corporateDocument,
     }
 
     return storefrontPermissionsClient
