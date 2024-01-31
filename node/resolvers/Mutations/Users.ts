@@ -517,20 +517,20 @@ const Users = {
     let tradeName = ''
     let corporateName = ''
     if (orgId) {
-      const orgDetails = await getOranizationDetails({ 
-      masterdata, 
-      logger, 
-      orgId
-    })
+      const orgDetails = await getOranizationDetails({
+        masterdata,
+        logger,
+        orgId
+      })
       tradeName = orgDetails?.tradeName
       corporateName = orgDetails?.name
     }
 
     let corporateDocument = ''
     if (costId) {
-      corporateDocument = await getCostCenterDocument({ 
-        masterdata, 
-        logger, 
+      corporateDocument = await getCostCenterDocument({
+        masterdata,
+        logger,
         costId
       })
     }

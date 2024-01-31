@@ -144,7 +144,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     email,
     corporateName,
     corporateDocument,
-    tradeName
+    tradeName,
   }: {
     id?: string
     roleId: string
@@ -173,7 +173,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
           userId,
           corporateName,
           corporateDocument,
-          tradeName
+          tradeName,
         },
       },
       {
@@ -193,7 +193,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     email,
     corporateName,
     corporateDocument,
-    tradeName
+    tradeName,
   }: {
     id?: string
     roleId: string
@@ -223,7 +223,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
           userId,
           corporateName,
           corporateDocument,
-          tradeName
+          tradeName,
         },
       },
       {
