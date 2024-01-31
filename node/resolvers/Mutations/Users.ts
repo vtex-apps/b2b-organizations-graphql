@@ -82,17 +82,17 @@ const getRoleSlug = async ({
           return ''
         })
 
-const getCostCenterDocument = async ( { masterdata, logger, costId } : any) => {
+const getCostCenterDocument = async ({ masterdata, logger, costId }: any) => {
   return masterdata
     .getDocument({
-      dataEntity : COST_CENTER_DATA_ENTITY,
+      dataEntity: COST_CENTER_DATA_ENTITY,
       fields: ['businessDocument'],
       id: costId,
     })
     .then((res: any) => {
       return res?.businessDocument ?? undefined
     })
-    .catch((error : any) => {
+    .catch((error: any) => {
       logger.error({
         error,
         message: 'getCostCenterDocumentError',
@@ -101,17 +101,17 @@ const getCostCenterDocument = async ( { masterdata, logger, costId } : any) => {
     })
 }
 
-const getOranizationDetails = async ( { masterdata, logger, orgId }: any) => {
+const getOranizationDetails = async ({ masterdata, logger, orgId }: any) => {
   return masterdata
     .getDocument({
-      dataEntity : ORGANIZATION_DATA_ENTITY,
+      dataEntity: ORGANIZATION_DATA_ENTITY,
       fields: ['tradeName', 'name'],
       id: orgId,
     })
     .then((res: any) => {
       return res ?? undefined
     })
-    .catch((error : any) => {
+    .catch((error: any) => {
       logger.error({
         error,
         message: 'getOranizationDetailsError',
@@ -119,7 +119,6 @@ const getOranizationDetails = async ( { masterdata, logger, orgId }: any) => {
       return undefined
     })
 }
-
 
 const getUser = async ({ masterdata, logger, userId, clId }: any) =>
   (await masterdata
@@ -488,9 +487,9 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        storefrontPermissions: storefrontPermissionsClient, 
-        masterdata
+      clients: {
+        storefrontPermissions: storefrontPermissionsClient,
+        masterdata,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as any
@@ -517,17 +516,23 @@ const Users = {
 
     let tradeName = ''
     let corporateName = ''
-    
     if (orgId) {
-      const orgDetails = await getOranizationDetails({ masterdata, logger, orgId })
+      const orgDetails = await getOranizationDetails({ 
+      masterdata, 
+      logger, 
+      orgId
+    })
       tradeName = orgDetails?.tradeName
       corporateName = orgDetails?.name
     }
 
     let corporateDocument = ''
-
     if (costId) {
-      corporateDocument = await getCostCenterDocument({ masterdata, logger, costId })
+      corporateDocument = await getCostCenterDocument({ 
+        masterdata, 
+        logger, 
+        costId
+      })
     }
 
     const fields = {
