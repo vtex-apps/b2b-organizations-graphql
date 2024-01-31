@@ -520,7 +520,7 @@ const Users = {
       const orgDetails = await getOranizationDetails({
         masterdata,
         logger,
-        orgId
+        orgId,
       })
       tradeName = orgDetails?.tradeName
       corporateName = orgDetails?.name
@@ -531,7 +531,7 @@ const Users = {
       corporateDocument = await getCostCenterDocument({
         masterdata,
         logger,
-        costId
+        costId,
       })
     }
 
