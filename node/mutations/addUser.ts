@@ -8,9 +8,13 @@ export default print(gql`
     $roleId: ID!
     $orgId: ID!
     $costId: ID!
-    $name: String!
     $canImpersonate: Boolean!
+    $name: String!
     $email: String!
+    $isCorporate: Boolean
+    $corporateName: String
+    $corporateDocument: String
+    $tradeName: String
   ) {
     addUser(
       id: $id
@@ -18,9 +22,13 @@ export default print(gql`
       roleId: $roleId
       orgId: $orgId
       costId: $costId
-      name: $name
       canImpersonate: $canImpersonate
+      name: $name
       email: $email
+      isCorporate: $isCorporate
+      corporateName: $corporateName
+      corporateDocument: $corporateDocument
+      tradeName: $tradeName
     ) {
       id
       status

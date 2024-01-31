@@ -1,4 +1,5 @@
 import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
+import { COST_CENTER_DATA_ENTITY, ORGANIZATION_DATA_ENTITY} from '../../mdSchema'
 import GraphQLError from '../../utils/GraphQLError'
 import type { ImpersonateMetricParams } from '../../utils/metrics/impersonate'
 import {
@@ -77,6 +78,46 @@ const getRoleSlug = async ({
 
           return ''
         })
+
+const getCostCenterDocument = async ( {masterdata, logger, costId} : any) => {
+  return await masterdata
+    .getDocument({
+      dataEntity : COST_CENTER_DATA_ENTITY,
+      fields: ['businessDocument'],
+      id: costId
+    })
+    .then((res: any) => {
+      return res?.businessDocument ?? undefined
+    })
+    .catch(( error : any) => {
+      logger.error({
+        error,
+        message: 'getCostCenterDocumentError',
+      })
+      return undefined;
+    })
+}
+
+const getOranizationDetails = async ( {masterdata, logger, orgId}: any) => {
+  return await masterdata
+    .getDocument({
+      dataEntity : ORGANIZATION_DATA_ENTITY,
+      fields: ['tradeName', 'name'],
+      id: orgId
+    })
+    .then((res: any) => {
+      return res ?? undefined
+    })
+    .catch(( error : any) => {
+      logger.error({
+        error,
+        message: 'getOranizationDetailsError',
+      })
+
+      return undefined;
+    })
+}
+
 
 const getUser = async ({ masterdata, logger, userId, clId }: any) =>
   (await masterdata
@@ -445,7 +486,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient },
+      clients: { storefrontPermissions: storefrontPermissionsClient, masterdata },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
     } = ctx as any
 
@@ -469,6 +510,21 @@ const Users = {
       throw error
     }
 
+    let tradeName = '';
+    let corporateName = '';
+    
+    if (orgId) {
+      let orgDetails = await getOranizationDetails({masterdata, logger, orgId});
+      tradeName = orgDetails?.tradeName;
+      corporateName = orgDetails?.name;
+    }
+
+    let corporateDocument = '';
+
+    if (costId) {
+      corporateDocument = await getCostCenterDocument({masterdata, logger, costId});
+    }
+
     const fields = {
       costId,
       email,
@@ -477,6 +533,9 @@ const Users = {
       orgId,
       roleId,
       userId,
+      tradeName,
+      corporateName,
+      corporateDocument
     }
 
     return storefrontPermissionsClient
@@ -492,7 +551,7 @@ const Users = {
           message: 'addUser-error',
         })
 
-        const message = error.graphQLErrors[0]?.message ?? error.message
+        const message = error.graphQLErrors?.[0]?.message ?? error.message
         let status = ''
 
         if (message.includes(MessageSFPUserAddError.DUPLICATED)) {

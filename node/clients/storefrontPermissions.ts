@@ -142,6 +142,9 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     costId,
     name,
     email,
+    corporateName,
+    corporateDocument,
+    tradeName
   }: {
     id?: string
     roleId: string
@@ -151,12 +154,16 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     clId?: string
     name: string
     email: string
+    corporateName: string
+    corporateDocument: string
+    tradeName: string
   }): Promise<any> => {
     return this.graphql.mutate(
       {
         mutate: addUser,
         variables: {
           canImpersonate: false,
+          isCorporate: true,
           costId,
           email,
           id,
@@ -164,6 +171,9 @@ export default class StorefrontPermissions extends AppGraphQLClient {
           orgId,
           roleId,
           userId,
+          corporateName,
+          corporateDocument,
+          tradeName
         },
       },
       {
@@ -181,6 +191,9 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     clId,
     name,
     email,
+    corporateName,
+    corporateDocument,
+    tradeName
   }: {
     id?: string
     roleId: string
@@ -190,12 +203,16 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     clId?: string
     name: string
     email: string
+    corporateName: string
+    corporateDocument: string
+    tradeName: string
   }): Promise<any> => {
     return this.graphql.mutate(
       {
         mutate: updateUser,
         variables: {
           canImpersonate: false,
+          isCorporate: true,
           clId,
           costId,
           email,
@@ -204,6 +221,9 @@ export default class StorefrontPermissions extends AppGraphQLClient {
           orgId,
           roleId,
           userId,
+          corporateName,
+          corporateDocument,
+          tradeName
         },
       },
       {

@@ -12,6 +12,10 @@ export default print(gql`
     $canImpersonate: Boolean!
     $name: String
     $email: String
+    $isCorporate: Boolean!
+    $corporateName: String
+    $corporateDocument: String
+    $tradeName: String
   ) {
     updateUser(
       id: $id
@@ -23,6 +27,10 @@ export default print(gql`
       canImpersonate: $canImpersonate
       name: $name
       email: $email
+      isCorporate: $isCorporate
+      corporateName: $corporateName
+      corporateDocument: $corporateDocument
+      tradeName: $tradeName
     ) {
       id
       status
