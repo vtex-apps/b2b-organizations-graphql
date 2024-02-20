@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- Add analytics client to properly send metrics to redshift
+
 ## [0.48.1] - 2024-02-07
 
 ### Fixed
