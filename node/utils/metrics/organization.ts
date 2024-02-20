@@ -1,9 +1,9 @@
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
 import { isEqual } from 'lodash'
 
-import type { Metric } from './metrics'
-import { B2B_METRIC_NAME, sendMetric } from './metrics'
 import type { Organization } from '../../typings'
+import type { Metric } from '../../clients/analytics'
+import { B2B_METRIC_NAME } from '../../clients/analytics'
 
 interface UpdateOrganizationFieldsMetric {
   update_details: { properties: string[] }
@@ -77,9 +77,14 @@ const getPropNamesByUpdateParams = (
 }
 
 export const sendUpdateOrganizationMetric = async (
+  ctx: Context,
   logger: Logger,
   updateOrganizationParams: UpdateOrganizationParams
 ) => {
+  const {
+    clients: { analytics },
+  } = ctx
+
   try {
     const fieldsNamesUpdated = getPropNamesByUpdateParams(
       updateOrganizationParams
@@ -90,7 +95,7 @@ export const sendUpdateOrganizationMetric = async (
       fieldsNamesUpdated
     )
 
-    await sendMetric(metric)
+    await analytics.sendMetric(metric)
   } catch (error) {
     logger.error({
       error,
@@ -100,11 +105,16 @@ export const sendUpdateOrganizationMetric = async (
 }
 
 export const sendOrganizationStatusMetric = async (
+  ctx: Context,
   logger: Logger,
   statusParams: OrganizationStatusParams
 ) => {
+  const {
+    clients: { analytics },
+  } = ctx
+
   try {
-    await sendMetric({
+    await analytics.sendMetric({
       account: statusParams.account,
       description: 'Change Organization Status Action - Graphql',
       fields: {

@@ -247,7 +247,7 @@ const Users = {
       },
     }
 
-    sendImpersonateB2BUserMetric(metricParams)
+    sendImpersonateB2BUserMetric(ctx, metricParams)
 
     return (
       impersonation?.data?.impersonateUser ?? {
@@ -359,6 +359,7 @@ const Users = {
     }
 
     return impersonateUser(
+      ctx,
       storefrontPermissionsClient,
       userId,
       logger,
@@ -425,7 +426,7 @@ const Users = {
           email,
         })
 
-        sendRemoveUserMetric(logger, ctx.vtex.account, fields)
+        sendRemoveUserMetric(ctx, logger, ctx.vtex.account, fields)
 
         return result.data.deleteUser
       })
@@ -482,7 +483,7 @@ const Users = {
     return storefrontPermissionsClient
       .addUser(fields)
       .then((result: any) => {
-        sendAddUserMetric(logger, ctx.vtex.account, fields)
+        sendAddUserMetric(ctx, logger, ctx.vtex.account, fields)
 
         return result.data.addUser
       })
@@ -608,7 +609,7 @@ const Users = {
     return storefrontPermissionsClient
       .updateUser(fields)
       .then((result: any) => {
-        sendUpdateUserMetric(logger, ctx.vtex.account, fields)
+        sendUpdateUserMetric(ctx, logger, ctx.vtex.account, fields)
 
         return result.data.updateUser
       })
@@ -709,6 +710,7 @@ const Users = {
 export default Users
 
 async function impersonateUser(
+  ctx: Context,
   storefrontPermissionsClient: any,
   userId: string | undefined,
   logger: any,
@@ -741,7 +743,7 @@ async function impersonateUser(
         user: undefined, // no information about original user at this point
       }
 
-      sendImpersonateUserMetric(metricParams)
+      sendImpersonateUserMetric(ctx, metricParams)
     })
     .catch((error: any) => {
       logger.error({
