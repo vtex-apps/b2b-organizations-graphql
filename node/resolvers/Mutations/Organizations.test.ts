@@ -69,6 +69,9 @@ const mockContext = (
           .fn()
           .mockResolvedValue({ data: { saveUser: randUser() } }),
       },
+      analytics: {
+        sendMetric: jest.fn(),
+      },
     },
     vtex: {
       logger: jest.fn(),

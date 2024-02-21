@@ -1,7 +1,7 @@
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
-import type { Metric } from './metrics'
-import { B2B_METRIC_NAME, sendMetric } from './metrics'
+import type { Metric } from '../../clients/analytics'
+import { B2B_METRIC_NAME } from '../../clients/analytics'
 
 export interface AuthAuditMetric {
   operation: string
@@ -29,9 +29,17 @@ export class AuthMetric implements Metric {
   }
 }
 
-const sendAuthMetric = async (logger: Logger, authMetric: AuthMetric) => {
+const sendAuthMetric = async (
+  ctx: Context,
+  logger: Logger,
+  authMetric: AuthMetric
+) => {
+  const {
+    clients: { analytics },
+  } = ctx
+
   try {
-    await sendMetric(authMetric)
+    await analytics.sendMetric(authMetric)
   } catch (error) {
     logger.error({
       error,

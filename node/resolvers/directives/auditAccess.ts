@@ -50,6 +50,6 @@ export class AuditAccess extends SchemaDirectiveVisitor {
       operation,
     })
 
-    await sendAuthMetric(logger, authMetric)
+    await sendAuthMetric(context, logger, authMetric)
   }
 }

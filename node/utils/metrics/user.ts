@@ -1,8 +1,8 @@
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
 import type { UserArgs } from '../../typings'
-import type { Metric } from './metrics'
-import { B2B_METRIC_NAME, sendMetric } from './metrics'
+import type { Metric } from '../../clients/analytics'
+import { B2B_METRIC_NAME } from '../../clients/analytics'
 
 interface UserMetricType {
   description: string
@@ -43,9 +43,17 @@ class UserMetric implements Metric {
   }
 }
 
-const sendUserMetric = async (logger: Logger, userMetric: UserMetric) => {
+const sendUserMetric = async (
+  ctx: Context,
+  logger: Logger,
+  userMetric: UserMetric
+) => {
+  const {
+    clients: { analytics },
+  } = ctx
+
   try {
-    await sendMetric(userMetric)
+    await analytics.sendMetric(userMetric)
   } catch (error) {
     logger.error({
       error,
@@ -55,33 +63,39 @@ const sendUserMetric = async (logger: Logger, userMetric: UserMetric) => {
 }
 
 export const sendRemoveUserMetric = async (
+  ctx: Context,
   logger: Logger,
   account: string,
   userArgs: Partial<UserArgs>
 ) => {
   await sendUserMetric(
+    ctx,
     logger,
     new UserMetric(account, userMetricType.remove, userArgs)
   )
 }
 
 export const sendAddUserMetric = async (
+  ctx: Context,
   logger: Logger,
   account: string,
   userArgs: Partial<UserArgs>
 ) => {
   await sendUserMetric(
+    ctx,
     logger,
     new UserMetric(account, userMetricType.add, userArgs)
   )
 }
 
 export const sendUpdateUserMetric = async (
+  ctx: Context,
   logger: Logger,
   account: string,
   userArgs: Partial<UserArgs>
 ) => {
   await sendUserMetric(
+    ctx,
     logger,
     new UserMetric(account, userMetricType.update, userArgs)
   )

@@ -688,7 +688,7 @@ const Organizations = {
         id,
       })
 
-      sendUpdateOrganizationMetric(logger, {
+      sendUpdateOrganizationMetric(ctx, logger, {
         account: ctx.vtex.account,
         currentOrganizationData,
         updatedProperties: fields,
@@ -797,7 +797,7 @@ const Organizations = {
             id,
           })
 
-          sendOrganizationStatusMetric(logger, {
+          sendOrganizationStatusMetric(ctx, logger, {
             account: ctx.vtex.account,
             status: ORGANIZATION_REQUEST_STATUSES.APPROVED,
           })
@@ -837,7 +837,7 @@ const Organizations = {
         )
       }
 
-      sendOrganizationStatusMetric(logger, {
+      sendOrganizationStatusMetric(ctx, logger, {
         account: ctx.vtex.account,
         status: ORGANIZATION_REQUEST_STATUSES.DECLINED,
       })

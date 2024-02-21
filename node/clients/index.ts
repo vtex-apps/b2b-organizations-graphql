@@ -1,5 +1,6 @@
 import { IOClients } from '@vtex/api'
 
+import AnalyticsClient from './analytics'
 import VtexId from './vtexId'
 import PaymentsClient from './payments'
 import MailClient from './email'
@@ -13,6 +14,10 @@ import SellersClient from './sellers'
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
+  public get analytics() {
+    return this.getOrSet('analytics', AnalyticsClient)
+  }
+
   public get checkout() {
     return this.getOrSet('checkout', Checkout)
   }
