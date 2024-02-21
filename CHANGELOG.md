@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- add a check condition for the caller, to allow requests from storefront-permissions in the flow create session.
+
 ## [0.48.2] - 2024-02-21
 
 ### Fixed
