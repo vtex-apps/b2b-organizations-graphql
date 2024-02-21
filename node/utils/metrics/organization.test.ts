@@ -15,7 +15,7 @@ import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
 import type { Seller } from '../../clients/sellers'
 import { ORGANIZATION_REQUEST_STATUSES } from '../constants'
-import { B2B_METRIC_NAME, sendMetric } from './metrics'
+import { B2B_METRIC_NAME } from '../../clients/analytics'
 import type {
   OrganizationStatusParams,
   UpdateOrganizationParams,
@@ -31,13 +31,24 @@ import type {
   PaymentTerm,
 } from '../../typings'
 
-jest.mock('./metrics')
+const mockContext = () => {
+  return {
+    clients: {
+      analytics: {
+        sendMetric: jest.fn(),
+      },
+    },
+  } as unknown as Context
+}
+
 afterEach(() => {
   jest.resetAllMocks()
 })
 
 describe('given an organization to update data', () => {
   describe('when change all properties', () => {
+    const context = mockContext()
+
     const logger = jest.fn() as unknown as Logger
 
     const account = randWord()
@@ -77,7 +88,11 @@ describe('given an organization to update data', () => {
     }
 
     beforeEach(async () => {
-      await sendUpdateOrganizationMetric(logger, updateOrganizationParams)
+      await sendUpdateOrganizationMetric(
+        context,
+        logger,
+        updateOrganizationParams
+      )
     })
 
     it('should metrify that all properties changed', () => {
@@ -103,11 +118,15 @@ describe('given an organization to update data', () => {
         name: B2B_METRIC_NAME,
       }
 
-      expect(sendMetric).toHaveBeenCalledWith(metricParam)
+      expect(context.clients.analytics.sendMetric).toHaveBeenCalledWith(
+        metricParam
+      )
     })
   })
 
   describe('when no change properties data', () => {
+    const context = mockContext()
+
     const logger = jest.fn() as unknown as Logger
 
     const account = randWord()
@@ -156,7 +175,11 @@ describe('given an organization to update data', () => {
     }
 
     beforeEach(async () => {
-      await sendUpdateOrganizationMetric(logger, updateOrganizationParams)
+      await sendUpdateOrganizationMetric(
+        context,
+        logger,
+        updateOrganizationParams
+      )
     })
 
     it('should metric no properties changed', () => {
@@ -172,10 +195,14 @@ describe('given an organization to update data', () => {
         name: B2B_METRIC_NAME,
       }
 
-      expect(sendMetric).toHaveBeenCalledWith(metricParam)
+      expect(context.clients.analytics.sendMetric).toHaveBeenCalledWith(
+        metricParam
+      )
     })
   })
   describe('when just the name, status and tradeName', () => {
+    const context = mockContext()
+
     const logger = jest.fn() as unknown as Logger
 
     const account = randWord()
@@ -214,7 +241,11 @@ describe('given an organization to update data', () => {
     }
 
     beforeEach(async () => {
-      await sendUpdateOrganizationMetric(logger, updateOrganizationParams)
+      await sendUpdateOrganizationMetric(
+        context,
+        logger,
+        updateOrganizationParams
+      )
     })
 
     it('should metric just the properties changed', () => {
@@ -230,11 +261,15 @@ describe('given an organization to update data', () => {
         name: B2B_METRIC_NAME,
       }
 
-      expect(sendMetric).toHaveBeenCalledWith(metricParam)
+      expect(context.clients.analytics.sendMetric).toHaveBeenCalledWith(
+        metricParam
+      )
     })
   })
 
   describe('when need to update status', () => {
+    const context = mockContext()
+
     const logger = jest.fn() as unknown as Logger
 
     const account = randWord()
@@ -245,7 +280,11 @@ describe('given an organization to update data', () => {
     }
 
     beforeEach(async () => {
-      await sendOrganizationStatusMetric(logger, updateOrganizationParams)
+      await sendOrganizationStatusMetric(
+        context,
+        logger,
+        updateOrganizationParams
+      )
     })
 
     it('should metrify the status changed', () => {
@@ -259,7 +298,9 @@ describe('given an organization to update data', () => {
         name: B2B_METRIC_NAME,
       }
 
-      expect(sendMetric).toHaveBeenCalledWith(metricParam)
+      expect(context.clients.analytics.sendMetric).toHaveBeenCalledWith(
+        metricParam
+      )
     })
   })
 })

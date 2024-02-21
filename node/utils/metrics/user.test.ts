@@ -1,7 +1,7 @@
 import { randEmail, randWord } from '@ngneat/falso'
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
-import { B2B_METRIC_NAME, sendMetric } from './metrics'
+import { B2B_METRIC_NAME } from '../../clients/analytics'
 import {
   sendAddUserMetric,
   sendRemoveUserMetric,
@@ -9,13 +9,24 @@ import {
 } from './user'
 import type { UserArgs } from '../../typings'
 
-jest.mock('./metrics')
+const mockContext = () => {
+  return {
+    clients: {
+      analytics: {
+        sendMetric: jest.fn(),
+      },
+    },
+  } as unknown as Context
+}
+
 afterEach(() => {
   jest.resetAllMocks()
 })
 
 describe('given an action for a user', () => {
   describe('when add user', () => {
+    const context = mockContext()
+
     const logger = jest.fn() as unknown as Logger
 
     const account = randWord()
@@ -27,7 +38,7 @@ describe('given an action for a user', () => {
     }
 
     beforeEach(async () => {
-      await sendAddUserMetric(logger, account, userArgs)
+      await sendAddUserMetric(context, logger, account, userArgs)
     })
 
     it('should metrify the action', () => {
@@ -39,11 +50,15 @@ describe('given an action for a user', () => {
         name: B2B_METRIC_NAME,
       }
 
-      expect(sendMetric).toHaveBeenCalledWith(metricParam)
+      expect(context.clients.analytics.sendMetric).toHaveBeenCalledWith(
+        metricParam
+      )
     })
   })
 
   describe('when remove user', () => {
+    const context = mockContext()
+
     const logger = jest.fn() as unknown as Logger
 
     const account = randWord()
@@ -55,7 +70,7 @@ describe('given an action for a user', () => {
     }
 
     beforeEach(async () => {
-      await sendRemoveUserMetric(logger, account, userArgs)
+      await sendRemoveUserMetric(context, logger, account, userArgs)
     })
 
     it('should metrify the action', () => {
@@ -67,11 +82,15 @@ describe('given an action for a user', () => {
         name: B2B_METRIC_NAME,
       }
 
-      expect(sendMetric).toHaveBeenCalledWith(metricParam)
+      expect(context.clients.analytics.sendMetric).toHaveBeenCalledWith(
+        metricParam
+      )
     })
   })
 
   describe('when update user', () => {
+    const context = mockContext()
+
     const logger = jest.fn() as unknown as Logger
 
     const account = randWord()
@@ -83,7 +102,7 @@ describe('given an action for a user', () => {
     }
 
     beforeEach(async () => {
-      await sendUpdateUserMetric(logger, account, userArgs)
+      await sendUpdateUserMetric(context, logger, account, userArgs)
     })
 
     it('should metrify the action', () => {
@@ -95,7 +114,9 @@ describe('given an action for a user', () => {
         name: B2B_METRIC_NAME,
       }
 
-      expect(sendMetric).toHaveBeenCalledWith(metricParam)
+      expect(context.clients.analytics.sendMetric).toHaveBeenCalledWith(
+        metricParam
+      )
     })
   })
 })

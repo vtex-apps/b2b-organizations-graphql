@@ -1,5 +1,5 @@
-import type { Metric } from './metrics'
-import { B2B_METRIC_NAME, sendMetric } from './metrics'
+import type { Metric } from '../../clients/analytics'
+import { B2B_METRIC_NAME } from '../../clients/analytics'
 
 type ImpersonatePerson = {
   email: string
@@ -80,24 +80,34 @@ const buildImpersonateB2BUserMetric = (
 }
 
 export const sendImpersonateUserMetric = async (
+  ctx: Context,
   metricParams: ImpersonateMetricParams
 ) => {
+  const {
+    clients: { analytics },
+  } = ctx
+
   try {
     const metric = buildImpersonateUserMetric(metricParams)
 
-    await sendMetric(metric)
+    await analytics.sendMetric(metric)
   } catch (error) {
     console.warn('Unable to log metrics', error)
   }
 }
 
 export const sendImpersonateB2BUserMetric = async (
+  ctx: Context,
   metricParams: ImpersonateMetricParams
 ) => {
+  const {
+    clients: { analytics },
+  } = ctx
+
   try {
     const metric = buildImpersonateB2BUserMetric(metricParams)
 
-    await sendMetric(metric)
+    await analytics.sendMetric(metric)
   } catch (error) {
     console.warn('Unable to log metrics', error)
   }
