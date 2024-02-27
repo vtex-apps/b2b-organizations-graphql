@@ -54,9 +54,6 @@
       "name": "vtex.storefront-permissions:resolve-graphql"
     },
     {
-      "name": "vtex.graphql-server:resolve-graphql"
-    },
-    {
       "name": "template-criar"
     },
     {

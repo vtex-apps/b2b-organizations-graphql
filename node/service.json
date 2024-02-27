@@ -27,6 +27,18 @@
     "requestCancellation": {
       "path": "/_v/private/b2b/checkout/pub/orders/:orderId/user-cancel-request",
       "public": true
+    },
+    "__graphql": {
+      "path": "/_v/graphql",
+      "policies": [
+        {
+          "effect": "allow",
+          "actions": ["get"],
+          "principals": [
+            "vrn:apps:*:{{account}}:*:app/vtex.storefront-permissions@*"
+          ]
+        }
+      ]
     }
   }
 }

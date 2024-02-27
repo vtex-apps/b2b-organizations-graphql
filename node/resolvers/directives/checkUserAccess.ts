@@ -1,7 +1,7 @@
-import { SchemaDirectiveVisitor } from 'graphql-tools'
+import { AuthenticationError, ForbiddenError } from '@vtex/api'
 import type { GraphQLField } from 'graphql'
 import { defaultFieldResolver } from 'graphql'
-import { AuthenticationError, ForbiddenError } from '@vtex/api'
+import { SchemaDirectiveVisitor } from 'graphql-tools'
 
 export class CheckUserAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -22,6 +22,16 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
 
       const apiToken = context?.headers['vtex-api-apptoken'] as string
       const appKey = context?.headers['vtex-api-appkey'] as string
+
+      // Add a condition to allow the caller storefront-permission call operations
+      // because the app doesn't send the cookie header.
+      if (
+        context.headers?.['x-vtex-caller']?.indexOf(
+          'vtex.storefront-permissions'
+        ) !== -1
+      ) {
+        return resolve(root, args, context, info)
+      }
 
       if (apiToken?.length && appKey?.length) {
         token = (
