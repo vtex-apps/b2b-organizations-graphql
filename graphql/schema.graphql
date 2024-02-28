@@ -24,7 +24,9 @@ type Query {
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
 
-  getOrganizationById(id: ID): Organization @cacheControl(scope: PRIVATE)
+  getOrganizationById(id: ID): Organization
+    @cacheControl(scope: PRIVATE)
+    @checkUserAccess
   getOrganizationByIdStorefront(id: ID): Organization
     @withSession
     @cacheControl(scope: PRIVATE)
@@ -56,6 +58,7 @@ type Query {
   ): CostCenterResult @withSession @cacheControl(scope: PRIVATE)
   getCostCenterById(id: ID!): CostCenter
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
+    @checkUserAccess
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
     @cacheControl(scope: PRIVATE, maxAge: SHORT)

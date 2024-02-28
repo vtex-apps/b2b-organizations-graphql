@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Directive withPermissions was not retrieving the permissions without app name on method parameter of storefront permissions client
 
+## [0.48.4] - 2024-02-28
+
+### Fixed
+
+- Policies config rollback for graphql operations. Enable configuration.
+
+## [0.48.3] - 2024-02-27
+
+### Fixed
+
+- add a check condition for the caller, to allow requests from storefront-permissions in the flow create session.
+
 ## [0.48.2] - 2024-02-21
 
 ### Fixed
