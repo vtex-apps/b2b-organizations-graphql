@@ -381,13 +381,15 @@ const Users = {
     const variables = {
       organizationId: orgId,
       costCenterId: costId,
-      search : email,
+      search: email,
     }
 
     storefrontPermissionsClient
       .listUsersPaginated(variables)
       .then((result: any) => {
-        const user = result.data.listUsersPaginated.data.find((u: any) =>u.email === email)
+        const user = result.data.listUsersPaginated.data.find(
+          (u: any) => u.email === email
+        )
 
         if (!user) return
 
@@ -399,7 +401,6 @@ const Users = {
           id,
           userId,
         }
-    
         return storefrontPermissionsClient
           .deleteUser(fields)
           .then((response: any) => {
@@ -408,15 +409,13 @@ const Users = {
               email,
             })
             sendRemoveUserMetric(ctx, logger, ctx.vtex.account, fields)
-    
             return response.data.deleteUser
           })
           .catch((error: any) => {
             logger.error({
               error,
-              message: 'removeUser-deleteUserError'
+              message: 'removeUser-deleteUserError',
             })
-    
             return { status: 'error', message: error }
           })
       })
