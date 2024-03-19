@@ -381,24 +381,23 @@ const Users = {
     const variables = {
       organizationId: orgId,
       costCenterId: costId,
-      search : email
+      search : email,
     }
 
     storefrontPermissionsClient
       .listUsersPaginated(variables)
       .then((result: any) => {
-        var user = result.data.listUsersPaginated.data.find((u: any) => u.email === email)
+        const user = result.data.listUsersPaginated.data.find((u: any) =>u.email === email)
 
-        if (!user)
-          return
+        if (!user) return
 
-        let id = user.id
-        let userId = user.userId
+        const id = user.id
+        const userId = user.userId
 
         const fields = {
           email,
           id,
-          userId
+          userId,
         }
     
         return storefrontPermissionsClient
@@ -406,9 +405,8 @@ const Users = {
           .then((response: any) => {
             events.sendEvent('', 'b2b-organizations-graphql.removeUser', {
               id,
-              email
+              email,
             })
-    
             sendRemoveUserMetric(ctx, logger, ctx.vtex.account, fields)
     
             return response.data.deleteUser
