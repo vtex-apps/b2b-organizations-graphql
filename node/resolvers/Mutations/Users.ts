@@ -1,6 +1,5 @@
 import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-
 import type { ImpersonateMetricParams } from '../../utils/metrics/impersonate'
 import {
   sendImpersonateB2BUserMetric,
@@ -369,7 +368,6 @@ const Users = {
     )
   },
 
-
   removeUserWithEmail: async (
     _: void,
     { orgId, costId, email }: UserArgs,
@@ -389,14 +387,10 @@ const Users = {
     storefrontPermissionsClient
       .listUsersPaginated(variables)
       .then((result: any) => {
+        var user = result.data.listUsersPaginated.data.find((u: any) => u.email === email)
 
-        console.info(JSON.stringify(result));
-        var user = result.data.listUsersPaginated.data.find((user: any) => user.email == email)
-
-        if(!user)
+        if (!user)
           return
-
-        console.info(JSON.stringify(user));
 
         let id = user.id
         let userId = user.userId
@@ -409,25 +403,24 @@ const Users = {
     
         return storefrontPermissionsClient
           .deleteUser(fields)
-          .then((result: any) => {
+          .then((response: any) => {
             events.sendEvent('', 'b2b-organizations-graphql.removeUser', {
               id,
-              email,
+              email
             })
     
             sendRemoveUserMetric(ctx, logger, ctx.vtex.account, fields)
     
-            return result.data.deleteUser
+            return response.data.deleteUser
           })
           .catch((error: any) => {
             logger.error({
               error,
-              message: 'removeUser-deleteUserError',
+              message: 'removeUser-deleteUserError'
             })
     
             return { status: 'error', message: error }
           })
-
       })
       .catch((error: any) => {
         logger.error({
