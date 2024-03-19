@@ -236,6 +236,11 @@ type Mutation {
     email: String!
     canImpersonate: Boolean = false
   ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
+  removeUserWithEmail(
+    orgId: ID!
+    costId: ID!
+    email: String!
+  ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   updateUser(
     id: ID
     roleId: ID!

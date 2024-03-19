@@ -1,5 +1,6 @@
 import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
-import GraphQLError from '../../utils/GraphQLError'
+import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+
 import type { ImpersonateMetricParams } from '../../utils/metrics/impersonate'
 import {
   sendImpersonateB2BUserMetric,
@@ -366,6 +367,75 @@ const Users = {
       sessionData?.namespaces?.account?.accountName,
       sessionData?.namespaces['storefront-permissions']
     )
+  },
+
+
+  removeUserWithEmail: async (
+    _: void,
+    { orgId, costId, email }: UserArgs,
+    ctx: Context
+  ) => {
+    const {
+      clients: { events, storefrontPermissions: storefrontPermissionsClient },
+      vtex: { logger },
+    } = ctx as any
+
+    const variables = {
+      organizationId: orgId,
+      costCenterId: costId,
+      search : email
+    }
+
+    storefrontPermissionsClient
+      .listUsersPaginated(variables)
+      .then((result: any) => {
+
+        console.info(JSON.stringify(result));
+        var user = result.data.listUsersPaginated.data.find((user: any) => user.email == email)
+
+        if(!user)
+          return
+
+        console.info(JSON.stringify(user));
+
+        let id = user.id
+        let userId = user.userId
+
+        const fields = {
+          email,
+          id,
+          userId
+        }
+    
+        return storefrontPermissionsClient
+          .deleteUser(fields)
+          .then((result: any) => {
+            events.sendEvent('', 'b2b-organizations-graphql.removeUser', {
+              id,
+              email,
+            })
+    
+            sendRemoveUserMetric(ctx, logger, ctx.vtex.account, fields)
+    
+            return result.data.deleteUser
+          })
+          .catch((error: any) => {
+            logger.error({
+              error,
+              message: 'removeUser-deleteUserError',
+            })
+    
+            return { status: 'error', message: error }
+          })
+
+      })
+      .catch((error: any) => {
+        logger.error({
+          error,
+          message: 'getUsers-error',
+        })
+        throw new GraphQLError(getErrorMessage(error))
+      })
   },
 
   /**
