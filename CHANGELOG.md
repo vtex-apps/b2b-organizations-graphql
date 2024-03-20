@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Add new removeUserWithEmail graphql API for bulk import use case
+
 ## [0.48.5] - 2024-02-29
 
 ### Fixed
