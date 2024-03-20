@@ -378,18 +378,10 @@ const Users = {
       vtex: { logger },
     } = ctx as any
 
-    const variables = {
-      organizationId: orgId,
-      costCenterId: costId,
-      search: email,
-    }
-
     storefrontPermissionsClient
-      .listUsersPaginated(variables)
+      .getUsersByEmail(email, orgId, costId)
       .then((result: any) => {
-        const user = result.data.listUsersPaginated.data.find(
-          (u: any) => u.email === email
-        )
+        const user = result.data.getUsersByEmail[0]
 
         if (!user) return
 
@@ -401,6 +393,7 @@ const Users = {
           id,
           userId,
         }
+
         return storefrontPermissionsClient
           .deleteUser(fields)
           .then((response: any) => {
