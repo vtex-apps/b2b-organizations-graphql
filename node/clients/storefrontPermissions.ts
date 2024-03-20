@@ -131,7 +131,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     email: string,
     orgId: string,
     costId: string
-    ): Promise<any> => {
+  ): Promise<any> => {
     return this.query({
       extensions: this.getPersistedQuery(),
       query: getUsersByEmail,
