@@ -97,7 +97,7 @@ const costCenters = {
       })
 
       /* MasterData client returns empty string when it doesn't find the document */
-      if (result as unknown as string !== '') {
+      if ((result as unknown as string) !== '') {
         result.addresses = await addMissingAddressIds(result, ctx)
       }
 
