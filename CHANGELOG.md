@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Directive withPermissions was not retrieving the permissions without app name on method parameter of storefront permissions client
 
+## [0.49.0] - 2024-03-20
+
+### Added
+
+- Add new removeUserWithEmail graphql API for bulk import use case
+
+## [0.48.5] - 2024-02-29
+
+### Fixed
+
+- Skip auth token validation when the x-vtex-caller is b2b-checkout-settings
+
 ## [0.48.4] - 2024-02-28
 
 ### Fixed

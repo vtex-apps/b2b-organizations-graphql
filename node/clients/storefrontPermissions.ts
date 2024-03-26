@@ -11,6 +11,7 @@ import getOrganizationsByEmail from '../queries/getOrganizationsByEmail'
 import getPermission from '../queries/getPermission'
 import getRole from '../queries/getRole'
 import getUser from '../queries/getUser'
+import getUsersByEmail from '../queries/getUsersByEmail'
 import listAllUsers from '../queries/listAllUsers'
 import listRoles from '../queries/listRoles'
 import listUsers from '../queries/listUsers'
@@ -123,6 +124,18 @@ export default class StorefrontPermissions extends AppGraphQLClient {
       extensions: this.getPersistedQuery(),
       query: getUser,
       variables: { id: userId },
+    })
+  }
+
+  public getUsersByEmail = async (
+    email: string,
+    orgId: string,
+    costId: string
+  ): Promise<any> => {
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: getUsersByEmail,
+      variables: { email, orgId, costId },
     })
   }
 

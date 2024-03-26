@@ -28,6 +28,9 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
       if (
         context.headers?.['x-vtex-caller']?.indexOf(
           'vtex.storefront-permissions'
+        ) !== -1 ||
+        context.headers?.['x-vtex-caller']?.indexOf(
+          'vtex.b2b-checkout-settings'
         ) !== -1
       ) {
         return resolve(root, args, context, info)
