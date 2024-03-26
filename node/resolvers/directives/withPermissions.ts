@@ -9,7 +9,9 @@ import type StorefrontPermissions from '../../clients/storefrontPermissions'
 export const getUserPermission = async (
   storefrontPermissions: StorefrontPermissions
 ) => {
-  const result = await storefrontPermissions.checkUserPermission()
+  const result = await storefrontPermissions.checkUserPermission(
+    'vtex.b2b-organizations@1.x'
+  )
 
   return result?.data?.checkUserPermission ?? null
 }
