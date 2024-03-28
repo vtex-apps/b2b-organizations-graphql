@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fix
+
+- Fix getCostCenterById query when the cost center is not found
+
 ## [0.49.0] - 2024-03-20
 
 ### Added
