@@ -1,3 +1,6 @@
+import type { EventContext } from '@vtex/api'
+
+import type { Clients } from '../clients'
 import { schemas } from '../mdSchema'
 import templates from '../templates'
 import { toHash } from '../utils'
@@ -19,7 +22,7 @@ export const getAppId = (): string => {
   return appName
 }
 
-const checkConfig = async (ctx: Context) => {
+const checkConfig = async (ctx: Context | EventContext<Clients>) => {
   const {
     vtex: { logger },
     clients: { mail, masterdata, vbase },
@@ -44,7 +47,7 @@ const checkConfig = async (ctx: Context) => {
       message: 'checkConfig-updatingSchema',
     })
 
-    schemas.forEach((schema) => {
+    schemas.forEach(schema => {
       updates.push(
         masterdata
           .createOrUpdateSchema({
@@ -68,8 +71,8 @@ const checkConfig = async (ctx: Context) => {
       )
     })
     try {
-      await Promise.all(updates).then((results) => {
-        if (results.every((res) => res === true)) {
+      await Promise.all(updates).then(results => {
+        if (results.every(res => res === true)) {
           settings.schemaHash = currSchemaHash
           schemaChanged = true
         }
@@ -91,7 +94,7 @@ const checkConfig = async (ctx: Context) => {
 
     try {
       await Promise.all(
-        templates.map(async (template) => {
+        templates.map(async template => {
           const existingData = await mail.getTemplate(template.Name)
 
           if (!existingData) {
@@ -113,7 +116,7 @@ const checkConfig = async (ctx: Context) => {
         settings.templateHash = currTemplateHash
         templatesChanged = true
       })
-      .catch((error) => {
+      .catch(error => {
         logger.error({
           error,
           message: 'checkConfig-publishTemplateError',

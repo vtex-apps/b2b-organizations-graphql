@@ -15,7 +15,7 @@ const getWhereByStatus = ({ status }: { status: string[] }) => {
   if (status?.length) {
     const statusArray = [] as string[]
 
-    status.forEach((stat) => {
+    status.forEach(stat => {
       statusArray.push(`status=${stat}`)
     })
     const statuses = `(${statusArray.join(' OR ')})`
@@ -132,7 +132,7 @@ const Organizations = {
     const whereArray = getWhereByStatus({ status })
 
     if (search) {
-      whereArray.push(`name="*${search}*"`)
+      whereArray.push(`(name="*${search}*" OR tradeName="*${search}*")`)
     }
 
     const where = whereArray.join(' AND ')
@@ -356,7 +356,7 @@ const Organizations = {
       if (search.match(/[a-z\d]+@[a-z]+\.[a-z]{2,3}/gm)) {
         whereArray.push(`b2bCustomerAdmin.email=${search}`)
       } else {
-        whereArray.push(`name="*${search}*"`)
+        whereArray.push(`(name="*${search}*" OR tradeName="*${search}*")`)
       }
     }
 

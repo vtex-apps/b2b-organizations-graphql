@@ -80,11 +80,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.48.2] - 2024-02-21
 
 ### Fixed
+
 - Add analytics client to properly send metrics to redshift
 
 ## [0.48.1] - 2024-02-07
 
 ### Fixed
+
 - Add retries to `sendMetric` to avoid connection errors
 
 ## [0.48.0] - 2024-01-19
@@ -92,6 +94,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Allow `paymentTerms`, `collections` and `sellers` to be provided by name only on `createOrganizationAndCostCenterWithAdminUser`
+
 ## [0.47.1] - 2023-12-18
 
 ### Fixed
@@ -178,7 +181,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.37.0] - 2023-09-19
 
-
 ### Added
 
 - Added event trigger on delete a user
@@ -194,7 +196,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Added metrics for impersonate user
-- 
+-
+
 ## [0.35.3] - 2023-08-09
 
 ### Fixed
@@ -212,7 +215,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Fix auth problem when fetching orders history
-
 
 ## [0.35.0] - 2023-07-24
 
