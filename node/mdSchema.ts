@@ -55,10 +55,6 @@ export const schemas = [
     version: ORGANIZATION_REQUEST_SCHEMA_VERSION,
     body: {
       properties: {
-        id: {
-          type: 'string',
-          title: 'ID',
-        },
         name: {
           type: 'string',
           title: 'Name',
@@ -132,10 +128,6 @@ export const schemas = [
     version: ORGANIZATION_SCHEMA_VERSION,
     body: {
       properties: {
-        id: {
-          type: 'string',
-          title: 'ID',
-        },
         name: {
           type: 'string',
           title: 'Name',
