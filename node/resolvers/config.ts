@@ -47,7 +47,7 @@ const checkConfig = async (ctx: Context | EventContext<Clients>) => {
       message: 'checkConfig-updatingSchema',
     })
 
-    schemas.forEach(schema => {
+    schemas.forEach((schema: any) => {
       updates.push(
         masterdata
           .createOrUpdateSchema({
@@ -94,7 +94,7 @@ const checkConfig = async (ctx: Context | EventContext<Clients>) => {
 
     try {
       await Promise.all(
-        templates.map(async template => {
+        templates.map(async (template: any) => {
           const existingData = await mail.getTemplate(template.Name)
 
           if (!existingData) {
@@ -116,7 +116,7 @@ const checkConfig = async (ctx: Context | EventContext<Clients>) => {
         settings.templateHash = currTemplateHash
         templatesChanged = true
       })
-      .catch(error => {
+      .catch((error: any) => {
         logger.error({
           error,
           message: 'checkConfig-publishTemplateError',
