@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
+
 - Directive withPermissions was not retrieving the permissions without app name on method parameter of storefront permissions client
+
+## [0.49.1] - 2024-03-28
+
+### Fix
+
+- Fix getCostCenterById query when the cost center is not found
 
 ## [0.49.0] - 2024-03-20
 
