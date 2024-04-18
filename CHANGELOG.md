@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fix
+
+- Use b2b-organizations app name on checkUserPermission to correctly get the user permissions
+
 ## [0.49.1] - 2024-03-28
 
 ### Fix
