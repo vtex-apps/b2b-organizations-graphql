@@ -314,17 +314,20 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }
 
   private getTokenToHeader = () => {
-    const token =
-      this.context.storeUserAuthToken ??
-      this.context.adminUserAuthToken ??
-      this.context.authToken
+    const adminToken = this.context.adminUserAuthToken ?? this.context.authToken
+    const userToken = this.context.storeUserAuthToken ?? null
+    const { sessionToken, account } = this.context
 
-    const { sessionToken } = this.context
+    let allCookies = `VtexIdclientAutCookie=${adminToken}`
+
+    if (userToken) {
+      allCookies += `; VtexIdclientAutCookie_${account}=${userToken}`
+    }
 
     return {
       'x-vtex-credential': this.context.authToken,
-      VtexIdclientAutCookie: token,
-      cookie: `VtexIdclientAutCookie=${token}`,
+      VtexIdclientAutCookie: adminToken,
+      cookie: allCookies,
       ...(sessionToken && {
         'x-vtex-session': sessionToken,
       }), // The axios client http doesn't allow undefined headers
