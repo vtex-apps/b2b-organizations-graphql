@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- Add metric to check access directives
+
 ## [0.49.3] - 2024-04-24
 
 ### Fixed

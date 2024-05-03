@@ -26,6 +26,7 @@ export class AuditAccess extends SchemaDirectiveVisitor {
       request,
     } = context
 
+    const userAgent = request.headers['user-agent'] as string
     const operation = field.astNode?.name?.value ?? request.url
     const forwardedHost = request.headers['x-forwarded-host'] as string
     const caller =
@@ -43,6 +44,7 @@ export class AuditAccess extends SchemaDirectiveVisitor {
 
     const authMetric = new AuthMetric(account, {
       caller,
+      userAgent,
       forwardedHost,
       hasAdminToken,
       hasApiToken,

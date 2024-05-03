@@ -7,6 +7,7 @@ export interface AuthAuditMetric {
   operation: string
   forwardedHost: string
   caller: string
+  userAgent: string
   role?: string
   permissions?: string[]
   hasAdminToken: boolean
@@ -21,11 +22,11 @@ export class AuthMetric implements Metric {
   public readonly fields: AuthAuditMetric
   public readonly name = B2B_METRIC_NAME
 
-  constructor(account: string, fields: AuthAuditMetric) {
+  constructor(account: string, fields: AuthAuditMetric, description?: string) {
     this.account = account
     this.fields = fields
-    this.kind = 'b2b-organization-auth-event'
-    this.description = 'Auth metric event'
+    this.kind = 'b2b-organizations-graphql-auth-event'
+    this.description = description ?? 'Auth metric event'
   }
 }
 
