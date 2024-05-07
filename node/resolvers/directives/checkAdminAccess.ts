@@ -21,15 +21,17 @@ export class CheckAdminAccess extends SchemaDirectiveVisitor {
       } = context
 
       // send metric to collect data about caller and tokens used in the request
-      const operation = field.astNode?.name?.value ?? context.request.url
+      const operation = field.astNode?.name?.value ?? context?.request?.url
       const metric = new AuthMetric(
-        context.vtex.account,
+        context?.vtex?.account,
         {
-          caller: context.request.header['x-vtex-caller'] as string,
-          userAgent: context.request.header['user-agent'] as string,
-          forwardedHost: context.request.header['x-forwarded-host'] as string,
+          caller: context?.request?.headers['x-vtex-caller'] as string,
+          userAgent: context?.request?.headers['user-agent'] as string,
+          forwardedHost: context?.request?.headers[
+            'x-forwarded-host'
+          ] as string,
           hasAdminToken: !!adminUserAuthToken,
-          hasApiToken: !!context.request.headers['vtex-api-apptoken'],
+          hasApiToken: !!context?.request?.headers['vtex-api-apptoken'],
           hasStoreToken: false,
           operation,
         },
