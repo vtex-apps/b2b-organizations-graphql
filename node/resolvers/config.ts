@@ -71,8 +71,8 @@ const checkConfig = async (ctx: Context | EventContext<Clients>) => {
       )
     })
     try {
-      await Promise.all(updates).then(results => {
-        if (results.every(res => res === true)) {
+      await Promise.all(updates).then((results: any) => {
+        if (results.every((res: any) => res === true)) {
           settings.schemaHash = currSchemaHash
           schemaChanged = true
         }
