@@ -13,6 +13,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `Trade Name` to the Organization listing page (Admin)
 - `Trade Name` to the Organization Requests listing page (Admin)
 - Event listener to update schemas once new app version is released
+-
+## [0.49.4] - 2024-05-07
+
+### Added
+- Add metric to check access directives
+
+## [0.49.3] - 2024-04-24
+
+### Fixed
+- Provide correct tokens to clients
+
+## [0.49.2] - 2024-04-18
+
+### Fix
+
+- Use b2b-organizations app name on checkUserPermission to correctly get the user permissions
 
 ## [0.49.1] - 2024-03-28
 
