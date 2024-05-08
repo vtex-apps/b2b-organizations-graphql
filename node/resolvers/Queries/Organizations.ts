@@ -15,7 +15,7 @@ const getWhereByStatus = ({ status }: { status: string[] }) => {
   if (status?.length) {
     const statusArray = [] as string[]
 
-    status.forEach(stat => {
+    status.forEach((stat: string) => {
       statusArray.push(`status=${stat}`)
     })
     const statuses = `(${statusArray.join(' OR ')})`
