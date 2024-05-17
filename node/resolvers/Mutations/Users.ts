@@ -538,10 +538,6 @@ const Users = {
       .then((result: any) => {
         sendAddUserMetric(ctx, logger, ctx.vtex.account, fields)
 
-        if(result.data.addUser.message.includes("invalidUserDuplicated")) {
-          throw new Error(MessageSFPUserAddError.DUPLICATED_ORGANIZATION)
-        }
-
         return result.data.addUser
       })
       .catch((error: any) => {
@@ -549,9 +545,10 @@ const Users = {
           error,
           message: 'addUser-error',
         })
-
+        console.log({ error })
         const message = error.graphQLErrors?.[0]?.message ?? error.message
         let status = ''
+        console.log({ message })
 
         if (message.includes(MessageSFPUserAddError.DUPLICATED)) {
           status = StatusAddUserError.DUPLICATED
@@ -562,7 +559,7 @@ const Users = {
         } else {
           status = StatusAddUserError.ERROR
         }
-        
+
         return { status, message }
       })
   },
