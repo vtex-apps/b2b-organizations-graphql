@@ -5,6 +5,6 @@ metadata:
   annotations:
     github.com/project-slug: vtex-apps/b2b-organizations-graphql
 spec:
-  type: other
-  lifecycle: unknown
+  type: backend-api
+  lifecycle: maintenance
   owner: b-2-b-enabler
