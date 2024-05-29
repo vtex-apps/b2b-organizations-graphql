@@ -23,7 +23,8 @@ export class CheckAdminAccess extends SchemaDirectiveVisitor {
       const { hasAdminToken, hasValidAdminToken, hasCurrentValidAdminToken } =
         await validateAdminToken(context, adminUserAuthToken as string)
 
-      const { hasApiToken, hasValidApiToken } = await validateApiToken(context)
+      const { hasApiToken, hasValidApiToken, hasCurrentValidApiToken } =
+        await validateApiToken(context)
 
       const hasStoreToken = !!storeUserAuthToken // we don't need to validate store token
 
@@ -53,7 +54,7 @@ export class CheckAdminAccess extends SchemaDirectiveVisitor {
 
       sendAuthMetric(context, logger, auditMetric)
 
-      if (!hasAdminToken) {
+      if (!hasAdminToken && !hasApiToken) {
         logger.warn({
           message: 'CheckAdminAccess: No token provided',
           userAgent,
@@ -69,7 +70,7 @@ export class CheckAdminAccess extends SchemaDirectiveVisitor {
         throw new AuthenticationError('No token was provided')
       }
 
-      if (!hasCurrentValidAdminToken) {
+      if (!hasCurrentValidAdminToken && !hasCurrentValidApiToken) {
         logger.warn({
           message: 'CheckAdminAccess: Invalid token',
           userAgent,
