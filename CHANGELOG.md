@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.49.5] - 2024-05-29
+
 ### Changed
 - Improve logging and metrics for checkUserAccess and checkAdminAccess directives
 
