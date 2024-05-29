@@ -1,5 +1,6 @@
 import type { Seller } from '../../clients/sellers'
 import {
+  COST_CENTER_DATA_ENTITY,
   ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_FIELDS,
   ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -29,6 +30,7 @@ import {
 } from '../../utils/metrics/organization'
 import checkConfig from '../config'
 import message from '../message'
+import costCenters from '../Queries/CostCenters'
 import B2BSettings from '../Queries/Settings'
 import CostCenterRepository from '../repository/CostCenterRepository'
 
@@ -632,7 +634,6 @@ const Organizations = {
       clients: { storefrontPermissions, mail, masterdata },
       vtex: { logger },
     } = ctx
-
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
@@ -687,6 +688,29 @@ const Organizations = {
         fields,
         id,
       })
+
+      const pageSize = 1000;
+      const costCentersByOrganization = await costCenters.getCostCentersByOrganizationId(_, { id, search: "", page: 1, pageSize, sortedBy: "name", sortOrder: "ASC" }, ctx)
+      
+      let currentPage = 1;
+      while (costCentersByOrganization.data.length < costCentersByOrganization.pagination.total) {
+        const costCentersByOrganizationPage = await costCenters.getCostCentersByOrganizationId(_, { id, search: "", page: currentPage + 1, pageSize, sortedBy: "name", sortOrder: "ASC" }, ctx);
+        costCentersByOrganization.data = costCentersByOrganization.data.concat(costCentersByOrganizationPage.data);
+        
+        currentPage = costCentersByOrganizationPage.pagination.page;
+      }
+
+      const updatePromises = costCentersByOrganization.data.map(async (costCenter: any) => {
+        return masterdata.updatePartialDocument({
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: {
+            paymentTerms,
+          },
+          id: costCenter.id,
+        });
+      });
+      
+      await Promise.all(updatePromises);
 
       sendUpdateOrganizationMetric(ctx, logger, {
         account: ctx.vtex.account,
