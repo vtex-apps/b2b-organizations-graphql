@@ -13,7 +13,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `Trade Name` to the Organization listing page (Admin)
 - `Trade Name` to the Organization Requests listing page (Admin)
 - Event listener to update schemas once new app version is released
--
+
+## [0.49.6] - 2024-06-03
+
+### Fixed
+- Fix check access directive by allowing appkey tokens for authentication
+
+## [0.49.5] - 2024-05-29
+
+### Changed
+- Improve logging and metrics for checkUserAccess and checkAdminAccess directives
+
 ## [0.49.4] - 2024-05-07
 
 ### Added

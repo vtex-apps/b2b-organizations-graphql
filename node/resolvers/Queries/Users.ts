@@ -11,6 +11,44 @@ import { getAppId } from '../config'
 const SCROLL_AWAIT_TIME = 100
 const SLEEP_ADD_PERCENTAGE = 0.1
 const SCROLL_SIZE = 1000
+
+const USER_DATA_ENTITY = 'b2b_users'
+const USER_DATA_ENTITY_SCHEMA = 'v0.1.2'
+
+// This function checks if given email is an user part of a buyer org.
+export const isUserPartOfBuyerOrg = async (email: string, ctx: Context) => {
+  const {
+    clients: { masterdata },
+  } = ctx
+
+  try {
+    const where = `email=${email}`
+    const resp = await masterdata.searchDocumentsWithPaginationInfo({
+      dataEntity: USER_DATA_ENTITY,
+      fields: ['id'], // we don't need to fetch all fields, only if there is an entry or not
+      pagination: {
+        page: 1,
+        pageSize: 1, // we only need to know if there is at least one user entry
+      },
+      schema: USER_DATA_ENTITY_SCHEMA,
+      ...(where ? { where } : {}),
+    })
+
+    const { data } = resp as unknown as {
+      data: any
+    }
+
+    if (data.length > 0) {
+      return true
+    }
+  } catch (error) {
+    // if it fails at somepoint, we treat it like no user was found
+    // on any buyer org, so we just let the function return false
+  }
+
+  return false
+}
+
 /**
  * Checks the permissions by applying the following rules:
  * @param checkUserPermission
