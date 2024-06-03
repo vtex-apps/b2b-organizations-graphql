@@ -44,6 +44,7 @@ export const validateApiToken = async (
 ): Promise<{
   hasApiToken: boolean
   hasValidApiToken: boolean
+  hasCurrentValidApiToken: boolean
 }> => {
   const {
     clients: { identity },
@@ -54,6 +55,9 @@ export const validateApiToken = async (
   const appKey = context?.headers['vtex-api-appkey'] as string
   const hasApiToken = !!(apiToken?.length && appKey?.length)
   let hasValidApiToken = false
+
+  // this is used to check if the token is valid by current standards
+  let hasCurrentValidApiToken = false
 
   if (hasApiToken) {
     try {
@@ -66,6 +70,13 @@ export const validateApiToken = async (
         token,
       })
 
+      // we set this flag to true if the token is valid by current standards
+      // in the future we should remove this line
+      hasCurrentValidApiToken = true
+      // keeping this behavior for now, but we should remove it in the future as well
+      context.cookies.set('VtexIdclientAutCookie', token)
+      context.vtex.adminUserAuthToken = token
+
       if (authUser?.audience === 'admin') {
         hasValidApiToken = true
       }
@@ -74,7 +85,7 @@ export const validateApiToken = async (
     }
   }
 
-  return { hasApiToken, hasValidApiToken }
+  return { hasApiToken, hasValidApiToken, hasCurrentValidApiToken }
 }
 
 export const validateStoreToken = async (

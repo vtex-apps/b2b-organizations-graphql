@@ -27,7 +27,8 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
       const { hasAdminToken, hasValidAdminToken, hasCurrentValidAdminToken } =
         await validateAdminToken(context, adminUserAuthToken as string)
 
-      const { hasApiToken, hasValidApiToken } = await validateApiToken(context)
+      const { hasApiToken, hasValidApiToken, hasCurrentValidApiToken } =
+        await validateApiToken(context)
 
       const { hasStoreToken, hasValidStoreToken, hasCurrentValidStoreToken } =
         await validateStoreToken(context, storeUserAuthToken as string)
@@ -72,7 +73,7 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
         return resolve(root, args, context, info)
       }
 
-      if (!hasAdminToken && !hasStoreToken) {
+      if (!hasAdminToken && !hasStoreToken && !hasApiToken) {
         logger.warn({
           message: 'CheckUserAccess: No token provided',
           userAgent,
@@ -88,7 +89,11 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
         throw new AuthenticationError('No token was provided')
       }
 
-      if (!hasCurrentValidAdminToken && !hasCurrentValidStoreToken) {
+      if (
+        !hasCurrentValidAdminToken &&
+        !hasCurrentValidStoreToken &&
+        !hasCurrentValidApiToken
+      ) {
         logger.warn({
           message: `CheckUserAccess: Invalid token`,
           userAgent,
