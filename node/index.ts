@@ -9,9 +9,6 @@ import { LRUCache, Service } from '@vtex/api'
 import { Clients } from './clients'
 import { resolvers } from './resolvers'
 import { schemaDirectives } from './resolvers/directives'
-import { appDependenciesUpdatedEvent } from './events/appDependenciesUpdatedEvent'
-import { kubeRouterAuditEvent } from './events/kubeRouterAuditEvent'
-import { appAllEvents } from './events/appAllEvents'
 
 const TIMEOUT_MS = 4000
 
@@ -54,9 +51,4 @@ export default new Service<Clients, RecorderState, ParamsContext>({
     schemaDirectives,
   },
   routes: resolvers.Routes,
-  events: {
-    appDependenciesUpdatedEvent,
-    kubeRouterAuditEvent,
-    appAllEvents,
-  },
 })
