@@ -35,5 +35,8 @@
     "lint-staged": "^10.5.1",
     "prettier": "^2.2.0",
     "typescript": "3.9.7"
+  },
+  "dependencies": {
+    "p-limit": "^5.0.0"
   }
 }
