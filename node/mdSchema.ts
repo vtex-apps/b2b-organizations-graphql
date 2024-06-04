@@ -15,7 +15,7 @@ export const ORGANIZATION_REQUEST_FIELDS = [
   'sellers',
   'customFields',
 ]
-export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.1.2'
+export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.1.1'
 
 export const ORGANIZATION_DATA_ENTITY = 'organizations'
 export const ORGANIZATION_FIELDS = [
@@ -32,7 +32,7 @@ export const ORGANIZATION_FIELDS = [
   'created',
   'customFields',
 ]
-export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.9'
+export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.8'
 
 export const COST_CENTER_DATA_ENTITY = 'cost_centers'
 export const COST_CENTER_FIELDS = [
@@ -111,14 +111,7 @@ export const schemas = [
           title: 'Custom Fields',
         },
       },
-      'v-indexed': [
-        'id',
-        'name',
-        'tradeName',
-        'b2bCustomerAdmin',
-        'status',
-        'created',
-      ],
+      'v-indexed': ['name', 'b2bCustomerAdmin', 'status', 'created'],
       'v-immediate-indexing': true,
       'v-cache': false,
     },
@@ -174,7 +167,7 @@ export const schemas = [
           title: 'Custom Fields',
         },
       },
-      'v-indexed': ['id', 'name', 'tradeName', 'status', 'created'],
+      'v-indexed': ['name', 'status', 'created'],
       'v-immediate-indexing': true,
       'v-cache': false,
     },

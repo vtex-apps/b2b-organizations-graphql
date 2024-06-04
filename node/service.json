@@ -40,26 +40,5 @@
         }
       ]
     }
-  },
-  "events": {
-    "appDependenciesUpdatedEvent": {
-      "sender": "apps",
-      "topics": ["depsUpdated"]
-    },
-    "appAllEvents": {
-      "sender": "apps",
-      "topics": [
-        "linked",
-        "settings",
-        "depsUpdated",
-        "appVersionsUpdated",
-        "deprecated",
-        "undeprecated"
-      ]
-    },
-    "kubeRouterAuditEvent": {
-      "sender": "kube-router",
-      "topics": ["audit"]
-    }
   }
 }
