@@ -1,4 +1,7 @@
 import {
+  COST_CENTER_DATA_ENTITY,
+  COST_CENTER_FIELDS,
+  COST_CENTER_SCHEMA_VERSION,
   ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_FIELDS,
   ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -6,6 +9,7 @@ import {
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
+import { CostCenter } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 
@@ -107,13 +111,15 @@ const Organizations = {
     {
       status,
       search,
+      document,
       page,
       pageSize,
       sortOrder,
       sortedBy,
     }: {
       status: string[]
-      search: string
+      search: string | null
+      document: string | null
       page: number
       pageSize: number
       sortOrder: string
@@ -130,6 +136,43 @@ const Organizations = {
     await checkConfig(ctx)
 
     const whereArray = getWhereByStatus({ status })
+
+    if(document) {
+      const documentFormatted = formatDocument(document)
+      try {
+        const where = `businessDocument="*${documentFormatted}*"`
+        const costCenterSearch = await masterdata.searchDocumentsWithPaginationInfo({
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: COST_CENTER_FIELDS,
+          pagination: { page, pageSize },
+          schema: COST_CENTER_SCHEMA_VERSION,
+          sort: `${sortedBy} ${sortOrder}`,
+          ...(where && { where }),
+        })
+
+        const data = costCenterSearch.data as CostCenter[]
+
+        for (const costCenter of data) {
+          const where = `id="*${costCenter.organization}*"`
+          await masterdata.searchDocumentsWithPaginationInfo({
+            dataEntity: ORGANIZATION_DATA_ENTITY,
+            fields: ORGANIZATION_FIELDS,
+            pagination: { page, pageSize },
+            schema: ORGANIZATION_SCHEMA_VERSION,
+            sort: `${sortedBy} ${sortOrder}`,
+            ...(where && { where }),
+          })
+        }
+
+        return costCenterSearch;
+      } catch (error) {
+        logger.error({
+          error,
+          message: 'getCostCenters-error',
+        })
+        throw new GraphQLError(getErrorMessage(error))
+      }
+    }
 
     if (search) {
       whereArray.push(
@@ -383,6 +426,26 @@ const Organizations = {
       throw new GraphQLError(getErrorMessage(error))
     }
   },
+}
+
+function formatDocument(document: string): string {
+  const documentFormatRemoved = document.replace(/[^0-9]/gu, '');
+  const documentArray = documentFormatRemoved.split('');
+
+  const formattedDocument = documentArray.map((char, index) => {
+    if (index === 2 || index === 5) {
+      return `.${char}`;
+    }
+    if (index === 8) {
+      return `/${char}`;
+    }
+    if (index === 12) {
+      return `-${char}`;
+    }
+    return char;
+  });
+
+  return formattedDocument.join('');
 }
 
 export default Organizations
