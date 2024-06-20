@@ -9,7 +9,7 @@ import {
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
-import { CostCenter } from '../../typings'
+import { CostCenter, Organization } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 
@@ -137,11 +137,11 @@ const Organizations = {
 
     const whereArray = getWhereByStatus({ status })
 
-    if(document) {
+    if (document) {
       const documentFormatted = formatDocument(document)
       try {
         const where = `businessDocument="*${documentFormatted}*"`
-        const costCenterSearch = await masterdata.searchDocumentsWithPaginationInfo({
+        const costCenterData = await masterdata.searchDocumentsWithPaginationInfo({
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: COST_CENTER_FIELDS,
           pagination: { page, pageSize },
@@ -150,21 +150,35 @@ const Organizations = {
           ...(where && { where }),
         })
 
-        const data = costCenterSearch.data as CostCenter[]
+        const data = costCenterData.data as CostCenter[]
 
-        for (const costCenter of data) {
-          const where = `id="*${costCenter.organization}*"`
-          await masterdata.searchDocumentsWithPaginationInfo({
+        const getOrganizationFromCostCenter = async (costCenter: CostCenter) => {
+          const organizations: Organization[] = await masterdata.searchDocuments({
             dataEntity: ORGANIZATION_DATA_ENTITY,
             fields: ORGANIZATION_FIELDS,
-            pagination: { page, pageSize },
+            pagination: { page: 1, pageSize: 25},
             schema: ORGANIZATION_SCHEMA_VERSION,
             sort: `${sortedBy} ${sortOrder}`,
-            ...(where && { where }),
+            where: `id="${costCenter.organization}"`,
           })
+
+          if (organizations.length === 0) {
+            throw new Error("No organization found")
+          }
+
+          if (organizations.length > 1) {
+            throw new Error("More than one organization found")
+          }
+
+          return organizations[0]
         }
 
-        return costCenterSearch;
+        const orgs = await Promise.all(data.map(getOrganizationFromCostCenter))
+
+        return {
+          data: orgs,
+          pagination: costCenterData.pagination,
+        }
       } catch (error) {
         logger.error({
           error,
@@ -173,7 +187,7 @@ const Organizations = {
         throw new GraphQLError(getErrorMessage(error))
       }
     }
-
+    
     if (search) {
       whereArray.push(
         `(name="*${search}*" OR tradeName="*${search}*" OR id="*${search}*")`
@@ -430,6 +444,7 @@ const Organizations = {
 
 function formatDocument(document: string): string {
   const documentFormatRemoved = document.replace(/[^0-9]/gu, '');
+
   const documentArray = documentFormatRemoved.split('');
 
   const formattedDocument = documentArray.map((char, index) => {
