@@ -1,5 +1,7 @@
 type Query {
-  getAppSettings: SettingsResponse @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  getAppSettings: SettingsResponse
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
   getOrganizationRequests(
     status: [String]
     search: String
@@ -7,9 +9,12 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "DESC"
     sortedBy: String = "created"
-  ): OrganizationRequestResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  ): OrganizationRequestResult
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
   getOrganizationRequestById(id: ID!): OrganizationRequest
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
   getOrganizations(
     status: [String]
     search: String
@@ -23,6 +28,7 @@ type Query {
 
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
+    @auditAccess
 
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PRIVATE)
@@ -37,7 +43,7 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): CostCenterResult @cacheControl(scope: PUBLIC, maxAge: SHORT)
+  ): CostCenterResult @cacheControl(scope: PUBLIC, maxAge: SHORT) @auditAccess
   getCostCentersByOrganizationId(
     id: ID
     search: String
@@ -55,7 +61,7 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): CostCenterResult @withSession @cacheControl(scope: PRIVATE)
+  ): CostCenterResult @withSession @cacheControl(scope: PRIVATE) @auditAccess
   getCostCenterById(id: ID!): CostCenter
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @checkUserAccess
@@ -87,7 +93,9 @@ type Query {
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
 
-  checkOrganizationIsActive(id: String): Boolean @cacheControl(scope: PRIVATE)
+  checkOrganizationIsActive(id: String): Boolean
+    @cacheControl(scope: PRIVATE)
+    @auditAccess
   getSalesChannels: [Channels]
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
@@ -105,18 +113,18 @@ type Query {
 }
 
 type Mutation {
-  saveAppSettings: MutationResponse @cacheControl(scope: PRIVATE)
+  saveAppSettings: MutationResponse @cacheControl(scope: PRIVATE) @auditAccess
   createOrganizationRequest(
     input: OrganizationInput!
     notifyUsers: Boolean
-  ): MasterDataResponse
+  ): MasterDataResponse @auditAccess
   updateOrganizationRequest(
     id: ID!
     status: String!
     notes: String
     notifyUsers: Boolean
-  ): MutationResponse
-  deleteOrganizationRequest(id: ID!): MutationResponse
+  ): MutationResponse @auditAccess
+  deleteOrganizationRequest(id: ID!): MutationResponse @auditAccess
   createOrganization(
     input: OrganizationInput!
     notifyUsers: Boolean
@@ -266,10 +274,12 @@ type Mutation {
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)
+    @auditAccess
   impersonateB2BUser(id: ID!): MutationResponse
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)
+    @auditAccess
   saveSalesChannels(channels: [SalesChannelsInput]!): MutationResponse
     @checkAdminAccess
     @cacheControl(scope: PRIVATE)
