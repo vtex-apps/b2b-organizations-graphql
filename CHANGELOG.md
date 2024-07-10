@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- Add paymentTerms field on create organization mutation
+
 ## [0.51.0] - 2024-06-04
 
 ### Fixed
