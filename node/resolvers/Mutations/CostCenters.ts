@@ -71,7 +71,7 @@ const CostCenters = {
         phoneNumber,
         sellers,
         stateRegistration,
-        paymentTerms
+        paymentTerms,
       }
 
       return await CostCenterRepository.createCostCenter(
