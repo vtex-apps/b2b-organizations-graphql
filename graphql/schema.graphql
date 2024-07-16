@@ -13,6 +13,7 @@ type Query {
   getOrganizations(
     status: [String]
     search: String
+    document: String
     page: Int = 1
     pageSize: Int = 25
     sortOrder: String = "ASC"
