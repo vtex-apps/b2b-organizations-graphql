@@ -5,6 +5,7 @@ import { SchemaDirectiveVisitor } from 'graphql-tools'
 import sendAuthMetric, { AuthMetric } from '../../utils/metrics/auth'
 import {
   validateAdminToken,
+  validateAdminTokenOnHeader,
   validateApiToken,
   validateStoreToken,
 } from './helper'
@@ -35,6 +36,9 @@ export class AuditAccess extends SchemaDirectiveVisitor {
       adminUserAuthToken as string
     )
 
+    const { hasAdminTokenOnHeader, hasValidAdminTokenOnHeader } =
+      await validateAdminTokenOnHeader(context)
+
     const { hasApiToken, hasValidApiToken } = await validateApiToken(context)
 
     const { hasStoreToken, hasValidStoreToken } = await validateStoreToken(
@@ -61,6 +65,8 @@ export class AuditAccess extends SchemaDirectiveVisitor {
       hasValidApiToken,
       hasStoreToken,
       hasValidStoreToken,
+      hasAdminTokenOnHeader,
+      hasValidAdminTokenOnHeader,
     })
 
     await sendAuthMetric(context, logger, auditMetric)
