@@ -6,6 +6,7 @@ import { SchemaDirectiveVisitor } from 'graphql-tools'
 import sendAuthMetric, { AuthMetric } from '../../utils/metrics/auth'
 import {
   validateAdminToken,
+  validateAdminTokenOnHeader,
   validateApiToken,
   validateStoreToken,
 } from './helper'
@@ -26,6 +27,12 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
 
       const { hasAdminToken, hasValidAdminToken, hasCurrentValidAdminToken } =
         await validateAdminToken(context, adminUserAuthToken as string)
+
+      const {
+        hasAdminTokenOnHeader,
+        hasValidAdminTokenOnHeader,
+        hasCurrentValidAdminTokenOnHeader,
+      } = await validateAdminTokenOnHeader(context)
 
       const { hasApiToken, hasValidApiToken, hasCurrentValidApiToken } =
         await validateApiToken(context)
@@ -54,6 +61,8 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
           hasValidApiToken,
           hasStoreToken,
           hasValidStoreToken,
+          hasAdminTokenOnHeader,
+          hasValidAdminTokenOnHeader,
         },
         'CheckUserAccessAudit'
       )
@@ -73,7 +82,12 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
         return resolve(root, args, context, info)
       }
 
-      if (!hasAdminToken && !hasStoreToken && !hasApiToken) {
+      if (
+        !hasAdminToken &&
+        !hasStoreToken &&
+        !hasApiToken &&
+        !hasAdminTokenOnHeader
+      ) {
         logger.warn({
           message: 'CheckUserAccess: No token provided',
           userAgent,
@@ -85,6 +99,8 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
           hasApiToken,
           hasValidApiToken,
           hasStoreToken,
+          hasAdminTokenOnHeader,
+          hasValidAdminTokenOnHeader,
         })
         throw new AuthenticationError('No token was provided')
       }
@@ -92,7 +108,8 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
       if (
         !hasCurrentValidAdminToken &&
         !hasCurrentValidStoreToken &&
-        !hasCurrentValidApiToken
+        !hasCurrentValidApiToken &&
+        !hasCurrentValidAdminTokenOnHeader
       ) {
         logger.warn({
           message: `CheckUserAccess: Invalid token`,
@@ -106,6 +123,8 @@ export class CheckUserAccess extends SchemaDirectiveVisitor {
           hasValidApiToken,
           hasStoreToken,
           hasValidStoreToken,
+          hasAdminTokenOnHeader,
+          hasValidAdminTokenOnHeader,
         })
         throw new ForbiddenError('Unauthorized Access')
       }

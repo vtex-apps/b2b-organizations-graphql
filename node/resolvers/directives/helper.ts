@@ -9,7 +9,8 @@ export const validateAdminToken = async (
   hasCurrentValidAdminToken: boolean
 }> => {
   const {
-    clients: { identity },
+    clients: { identity, lm },
+    vtex: { account, logger },
   } = context
 
   // check if has admin token and if it is valid
@@ -28,11 +29,18 @@ export const validateAdminToken = async (
       // in the future we should remove this line
       hasCurrentValidAdminToken = true
 
-      if (authUser?.audience === 'admin') {
-        hasValidAdminToken = true
+      if (authUser?.audience === 'admin' && authUser?.account === account) {
+        hasValidAdminToken = await lm.getUserAdminPermissions(
+          account,
+          authUser.id
+        )
       }
     } catch (err) {
       // noop so we leave hasValidAdminToken as false
+      logger.warn({
+        message: 'Error validating admin token',
+        err,
+      })
     }
   }
 
@@ -47,7 +55,8 @@ export const validateApiToken = async (
   hasCurrentValidApiToken: boolean
 }> => {
   const {
-    clients: { identity },
+    clients: { identity, lm },
+    vtex: { account, logger },
   } = context
 
   // check if has api token and if it is valid
@@ -77,11 +86,18 @@ export const validateApiToken = async (
       context.cookies.set('VtexIdclientAutCookie', token)
       context.vtex.adminUserAuthToken = token
 
-      if (authUser?.audience === 'admin') {
-        hasValidApiToken = true
+      if (authUser?.audience === 'admin' && authUser?.account === account) {
+        hasValidApiToken = await lm.getUserAdminPermissions(
+          account,
+          authUser.id
+        )
       }
     } catch (err) {
       // noop so we leave hasValidApiToken as false
+      logger.warn({
+        message: 'Error validating API token',
+        err,
+      })
     }
   }
 
@@ -98,6 +114,7 @@ export const validateStoreToken = async (
 }> => {
   const {
     clients: { vtexId },
+    vtex: { logger },
   } = context
 
   // check if has store token and if it is valid
@@ -126,8 +143,40 @@ export const validateStoreToken = async (
       }
     } catch (err) {
       // noop so we leave hasValidStoreToken as false
+      logger.warn({
+        message: 'Error validating store token:',
+        err,
+      })
     }
   }
 
   return { hasStoreToken, hasValidStoreToken, hasCurrentValidStoreToken }
+}
+
+export const validateAdminTokenOnHeader = async (
+  context: Context
+): Promise<{
+  hasAdminTokenOnHeader: boolean
+  hasValidAdminTokenOnHeader: boolean
+  hasCurrentValidAdminTokenOnHeader: boolean
+}> => {
+  const adminUserAuthToken = context?.headers.vtexidclientautcookie as string
+  const hasAdminTokenOnHeader = !!adminUserAuthToken?.length
+
+  if (!hasAdminTokenOnHeader) {
+    return {
+      hasAdminTokenOnHeader: false,
+      hasValidAdminTokenOnHeader: false,
+      hasCurrentValidAdminTokenOnHeader: false,
+    }
+  }
+
+  const { hasAdminToken, hasCurrentValidAdminToken, hasValidAdminToken } =
+    await validateAdminToken(context, adminUserAuthToken)
+
+  return {
+    hasAdminTokenOnHeader: hasAdminToken,
+    hasValidAdminTokenOnHeader: hasValidAdminToken,
+    hasCurrentValidAdminTokenOnHeader: hasCurrentValidAdminToken,
+  }
 }
