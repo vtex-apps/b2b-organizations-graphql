@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.51.1] - 2024-07-22
+
 ### Added
 - Audit metrics for some graphql APIs
 - Improve access directives
