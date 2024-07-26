@@ -314,9 +314,9 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }
 
   private getTokenToHeader = () => {
-    // provide authToken (app token) as this is a call between b2b suite apps
-    // (with a fallback to the admin user token if the app token is not available)
-    const adminToken = this.context.authToken ?? this.context.adminUserAuthToken
+    // provide authToken (app token) as an admin token as this is a call
+    // between b2b suite apps and no further token validation is needed
+    const adminToken = this.context.authToken
     const userToken = this.context.storeUserAuthToken ?? null
     const { sessionToken, account } = this.context
 
