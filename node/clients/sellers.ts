@@ -19,7 +19,16 @@ export default class SellersClient extends JanusClient {
     })
   }
 
-  public async getSellers(): Promise<{ items: Seller[] }> {
-    return this.http.get(SELLERS_PATH)
+  public async getSellers(paging?: {
+    from: number
+    to: number
+  }): Promise<{ items: Seller[] }> {
+    return this.http.get(SELLERS_PATH, {
+      metric: 'sellers-get',
+      params: {
+        from: paging?.from ?? 0,
+        to: paging?.to ?? 100,
+      },
+    })
   }
 }

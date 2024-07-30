@@ -47,12 +47,33 @@ const B2BSettings = {
 
     return settings
   },
-  getSellers: async (_: void, __: void, ctx: Context) => {
+  getSellers: async (
+    _: void,
+    args: {
+      paging?: {
+        from: number
+        to: number
+      }
+    },
+    ctx: Context
+  ) => {
     const {
       clients: { sellers },
     } = ctx
 
-    return (await sellers.getSellers())?.items
+    const { paging } = args
+
+    try {
+      return sellers.getSellers(paging)
+    } catch (e) {
+      if (e.message) {
+        throw new GraphQLError(e.message)
+      } else if (e.response?.data?.message) {
+        throw new GraphQLError(e.response.data.message)
+      } else {
+        throw new GraphQLError(e)
+      }
+    }
   },
 }
 

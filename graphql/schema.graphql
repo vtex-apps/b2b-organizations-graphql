@@ -109,7 +109,25 @@ type Query {
   getB2BSettings: B2BSettings
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
-  getSellers: [Seller] @checkAdminAccess @cacheControl(scope: PRIVATE)
+  getSellers(paging: PaginationInput): GetSellersResponse
+    @checkAdminAccess
+    @cacheControl(scope: PRIVATE)
+}
+
+input PaginationInput {
+  from: Int
+  to: Int
+}
+
+type PaginationResponse {
+  from: Int
+  to: Int
+  total: Int
+}
+
+type GetSellersResponse {
+  items: [Seller]
+  pagination: PaginationResponse
 }
 
 type Mutation {
