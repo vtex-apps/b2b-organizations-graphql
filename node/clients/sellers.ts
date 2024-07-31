@@ -9,6 +9,15 @@ export interface Seller {
   email: string
 }
 
+export interface GetSellersResponse {
+  items: Seller[]
+  paging: {
+    from: number
+    to: number
+    total: number
+  }
+}
+
 export default class SellersClient extends JanusClient {
   constructor(context: IOContext, options?: InstanceOptions) {
     super(context, {
@@ -22,7 +31,7 @@ export default class SellersClient extends JanusClient {
   public async getSellers(paging?: {
     from: number
     to: number
-  }): Promise<{ items: Seller[] }> {
+  }): Promise<GetSellersResponse> {
     return this.http.get(SELLERS_PATH, {
       metric: 'sellers-get',
       params: {
