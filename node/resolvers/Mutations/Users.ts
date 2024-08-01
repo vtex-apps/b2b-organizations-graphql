@@ -385,8 +385,8 @@ const Users = {
 
         if (!user) return
 
-        const id = user.id
-        const userId = user.userId
+        const { id } = user
+        const { userId } = user
 
         const fields = {
           email,
@@ -402,6 +402,7 @@ const Users = {
               email,
             })
             sendRemoveUserMetric(ctx, logger, ctx.vtex.account, fields)
+
             return response.data.deleteUser
           })
           .catch((error: any) => {
@@ -409,6 +410,7 @@ const Users = {
               error,
               message: 'removeUser-deleteUserError',
             })
+
             return { status: 'error', message: error }
           })
       })

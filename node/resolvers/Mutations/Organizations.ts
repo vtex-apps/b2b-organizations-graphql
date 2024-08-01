@@ -107,6 +107,7 @@ const createOrganization = async (
     ...(collections && { collections }),
     customFields: customFields ?? [],
     status: ORGANIZATION_STATUSES.ACTIVE,
+    permissions: { createQuote: true },
   }
 
   return masterdata.createDocument({
@@ -219,6 +220,7 @@ const createOrganizationAndCostCenterWithAdminUser = async (
       defaultCostCenter: organization.defaultCostCenter,
       costCenters: organization.costCenters,
       customFields: organization.customFields,
+      permissions: { createQuote: true },
       paymentTerms: organization.paymentTerms
         ? await findPaymentTerms(organization.paymentTerms, ctx)
         : [],
@@ -613,6 +615,7 @@ const Organizations = {
       salesChannel,
       sellers,
       notifyUsers = true,
+      permissions,
     }: {
       id: string
       name: string
@@ -625,6 +628,7 @@ const Organizations = {
       salesChannel?: string
       sellers?: any[]
       notifyUsers?: boolean
+      permissions?: Permissions
     },
     ctx: Context
   ) => {
@@ -680,6 +684,7 @@ const Organizations = {
         ...(salesChannel && { salesChannel }),
         ...(sellers && { sellers }),
         status,
+        permissions,
       }
 
       await masterdata.updatePartialDocument({
@@ -766,7 +771,7 @@ const Organizations = {
           // the following copy is fine as organizationRequest does not contain fields that need transformation
           const normalizedOrganizationRequest = {
             ...organizationRequest,
-          } as NormalizedOrganizationInput
+          } as unknown as NormalizedOrganizationInput
 
           const { id: organizationId } =
             await createOrganizationAndCostCenterWithAdminUser(
