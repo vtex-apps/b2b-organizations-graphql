@@ -8,7 +8,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Fixed
-- Add paymentTerms field on create organization mutation
+- Add paymentTerms field on create cost center mutation
+
+## [0.51.2] - 2024-07-30
+
+### Fixed
+- Provide app token on calls to storefront-permissions app
+
+## [0.51.1] - 2024-07-22
+
+### Added
+- Audit metrics for some graphql APIs
+- Improve access directives
 
 ## [0.51.0] - 2024-06-04
 
