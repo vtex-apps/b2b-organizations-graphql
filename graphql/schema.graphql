@@ -109,7 +109,7 @@ type Query {
   getB2BSettings: B2BSettings
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
-  getSellers: [Seller] @checkAdminAccess @cacheControl(scope: PRIVATE)
+  getSellers: [Seller] @validateAdminUserAccess @cacheControl(scope: PRIVATE)
 }
 
 type Mutation {
@@ -129,7 +129,7 @@ type Mutation {
     input: OrganizationInput!
     notifyUsers: Boolean
   ): OrganizationCostCenterResponse
-    @validateAdminUserAccess
+    @checkAdminAccess
     @cacheControl(scope: PRIVATE)
   createOrganizationAndCostCentersWithId(
     input: NormalizedOrganizationInput!
