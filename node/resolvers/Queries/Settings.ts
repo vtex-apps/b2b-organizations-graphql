@@ -1,6 +1,7 @@
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import type { B2BSettingsInput } from '../../typings'
+import type { GetSellersOpts } from '../../clients/sellers'
 
 const B2BSettings = {
   getB2BSettings: async (_: void, __: void, ctx: Context) => {
@@ -66,22 +67,15 @@ const B2BSettings = {
   },
   getSellersPaginated: async (
     _: void,
-    args: {
-      paging?: {
-        from: number
-        to: number
-      }
-    },
+    { args }: { args: GetSellersOpts },
     ctx: Context
   ) => {
     const {
       clients: { sellers },
     } = ctx
 
-    const { paging } = args
-
     try {
-      return await sellers.getSellers(paging)
+      return await sellers.getSellers(args)
     } catch (e) {
       if (e.message) {
         throw new GraphQLError(e.message)

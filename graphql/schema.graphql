@@ -110,25 +110,25 @@ type Query {
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
   getSellers: [Seller] @checkAdminAccess @cacheControl(scope: PRIVATE)
-  getSellersPaginated(paging: PaginationInput): GetSellersResponse
-    @checkAdminAccess
-    @cacheControl(scope: PRIVATE)
+  getSellersPaginated(
+    args: GetSellersPaginatedArgsInput
+  ): GetSellersPaginatedResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
 }
 
-input PaginationInput {
-  from: Int
-  to: Int
+input GetSellersPaginatedArgsInput {
+  page: Int
+  pageSize: Int
 }
 
 type PaginationResponse {
-  from: Int
-  to: Int
+  page: Int
+  pageSize: Int
   total: Int
 }
 
-type GetSellersResponse {
+type GetSellersPaginatedResponse {
   items: [Seller]
-  paging: PaginationResponse
+  pagination: PaginationResponse
 }
 
 type Mutation {
