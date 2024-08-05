@@ -8,22 +8,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
+
 - Add new `getSellersPaginated` query to allow pagination on sellers query
+
+## [0.52.0] - 2024-08-05
+
+### Added
+
+- New admin user token validation directive
 
 ## [0.51.2] - 2024-07-30
 
 ### Fixed
+
 - Provide app token on calls to storefront-permissions app
 
 ## [0.51.1] - 2024-07-22
 
 ### Added
+
 - Audit metrics for some graphql APIs
 - Improve access directives
 
 ## [0.51.0] - 2024-06-04
 
 ### Fixed
+
 - Removed 0.50.0 version changes which contained a bug
 
 ## [0.50.0] - 2024-06-03
@@ -38,21 +48,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.49.6] - 2024-06-03
 
 ### Fixed
+
 - Fix check access directive by allowing appkey tokens for authentication
 
 ## [0.49.5] - 2024-05-29
 
 ### Changed
+
 - Improve logging and metrics for checkUserAccess and checkAdminAccess directives
 
 ## [0.49.4] - 2024-05-07
 
 ### Added
+
 - Add metric to check access directives
 
 ## [0.49.3] - 2024-04-24
 
 ### Fixed
+
 - Provide correct tokens to clients
 
 ## [0.49.2] - 2024-04-18
@@ -94,11 +108,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.48.2] - 2024-02-21
 
 ### Fixed
+
 - Add analytics client to properly send metrics to redshift
 
 ## [0.48.1] - 2024-02-07
 
 ### Fixed
+
 - Add retries to `sendMetric` to avoid connection errors
 
 ## [0.48.0] - 2024-01-19
@@ -106,6 +122,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Allow `paymentTerms`, `collections` and `sellers` to be provided by name only on `createOrganizationAndCostCenterWithAdminUser`
+
 ## [0.47.1] - 2023-12-18
 
 ### Fixed
@@ -192,7 +209,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.37.0] - 2023-09-19
 
-
 ### Added
 
 - Added event trigger on delete a user
@@ -208,7 +224,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Added metrics for impersonate user
-- 
+-
+
 ## [0.35.3] - 2023-08-09
 
 ### Fixed
@@ -226,7 +243,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Fix auth problem when fetching orders history
-
 
 ## [0.35.0] - 2023-07-24
 
