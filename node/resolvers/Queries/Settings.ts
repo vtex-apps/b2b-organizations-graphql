@@ -53,21 +53,11 @@ const B2BSettings = {
       clients: { sellers },
     } = ctx
 
-    try {
-      return (await sellers.getSellers())?.items
-    } catch (e) {
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
-    }
+    return (await sellers.getSellers())?.items
   },
   getSellersPaginated: async (
     _: void,
-    { args }: { args: GetSellersOpts },
+    options: GetSellersOpts,
     ctx: Context
   ) => {
     const {
@@ -75,7 +65,7 @@ const B2BSettings = {
     } = ctx
 
     try {
-      return await sellers.getSellers(args)
+      return await sellers.getSellers(options)
     } catch (e) {
       if (e.message) {
         throw new GraphQLError(e.message)

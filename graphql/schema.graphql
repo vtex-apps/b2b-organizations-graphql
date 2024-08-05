@@ -110,14 +110,9 @@ type Query {
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
   getSellers: [Seller] @checkAdminAccess @cacheControl(scope: PRIVATE)
-  getSellersPaginated(
-    args: GetSellersPaginatedArgsInput
-  ): GetSellersPaginatedResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
-}
-
-input GetSellersPaginatedArgsInput {
-  page: Int
-  pageSize: Int
+  getSellersPaginated(page: Int, pageSize: Int): GetSellersPaginatedResponse
+    @checkAdminAccess
+    @cacheControl(scope: PRIVATE)
 }
 
 type PaginationResponse {

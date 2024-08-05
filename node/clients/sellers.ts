@@ -39,10 +39,10 @@ export default class SellersClient extends JanusClient {
     })
   }
 
-  public async getSellers(args?: GetSellersOpts): Promise<GetSellersResponse> {
+  public async getSellers(opts?: GetSellersOpts): Promise<GetSellersResponse> {
     const argsWithDefaults = {
       ...INITIAL_LIST_OPTIONS,
-      ...args,
+      ...opts,
     }
 
     const result = await this.http.get<{
@@ -55,8 +55,8 @@ export default class SellersClient extends JanusClient {
     }>(SELLERS_PATH, {
       metric: 'sellers-get',
       params: {
-        from: argsWithDefaults?.page ?? INITIAL_LIST_OPTIONS.page,
-        to: argsWithDefaults?.pageSize ?? INITIAL_LIST_OPTIONS.pageSize,
+        from: (argsWithDefaults.page - 1) * argsWithDefaults.pageSize,
+        to: argsWithDefaults.page * argsWithDefaults.pageSize,
       },
     })
 
@@ -64,7 +64,7 @@ export default class SellersClient extends JanusClient {
       return {
         items: [],
         pagination: {
-          page: 0,
+          page: 1,
           pageSize: 0,
           total: 0,
         },
@@ -86,21 +86,28 @@ export default class SellersClient extends JanusClient {
   }
 
   private sortSellers(sellers: Seller[]) {
+    // Sorts the sellers first based on whether the name is a number, then sorts by the actual name
     return orderBy(
       sellers,
       [
         (seller: Seller) => {
           const name = seller.name ?? ''
+          // Check if the name is a number and not an empty string
           const isNumber = !isNaN(name) && name !== ''
 
+          // Returns 1 if the name is a number, or 0 if not, to prioritize sorting numbers first
           return isNumber ? 1 : 0
         },
         (seller: Seller) => {
           const name = seller.name ?? ''
 
+          // If the name is not a number, return the name as a string for alphabetical sorting
+          // If it is a number, convert it to a number for numeric sorting
+
           return isNaN(name) ? name : Number(name)
         },
       ],
+      // Sort both criteria in ascending order
       ['asc', 'asc']
     )
   }
