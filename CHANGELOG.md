@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Add new `getSellersPaginated` query to allow pagination on sellers query
 
+## [0.53.0] - 2024-08-06
+
+### Fixed
+
+- Add paymentTerms field on create cost center mutation
+
 ## [0.52.0] - 2024-08-05
 
 ### Added
