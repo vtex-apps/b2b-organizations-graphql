@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Add paymentTerms field on create cost center mutation
 
+## [0.52.0] - 2024-08-05
+
+### Added
+- New admin user token validation directive
+
 ## [0.51.2] - 2024-07-30
 
 ### Fixed
