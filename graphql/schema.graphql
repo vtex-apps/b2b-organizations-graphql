@@ -111,7 +111,7 @@ type Query {
     @auditAccess
   getSellers: [Seller] @validateAdminUserAccess @cacheControl(scope: PRIVATE)
   getSellersPaginated(page: Int, pageSize: Int): GetSellersPaginatedResponse
-    @checkAdminAccess
+    @validateAdminUserAccess
     @cacheControl(scope: PRIVATE)
 }
 

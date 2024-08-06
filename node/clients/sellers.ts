@@ -24,11 +24,6 @@ export interface GetSellersOpts {
   pageSize: number
 }
 
-const INITIAL_LIST_OPTIONS = {
-  page: 1,
-  pageSize: 100,
-}
-
 export default class SellersClient extends JanusClient {
   constructor(context: IOContext, options?: InstanceOptions) {
     super(context, {
@@ -39,25 +34,48 @@ export default class SellersClient extends JanusClient {
     })
   }
 
-  public async getSellers(opts?: GetSellersOpts): Promise<GetSellersResponse> {
+  public async getSellers(): Promise<{ items: Seller[] }> {
+    return this.http.get(SELLERS_PATH, {
+      metric: 'sellers-get',
+    })
+  }
+
+  public async getSellersPaginated(
+    opts?: GetSellersOpts
+  ): Promise<GetSellersResponse> {
+    const INITIAL_LIST_OPTIONS = {
+      page: 1,
+      pageSize: 100,
+    }
+
     const argsWithDefaults = {
       ...INITIAL_LIST_OPTIONS,
       ...opts,
     }
 
+    const { pageSize } = argsWithDefaults
+
+    const page = Math.max(1, argsWithDefaults.page)
+
+    const from = (page - 1) * pageSize
+    const to = page * pageSize
+
+    if (from >= to) {
+      throw new Error(
+        'Invalid pagination values: `from` should be less than `to`. Please make sure you are passing valid values for `page` and `pageSize`.'
+      )
+    }
+
     const result = await this.http.get<{
+      items: Seller[]
       paging: {
         from: number
         to: number
         total: number
       }
-      items: Seller[]
     }>(SELLERS_PATH, {
-      metric: 'sellers-get',
-      params: {
-        from: (argsWithDefaults.page - 1) * argsWithDefaults.pageSize,
-        to: argsWithDefaults.page * argsWithDefaults.pageSize,
-      },
+      metric: 'sellers-paginated-get',
+      params: { from, to },
     })
 
     if (!result.items) {
@@ -78,8 +96,8 @@ export default class SellersClient extends JanusClient {
     return {
       items: result.items,
       pagination: {
-        page: argsWithDefaults.page,
-        pageSize: argsWithDefaults.pageSize,
+        page,
+        pageSize,
         total: result.paging.total,
       },
     }

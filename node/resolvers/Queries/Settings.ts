@@ -65,7 +65,7 @@ const B2BSettings = {
     } = ctx
 
     try {
-      return await sellers.getSellers(options)
+      return await sellers.getSellersPaginated(options)
     } catch (e) {
       if (e.message) {
         throw new GraphQLError(e.message)
