@@ -35,9 +35,7 @@ export default class SellersClient extends JanusClient {
   }
 
   public async getSellers(): Promise<{ items: Seller[] }> {
-    return this.http.get(SELLERS_PATH, {
-      metric: 'sellers-get',
-    })
+    return this.http.get(SELLERS_PATH)
   }
 
   public async getSellersPaginated(
@@ -53,18 +51,16 @@ export default class SellersClient extends JanusClient {
       ...opts,
     }
 
-    const { pageSize } = argsWithDefaults
+    const { page, pageSize } = argsWithDefaults
 
-    const page = Math.max(1, argsWithDefaults.page)
+    if (page < 1 || pageSize < 1) {
+      throw new Error(
+        `Please make sure you are passing valid values for 'page' and 'pageSize'. Received: page=${page}, pageSize=${pageSize}`
+      )
+    }
 
     const from = (page - 1) * pageSize
     const to = page * pageSize
-
-    if (from >= to) {
-      throw new Error(
-        'Invalid pagination values: `from` should be less than `to`. Please make sure you are passing valid values for `page` and `pageSize`.'
-      )
-    }
 
     const result = await this.http.get<{
       items: Seller[]
