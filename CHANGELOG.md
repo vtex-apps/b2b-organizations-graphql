@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.54.0] - 2024-08-12
+
 ### Added
 
 - Add new `getSellersPaginated` query to allow pagination on sellers query
