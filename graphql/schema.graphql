@@ -572,6 +572,7 @@ input DefaultCostCenterInput {
   id: String
   name: String
   address: AddressInput
+  paymentTerms: [PaymentTermInput]
   phoneNumber: String
   businessDocument: String
   customFields: [CustomFieldInput]
