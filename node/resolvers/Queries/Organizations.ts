@@ -230,8 +230,6 @@ const Organizations = {
       )
     })
 
-    console.log(`organizations`, organizations)
-
     try {
       return organizations
     } catch (error) {
@@ -259,7 +257,6 @@ const Organizations = {
       vtex: { logger, sessionToken, adminUserAuthToken },
     }: any
   ) => {
-
     const organizationFilters: string[] = []
     let fromSession = false
     const {
@@ -316,23 +313,30 @@ const Organizations = {
       }
     }
 
-    const response = await storefrontPermissions.getOrganizationsByEmailPaginated(email, page, pageSize)
-
-    const organizations = response?.data?.getOrganizationsByEmailPaginated?.data?.filter(({ orgId }: { orgId: string }) => {
-      return (
-        fromSession ||
-        (organizationFilters.length > 0
-          ? organizationFilters.find((id: string) => orgId === id)
-          : true)
+    const response =
+      await storefrontPermissions.getOrganizationsByEmailPaginated(
+        email,
+        page,
+        pageSize
       )
-    })
+
+    const organizations =
+      response?.data?.getOrganizationsByEmailPaginated?.data?.filter(
+        ({ orgId }: { orgId: string }) => {
+          return (
+            fromSession ||
+            (organizationFilters.length > 0
+              ? organizationFilters.find((id: string) => orgId === id)
+              : true)
+          )
+        }
+      )
 
     try {
       return {
         data: organizations,
-        pagination: response.data?.getOrganizationsByEmailPaginated?.pagination
+        pagination: response.data?.getOrganizationsByEmailPaginated?.pagination,
       }
-        
     } catch (error) {
       logger.error({
         error,

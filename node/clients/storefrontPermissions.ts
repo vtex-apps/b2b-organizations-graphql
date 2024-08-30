@@ -41,7 +41,11 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     })
   }
 
-  public getOrganizationsByEmailPaginated = async (email: string, page: number, pageSize: number): Promise<any> => {
+  public getOrganizationsByEmailPaginated = async (
+    email: string,
+    page: number,
+    pageSize: number
+  ): Promise<any> => {
     return this.query({
       extensions: this.getPersistedQuery(),
       query: getOrganizationsByEmailPaginated,
