@@ -92,6 +92,10 @@ type Query {
   getOrganizationsByEmail(email: String): [B2BOrganization]
     @checkUserAccess
     @cacheControl(scope: PRIVATE)
+  
+  getOrganizationsByEmailPaginated(email: String, page: Int, pageSize: Int): B2BOrganizationPagination
+    @checkUserAccess
+    @cacheControl(scope: PRIVATE)
 
   checkOrganizationIsActive(id: String): Boolean
     @cacheControl(scope: PRIVATE)
@@ -473,6 +477,11 @@ type B2BOrganization {
   organizationName: String
   organizationStatus: String
   costCenterName: String
+}
+
+type B2BOrganizationPagination {
+  data: [B2BOrganization]
+  pagination: Pagination
 }
 
 type SimpleRole {

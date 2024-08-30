@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added 
+
+- Add new `getOrganizationsByEmailPaginated` query to allow pagination on organizations by email query
+
 ## [0.55.0] - 2024-08-22
 
 ### Added
