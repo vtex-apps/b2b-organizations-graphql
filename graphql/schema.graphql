@@ -113,7 +113,7 @@ type Query {
   getSellersPaginated(page: Int, pageSize: Int): GetSellersPaginatedResponse
     @validateAdminUserAccess
     @cacheControl(scope: PRIVATE)
-  getAccount: Account @withSession @cacheControl(scope: PRIVATE)
+  getAccount: Account @validateAdminUserAccess @cacheControl(scope: PRIVATE)
 }
 
 type Account {
