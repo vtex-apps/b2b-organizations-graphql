@@ -159,7 +159,7 @@ type Mutation {
   createCostCenterWithId(
     organizationId: ID
     input: CostCenterInput!
-  ): MasterDataResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
+  ): MasterDataResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
   updateOrganization(
     id: ID!
     name: String!
@@ -257,12 +257,12 @@ type Mutation {
     name: String!
     email: String!
     canImpersonate: Boolean = false
-  ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
+  ): MutationResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
   removeUserWithEmail(
     orgId: ID!
     costId: ID!
     email: String!
-  ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
+  ): MutationResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
   updateUser(
     id: ID
     roleId: ID!
@@ -307,7 +307,7 @@ type Mutation {
   saveB2BSettings(input: B2BSettingsInput): MutationResponse
     @withSession
     @withPermissions
-    @checkAdminAccess
+    @validateAdminUserAccess
 }
 
 type SettingsResponse {
