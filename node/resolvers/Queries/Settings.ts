@@ -76,6 +76,21 @@ const B2BSettings = {
       }
     }
   },
+  getAccount: async (_: void, __: void, ctx: Context) => {
+    const {
+      clients: { lm },
+    } = ctx
+
+    return lm.getAccount().catch((e) => {
+      if (e.message) {
+        throw new GraphQLError(e.message)
+      } else if (e.response?.data?.message) {
+        throw new GraphQLError(e.response.data.message)
+      } else {
+        throw new GraphQLError(e)
+      }
+    })
+  },
 }
 
 export default B2BSettings

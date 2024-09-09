@@ -113,6 +113,15 @@ type Query {
   getSellersPaginated(page: Int, pageSize: Int): GetSellersPaginatedResponse
     @validateAdminUserAccess
     @cacheControl(scope: PRIVATE)
+  getAccount: Account @validateAdminUserAccess @cacheControl(scope: PRIVATE)
+}
+
+type Account {
+  id: ID
+  name: String
+  accountName: String
+  tradingName: String
+  isActive: Boolean
 }
 
 type PaginationResponse {
