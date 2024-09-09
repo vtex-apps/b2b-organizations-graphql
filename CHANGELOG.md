@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.56.0] - 2024-09-09
+
 ### Added
 
 Adds a new `getAccount` query to retrieve account information. It includes fields such as `id`, `name`, `accountName`, `tradingName`, and `isActive`. This query is implemented in both the GraphQL schema and the LMClient class.
