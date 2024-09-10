@@ -140,6 +140,21 @@ export const validateStoreToken = async (
         if (userIsPartOfBuyerOrg) {
           hasValidStoreToken = true
         }
+
+        // adding log to better understand invalid store token use cases
+        // in the future we should remove this log
+        if (hasCurrentValidStoreToken && !hasValidStoreToken) {
+          logger.warn({
+            message: 'Invalid store token:',
+            operation: context?.request?.url,
+            userAgent: context?.request?.headers['user-agent'] as string,
+            caller: context?.request?.headers['x-vtex-caller'] as string,
+            forwardedHost: context?.request?.headers[
+              'x-forwarded-host'
+            ] as string,
+            authUser,
+          })
+        }
       }
     } catch (err) {
       // noop so we leave hasValidStoreToken as false

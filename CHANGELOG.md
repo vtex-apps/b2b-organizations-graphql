@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- Add logging for store token validation
+
 ## [0.56.0] - 2024-09-09
 
 ### Added
