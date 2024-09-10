@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- Remove error log when file not found for marketing's tags.
+
 ## [0.56.1] - 2024-09-10
 
 ### Added
