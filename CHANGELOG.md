@@ -10,6 +10,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Add new admin token validation directive to some APIs
 
+## [0.56.2] - 2024-09-10
+
+### Fixed
+
+- Remove error log when file not found for marketing's tags.
+
+## [0.56.1] - 2024-09-10
+
+### Added
+- Add logging for store token validation
+
+## [0.56.0] - 2024-09-09
+
+### Added
+
+Adds a new `getAccount` query to retrieve account information. It includes fields such as `id`, `name`, `accountName`, `tradingName`, and `isActive`. This query is implemented in both the GraphQL schema and the LMClient class.
+
 ## [0.55.0] - 2024-08-22
 
 ### Added
