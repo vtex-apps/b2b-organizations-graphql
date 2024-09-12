@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- Add new admin token validation directive to some APIs
+
 ## [0.56.2] - 2024-09-10
 
 ### Fixed
