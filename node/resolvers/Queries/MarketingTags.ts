@@ -14,10 +14,14 @@ const MarketingTags = {
     try {
       return await vbase.getJSON(MARKETING_TAGS.VBASE_BUCKET, costId)
     } catch (error) {
-      logger.error({
-        error,
-        message: 'getMarketingTags.error',
-      })
+      const { data } = error.response as any
+
+      if (data.code !== 'FileNotFound') {
+        logger.error({
+          error,
+          message: 'getMarketingTags.error',
+        })
+      }
 
       return { status: 'error', message: error }
     }

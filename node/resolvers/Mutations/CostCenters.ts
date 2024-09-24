@@ -30,6 +30,7 @@ const CostCenters = {
         customFields,
         marketingTags,
         sellers,
+        paymentTerms,
       },
     }: { organizationId: string; input: CostCenterInput },
     ctx: Context
@@ -72,6 +73,7 @@ const CostCenters = {
         phoneNumber,
         sellers,
         stateRegistration,
+        paymentTerms,
       }
 
       return await CostCenterRepository.createCostCenter(
@@ -103,6 +105,7 @@ const CostCenters = {
         customFields,
         marketingTags,
         sellers,
+        paymentTerms,
       },
     }: { organizationId: string; input: CostCenterInputWithId },
     ctx: Context
@@ -147,6 +150,7 @@ const CostCenters = {
       phoneNumber,
       sellers,
       stateRegistration,
+      paymentTerms,
     }
 
     const { id: costCenterId } = await CostCenterRepository.createCostCenter(

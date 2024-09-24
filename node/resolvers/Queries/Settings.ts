@@ -1,6 +1,7 @@
 import GraphQLError from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import type { B2BSettingsInput } from '../../typings'
+import type { GetSellersOpts } from '../../clients/sellers'
 
 const B2BSettings = {
   getB2BSettings: async (_: void, __: void, ctx: Context) => {
@@ -53,6 +54,42 @@ const B2BSettings = {
     } = ctx
 
     return (await sellers.getSellers())?.items
+  },
+  getSellersPaginated: async (
+    _: void,
+    options: GetSellersOpts,
+    ctx: Context
+  ) => {
+    const {
+      clients: { sellers },
+    } = ctx
+
+    try {
+      return await sellers.getSellersPaginated(options)
+    } catch (e) {
+      if (e.message) {
+        throw new GraphQLError(e.message)
+      } else if (e.response?.data?.message) {
+        throw new GraphQLError(e.response.data.message)
+      } else {
+        throw new GraphQLError(e)
+      }
+    }
+  },
+  getAccount: async (_: void, __: void, ctx: Context) => {
+    const {
+      clients: { lm },
+    } = ctx
+
+    return lm.getAccount().catch((e) => {
+      if (e.message) {
+        throw new GraphQLError(e.message)
+      } else if (e.response?.data?.message) {
+        throw new GraphQLError(e.response.data.message)
+      } else {
+        throw new GraphQLError(e)
+      }
+    })
   },
 }
 

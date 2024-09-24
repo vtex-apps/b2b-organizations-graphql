@@ -3,6 +3,12 @@ import { defaultFieldResolver } from 'graphql'
 import { SchemaDirectiveVisitor } from 'graphql-tools'
 
 import sendAuthMetric, { AuthMetric } from '../../utils/metrics/auth'
+import {
+  validateAdminToken,
+  validateAdminTokenOnHeader,
+  validateApiToken,
+  validateStoreToken,
+} from './helper'
 
 export class AuditAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -22,36 +28,47 @@ export class AuditAccess extends SchemaDirectiveVisitor {
 
   private async sendAuthMetric(field: GraphQLField<any, any>, context: any) {
     const {
-      vtex: { adminUserAuthToken, storeUserAuthToken, account, logger },
-      request,
+      vtex: { adminUserAuthToken, storeUserAuthToken, logger },
     } = context
 
-    const userAgent = request.headers['user-agent'] as string
-    const operation = field.astNode?.name?.value ?? request.url
-    const forwardedHost = request.headers['x-forwarded-host'] as string
-    const caller =
-      context?.graphql?.query?.senderApp ??
-      context?.graphql?.query?.extensions?.persistedQuery?.sender ??
-      request.header['x-b2b-senderapp'] ??
-      (request.headers['x-vtex-caller'] as string)
-
-    const hasAdminToken = !!(
-      adminUserAuthToken ?? (context?.headers.vtexidclientautcookie as string)
+    const { hasAdminToken, hasValidAdminToken } = await validateAdminToken(
+      context,
+      adminUserAuthToken as string
     )
 
-    const hasStoreToken = !!storeUserAuthToken
-    const hasApiToken = !!request.headers['vtex-api-apptoken']
+    const { hasAdminTokenOnHeader, hasValidAdminTokenOnHeader } =
+      await validateAdminTokenOnHeader(context)
 
-    const authMetric = new AuthMetric(account, {
+    const { hasApiToken, hasValidApiToken } = await validateApiToken(context)
+
+    const { hasStoreToken, hasValidStoreToken } = await validateStoreToken(
+      context,
+      storeUserAuthToken as string
+    )
+
+    // now we emit a metric with all the collected data before we proceed
+    const operation = field?.astNode?.name?.value ?? context?.request?.url
+    const userAgent = context?.request?.headers['user-agent'] as string
+    const caller = context?.request?.headers['x-vtex-caller'] as string
+    const forwardedHost = context?.request?.headers[
+      'x-forwarded-host'
+    ] as string
+
+    const auditMetric = new AuthMetric(context?.vtex?.account, {
+      operation,
+      forwardedHost,
       caller,
       userAgent,
-      forwardedHost,
       hasAdminToken,
+      hasValidAdminToken,
       hasApiToken,
+      hasValidApiToken,
       hasStoreToken,
-      operation,
+      hasValidStoreToken,
+      hasAdminTokenOnHeader,
+      hasValidAdminTokenOnHeader,
     })
 
-    await sendAuthMetric(context, logger, authMetric)
+    await sendAuthMetric(context, logger, auditMetric)
   }
 }
