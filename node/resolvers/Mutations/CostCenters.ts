@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import {
   COST_CENTER_DATA_ENTITY,
   ORGANIZATION_DATA_ENTITY,
@@ -12,6 +13,7 @@ import Organizations from '../Queries/Organizations'
 import costCenters from '../Queries/CostCenters'
 import checkConfig from '../config'
 import CostCenterRepository from '../repository/CostCenterRepository'
+import Users from '../Queries/Users'
 
 const CostCenters = {
   createCostCenter: async (
@@ -205,6 +207,24 @@ const CostCenters = {
     } = ctx
 
     try {
+      const users = await Users.getUsers(
+        _,
+        { costCenterId: id, organizationId: '' },
+        ctx
+      )
+
+      console.log('users', users)
+      const usersDeleted = await Promise.all(
+        users.map((user: any) =>
+          masterdata.deleteDocument({
+            dataEntity: 'b2b_users',
+            id: user.id,
+          })
+        )
+      )
+
+      console.log('usersDeleted', usersDeleted)
+
       await masterdata.deleteDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
         id,
