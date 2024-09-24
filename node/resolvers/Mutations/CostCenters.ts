@@ -213,8 +213,7 @@ const CostCenters = {
         ctx
       )
 
-      console.log('users', users)
-      const usersDeleted = await Promise.all(
+      await Promise.all(
         users.map((user: any) =>
           masterdata.deleteDocument({
             dataEntity: 'b2b_users',
@@ -222,8 +221,6 @@ const CostCenters = {
           })
         )
       )
-
-      console.log('usersDeleted', usersDeleted)
 
       await masterdata.deleteDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
