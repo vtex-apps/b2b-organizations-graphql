@@ -98,6 +98,8 @@ const Organizations = {
 
       return {
         ...org,
+        // the previous data registered doesn't have this propertty on masterdata
+        // so we need to add it to the response
         permissions: org.permissions ?? { createQuote: true },
       }
     } catch (error) {
@@ -158,6 +160,8 @@ const Organizations = {
       const mappedOrganizations = organizationsDB.data.map((org) => {
         return {
           ...org,
+          // the previous data registered doesn't have this propertty on masterdata
+          // so we need to add it to the response
           permissions: org.permissions ?? { createQuote: true },
         }
       })
