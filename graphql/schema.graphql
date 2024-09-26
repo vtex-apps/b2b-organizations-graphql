@@ -10,8 +10,8 @@ type Query {
     sortOrder: String = "DESC"
     sortedBy: String = "created"
   ): OrganizationRequestResult
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
-    @auditAccess
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
+    @validateAdminUserAccess
   getOrganizationRequestById(id: ID!): OrganizationRequest
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
