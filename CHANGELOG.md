@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.57.1] - 2024-09-30
+
 ### Fixed
 - Change GetOrganizationRequests API cache control scope to private
 
