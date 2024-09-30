@@ -10,7 +10,7 @@ type Query {
     sortOrder: String = "DESC"
     sortedBy: String = "created"
   ): OrganizationRequestResult
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @auditAccess
   getOrganizationRequestById(id: ID!): OrganizationRequest
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
