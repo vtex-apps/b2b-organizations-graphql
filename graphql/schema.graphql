@@ -24,7 +24,7 @@ type Query {
     sortedBy: String = "name"
   ): OrganizationResult
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-    @@validateStoreUserAccess
+    @validateStoreUserAccess
 
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
