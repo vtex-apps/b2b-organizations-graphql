@@ -24,7 +24,7 @@ type Query {
     sortedBy: String = "name"
   ): OrganizationResult
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-    @checkUserAccess
+    @@validateStoreUserAccess
 
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
@@ -224,7 +224,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   """
   addUser will create an user with the provided parameters.
