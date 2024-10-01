@@ -28,7 +28,7 @@ type Query {
 
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
-    @auditAccess
+    @@validateAdminUserAccess
 
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PRIVATE)

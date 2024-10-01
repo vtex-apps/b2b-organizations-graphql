@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- Add new admin token validation directive to getOrganizationsWithoutSalesManager
+
 ## [0.57.1] - 2024-09-30
 
 ### Fixed
