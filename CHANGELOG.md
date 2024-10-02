@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fix deleteCostCenter mutation
 
+## [0.57.1] - 2024-09-30
+
+### Fixed
+- Change GetOrganizationRequests API cache control scope to private
+
 ## [0.57.0] - 2024-09-12
 
 ### Added
