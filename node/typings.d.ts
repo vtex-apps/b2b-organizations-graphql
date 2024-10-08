@@ -234,6 +234,7 @@ interface Price {
 interface UISettings {
   showModal: boolean
   clearCart: boolean
+  fullImpersonation: boolean
 }
 
 interface CustomField {

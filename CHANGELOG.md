@@ -7,23 +7,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.59.0] - 2024-10-08
 ### Added
+
+- `Full Impersonation` Organization Setting, this will allow a Impersonator to also Switch between the User's Organization/Cost Center
+
+## [0.59.0] - 2024-10-08
+
+### Added
+
 - Add permission createQuote to organization
 
 ## [0.58.0] - 2024-10-07
 
 ### Added
+
 - Add new admin token validation directive to getOrganizationsWithoutSalesManager
 
 ## [0.57.1] - 2024-09-30
 
 ### Fixed
+
 - Change GetOrganizationRequests API cache control scope to private
 
 ## [0.57.0] - 2024-09-12
 
 ### Added
+
 - Add new admin token validation directive to some APIs
 
 ## [0.56.2] - 2024-09-10
@@ -35,6 +44,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.56.1] - 2024-09-10
 
 ### Added
+
 - Add logging for store token validation
 
 ## [0.56.0] - 2024-09-09
@@ -46,6 +56,7 @@ Adds a new `getAccount` query to retrieve account information. It includes field
 ## [0.55.0] - 2024-08-22
 
 ### Added
+
 - Add paymentTerms field to cost center input on mutations
 
 ## [0.54.0] - 2024-08-12
