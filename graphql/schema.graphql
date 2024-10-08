@@ -28,7 +28,7 @@ type Query {
 
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
-    @auditAccess
+    @validateAdminUserAccess
 
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PRIVATE)
@@ -180,6 +180,7 @@ type Mutation {
     customFields: [CustomFieldInput]
     salesChannel: String
     sellers: [SellerInput]
+    permissions: PermissionsInput
     notifyUsers: Boolean
   ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
@@ -387,6 +388,7 @@ type Organization {
   priceTables: [String]
   sellers: [Seller]
   customFields: [CustomField]
+  permissions: Permissions
   salesChannel: String
   costCenters: [ID]
   status: String
@@ -591,6 +593,14 @@ input CostCenterInput {
   businessDocument: String
   customFields: [CustomFieldInput]
   stateRegistration: String
+}
+
+input PermissionsInput {
+  createQuote: Boolean
+}
+
+type Permissions {
+  createQuote: Boolean
 }
 
 input AddressInput {
