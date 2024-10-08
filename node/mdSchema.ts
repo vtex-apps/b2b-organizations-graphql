@@ -31,6 +31,7 @@ export const ORGANIZATION_FIELDS = [
   'status',
   'created',
   'customFields',
+  'permissions',
 ]
 export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.8'
 
@@ -165,6 +166,15 @@ export const schemas = [
         customFields: {
           type: 'array',
           title: 'Custom Fields',
+        },
+        permissions: {
+          type: 'object',
+          title: 'Permissions',
+          properties: {
+            createQuote: {
+              type: 'boolean',
+            },
+          },
         },
       },
       'v-indexed': ['name', 'status', 'created'],

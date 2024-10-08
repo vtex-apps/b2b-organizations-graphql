@@ -263,6 +263,9 @@ describe('given an Organization Mutation', () => {
             name: input.name,
             status: 'active',
             tradeName: input.tradeName,
+            permissions: {
+              createQuote: true,
+            },
           },
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
@@ -365,6 +368,9 @@ describe('given an Organization Mutation', () => {
             name: input.name,
             status: 'active',
             tradeName: input.tradeName,
+            permissions: {
+              createQuote: true,
+            },
           },
           schema: ORGANIZATION_SCHEMA_VERSION,
         })

@@ -155,6 +155,7 @@ interface Organization {
   costCenters: string[]
   paymentTerms: PaymentTerm[]
   priceTables?: string[]
+  permissions?: Permissions
   status: string
   created: string
   customFields?: CustomField[]

@@ -6,6 +6,7 @@ import {
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
+import type { Organization } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 
@@ -66,9 +67,7 @@ const Organizations = {
       _,
       { id: orgId },
       ctx
-    )) as {
-      status: string
-    }
+    )) as { status: string; permissions?: { createQuote: boolean } }
 
     if (!organization) {
       throw new Error('Organization not found')
@@ -91,11 +90,18 @@ const Organizations = {
     await checkConfig(ctx)
 
     try {
-      return await masterdata.getDocument({
+      const org: Organization = await masterdata.getDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
         fields: ORGANIZATION_FIELDS,
         id,
       })
+
+      return {
+        ...org,
+        // the previous data registered doesn't have this propertty on masterdata
+        // so we need to add it to the response
+        permissions: org.permissions ?? { createQuote: true },
+      }
     } catch (error) {
       logger.error({ error, message: 'getOrganizationById-error' })
       throw new GraphQLError(getErrorMessage(error))
@@ -138,14 +144,32 @@ const Organizations = {
     const where = whereArray.join(' AND ')
 
     try {
-      return await masterdata.searchDocumentsWithPaginationInfo({
-        dataEntity: ORGANIZATION_DATA_ENTITY,
-        fields: ORGANIZATION_FIELDS,
-        pagination: { page, pageSize },
-        schema: ORGANIZATION_SCHEMA_VERSION,
-        sort: `${sortedBy} ${sortOrder}`,
-        ...(where && { where }),
+      const organizationsDB =
+        (await masterdata.searchDocumentsWithPaginationInfo({
+          dataEntity: ORGANIZATION_DATA_ENTITY,
+          fields: ORGANIZATION_FIELDS,
+          pagination: { page, pageSize },
+          schema: ORGANIZATION_SCHEMA_VERSION,
+          sort: `${sortedBy} ${sortOrder}`,
+          ...(where && { where }),
+        })) as {
+          data: Organization[]
+          pagination: { total: number; page: number; pageSize: number }
+        }
+
+      const mappedOrganizations = organizationsDB.data.map((org) => {
+        return {
+          ...org,
+          // the previous data registered doesn't have this propertty on masterdata
+          // so we need to add it to the response
+          permissions: org.permissions ?? { createQuote: true },
+        }
       })
+
+      return {
+        data: mappedOrganizations,
+        pagination: organizationsDB.pagination,
+      }
     } catch (error) {
       logger.error({
         error,
@@ -275,7 +299,7 @@ const Organizations = {
       throw new GraphQLError('operation-not-permitted')
     }
 
-    const organization = await masterdata.getDocument({
+    const organization: Organization = await masterdata.getDocument({
       dataEntity: ORGANIZATION_DATA_ENTITY,
       fields: ORGANIZATION_FIELDS,
       id,
@@ -286,7 +310,10 @@ const Organizations = {
     }
 
     try {
-      return organization
+      return {
+        ...organization,
+        permissions: organization.permissions ?? { createQuote: true },
+      }
     } catch (error) {
       logger.error({
         error,
