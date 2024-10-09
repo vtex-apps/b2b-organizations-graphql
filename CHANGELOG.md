@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.60.0] - 2024-10-09
+
 ### Added
 - Add new store user token validation directive to some APIs
 
