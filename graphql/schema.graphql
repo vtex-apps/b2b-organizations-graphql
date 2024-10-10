@@ -43,7 +43,9 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): CostCenterResult @cacheControl(scope: PUBLIC, maxAge: SHORT) @auditAccess
+  ): CostCenterResult
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @validateStoreUserAccess
   getCostCentersByOrganizationId(
     id: ID
     search: String
