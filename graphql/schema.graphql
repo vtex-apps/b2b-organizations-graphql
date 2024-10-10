@@ -32,11 +32,11 @@ type Query {
 
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PRIVATE)
-    @checkUserAccess
+    @validateStoreUserAccess
   getOrganizationByIdStorefront(id: ID): Organization
     @withSession
     @cacheControl(scope: PRIVATE)
-    @checkUserAccess
+    @validateStoreUserAccess
   getCostCenters(
     search: String
     page: Int = 1
@@ -53,7 +53,7 @@ type Query {
     sortedBy: String = "name"
   ): CostCenterResult
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-    @checkUserAccess
+    @validateStoreUserAccess
   getCostCentersByOrganizationIdStorefront(
     id: ID
     search: String
@@ -64,14 +64,14 @@ type Query {
   ): CostCenterResult @withSession @cacheControl(scope: PRIVATE) @auditAccess
   getCostCenterById(id: ID!): CostCenter
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-    @checkUserAccess
+    @validateStoreUserAccess
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-    @checkUserAccess
+    @validateStoreUserAccess
   getUsers(organizationId: ID, costCenterId: ID): [B2BUser]
     @withSession
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getUsersPaginated(
     organizationId: ID
@@ -83,14 +83,14 @@ type Query {
     sortedBy: String
   ): B2BUserPagination
     @withSession
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getPaymentTerms: [PaymentTerm]
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
 
   getOrganizationsByEmail(email: String): [B2BOrganization]
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
 
   checkOrganizationIsActive(id: String): Boolean
@@ -152,18 +152,18 @@ type Mutation {
     input: OrganizationInput!
     notifyUsers: Boolean
   ): OrganizationCostCenterResponse
-    @checkAdminAccess
+    @validateAdminUserAccess
     @cacheControl(scope: PRIVATE)
   createOrganizationAndCostCentersWithId(
     input: NormalizedOrganizationInput!
-  ): MasterDataResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
+  ): MasterDataResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
   createCostCenter(
     organizationId: ID
     input: CostCenterInput!
   ): MasterDataResponse
     @withSession
     @withPermissions
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   createCostCenterWithId(
     organizationId: ID
@@ -182,11 +182,11 @@ type Mutation {
     sellers: [SellerInput]
     permissions: PermissionsInput
     notifyUsers: Boolean
-  ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
+  ): MutationResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
     @withPermissions
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   createCostCenterAddress(
     costCenterId: ID
@@ -194,7 +194,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   updateCostCenterAddress(
     costCenterId: ID
@@ -202,15 +202,15 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   deleteOrganization(id: ID!): MutationResponse
-    @checkAdminAccess
+    @validateAdminUserAccess
     @cacheControl(scope: PRIVATE)
   deleteCostCenter(id: ID!): MutationResponse
     @withSession
     @withPermissions
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   saveUser(
     id: ID
@@ -247,7 +247,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   """
   createUserWithEmail is a simplified version of addUser. Both
@@ -286,12 +286,12 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   removeUser(id: ID!, userId: ID, email: String!, clId: ID!): MutationResponse
     @withSession
     @withPermissions
-    @checkUserAccess
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   impersonateUser(clId: ID, userId: ID): MutationResponse
     @deprecated(reason: "Use impersonateB2BUser instead")
@@ -305,11 +305,11 @@ type Mutation {
     @cacheControl(scope: PRIVATE)
     @auditAccess
   saveSalesChannels(channels: [SalesChannelsInput]!): MutationResponse
-    @checkAdminAccess
+    @validateAdminUserAccess
     @cacheControl(scope: PRIVATE)
 
   setMarketingTags(costId: ID!, tags: [String]!): MutationResponse
-    @checkAdminAccess
+    @validateAdminUserAccess
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)
