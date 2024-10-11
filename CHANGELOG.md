@@ -7,12 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- Add TopBarSettings type in B2B settings and updated saveB2BSettings to use the new topBar field in UISettings
+
 ## [0.60.0] - 2024-10-09
 
 ### Added
 - Add new store user token validation directive to some APIs
 
 ## [0.59.0] - 2024-10-08
+
 ### Added
 - Add permission createQuote to organization
 

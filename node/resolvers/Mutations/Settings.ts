@@ -103,7 +103,11 @@ const Settings = {
         transactionEmailSettings:
           transactionEmailSettings ??
           currentB2BSettings?.transactionEmailSettings,
-        uiSettings,
+        uiSettings: {
+          showModal: uiSettings.showModal,
+          clearCart: uiSettings.clearCart,
+          topBar: uiSettings.topBar ?? currentB2BSettings?.uiSettings?.topBar,
+        },
       }
 
       await vbase.saveJSON(B2B_SETTINGS_DATA_ENTITY, 'settings', b2bSettings)
