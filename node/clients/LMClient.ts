@@ -1,6 +1,7 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { InstanceOptions, IOContext } from '@vtex/api'
-import { ExternalClient } from '@vtex/api'
+import { ExternalClient, ForbiddenError } from '@vtex/api'
 
 export default class LMClient extends ExternalClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
@@ -22,6 +23,24 @@ export default class LMClient extends ExternalClient {
     ).then((res: any) => {
       return res
     })
+  }
+
+  public checkUserAdminPermission = async (
+    account: string,
+    userEmail: string,
+    resourceCode: string
+  ) => {
+    const productCode = '97'
+
+    const checkOrgPermission = await this.get<boolean>(
+      `/api/license-manager/pvt/accounts/${account}/products/${productCode}/logins/${userEmail}/resources/${resourceCode}/granted`
+    )
+
+    if (!checkOrgPermission) {
+      throw new ForbiddenError('Unauthorized Access')
+    }
+
+    return checkOrgPermission
   }
 
   public getAccount = async () => {

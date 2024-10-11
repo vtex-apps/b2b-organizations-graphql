@@ -153,7 +153,8 @@ type Mutation {
     notifyUsers: Boolean
   ): OrganizationCostCenterResponse
     @checkAdminAccess
-    @cacheControl(scope: PRIVATE)
+    @validateAdminUserAccess(orgPermission: "buyer_organization_edit")
+    @cacheControl(scope: PRIVATE, maxAge: 300)
   createOrganizationAndCostCentersWithId(
     input: NormalizedOrganizationInput!
   ): MasterDataResponse @checkAdminAccess @cacheControl(scope: PRIVATE)

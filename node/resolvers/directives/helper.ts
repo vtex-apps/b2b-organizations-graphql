@@ -1,8 +1,11 @@
+/* eslint-disable no-console */
+
 import { isUserPartOfBuyerOrg } from '../Queries/Users'
 
 export const validateAdminToken = async (
   context: Context,
-  adminUserAuthToken: string
+  adminUserAuthToken: string,
+  orgPermission?: 'buyer_organization_edit' | 'buyer_organization_view'
 ): Promise<{
   hasAdminToken: boolean
   hasValidAdminToken: boolean
@@ -16,15 +19,19 @@ export const validateAdminToken = async (
   // check if has admin token and if it is valid
   const hasAdminToken = !!adminUserAuthToken
   let hasValidAdminToken = false
+  let userEmail = ''
+  let tokenType = ''
   // this is used to check if the token is valid by current standards
   let hasCurrentValidAdminToken = false
 
+  console.log('VALIDATE ADMIN TOKEN')
   if (hasAdminToken) {
     try {
       const authUser = await identity.validateToken({
         token: adminUserAuthToken,
       })
 
+      console.log({ authUser })
       // we set this flag to true if the token is valid by current standards
       // in the future we should remove this line
       hasCurrentValidAdminToken = true
@@ -34,6 +41,10 @@ export const validateAdminToken = async (
           account,
           authUser.id
         )
+
+        userEmail = authUser.user
+        tokenType = authUser.tokenType
+        console.log({ userEmail, tokenType })
       }
     } catch (err) {
       // noop so we leave hasValidAdminToken as false
@@ -42,6 +53,11 @@ export const validateAdminToken = async (
         err,
       })
     }
+  }
+
+  console.log({ hasValidAdminToken, orgPermission, tokenType })
+  if (hasValidAdminToken && orgPermission && tokenType === 'user') {
+    await lm.checkUserAdminPermission(account, userEmail, orgPermission)
   }
 
   return { hasAdminToken, hasValidAdminToken, hasCurrentValidAdminToken }
@@ -79,6 +95,9 @@ export const validateApiToken = async (
         token,
       })
 
+      console.log('validateApiToken')
+      console.log({ authUser })
+      console.log('end validateApiToken')
       // we set this flag to true if the token is valid by current standards
       // in the future we should remove this line
       hasCurrentValidApiToken = true

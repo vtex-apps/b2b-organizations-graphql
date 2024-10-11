@@ -1,6 +1,14 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
 import { JanusClient } from '@vtex/api'
 
+type AuthUser = {
+  id: string
+  authStatus: string
+  tokenType: string
+  account: string
+  audience: string
+  user: string
+}
 export default class IdentityClient extends JanusClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
     super(ctx, {
@@ -11,7 +19,7 @@ export default class IdentityClient extends JanusClient {
     })
   }
 
-  public async validateToken({ token }: { token: string }): Promise<any> {
+  public async validateToken({ token }: { token: string }): Promise<AuthUser> {
     return this.http.post('/api/vtexid/credential/validate', { token })
   }
 
