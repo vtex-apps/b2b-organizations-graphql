@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.60.0] - 2024-10-09
+
+### Added
+- Add new store user token validation directive to some APIs
+
+## [0.59.0] - 2024-10-08
+### Added
+- Add permission createQuote to organization
+
+## [0.58.0] - 2024-10-07
+
+### Added
+- Add new admin token validation directive to getOrganizationsWithoutSalesManager
+
 ## [0.57.1] - 2024-09-30
 
 ### Fixed
