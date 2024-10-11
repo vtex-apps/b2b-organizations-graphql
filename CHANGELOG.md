@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Add TopBarSettings type in B2B settings and updated saveB2BSettings to use the new topBar field in UISettings
 
 ## [0.62.0] - 2024-12-03
 ### Added
