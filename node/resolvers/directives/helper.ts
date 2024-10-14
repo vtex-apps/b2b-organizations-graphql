@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { isUserPartOfBuyerOrg } from '../Queries/Users'
 
 export const validateAdminToken = async (

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { SchemaDirectiveVisitor } from 'graphql-tools'
 import { AuthenticationError, ForbiddenError } from '@vtex/api'
 import type { GraphQLField } from 'graphql'
@@ -16,10 +15,8 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
     const { resolve = defaultFieldResolver } = field
 
-    console.log('Directive arguments:', this.args)
     const { orgPermission } = this.args
 
-    console.log('orgPermission:', orgPermission)
     field.resolve = async (
       root: any,
       args: any,
