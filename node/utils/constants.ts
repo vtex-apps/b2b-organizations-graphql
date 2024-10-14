@@ -14,3 +14,5 @@ export const ORGANIZATION_REQUEST_STATUSES = {
 export const MARKETING_TAGS = {
   VBASE_BUCKET: 'b2b_marketing_tags',
 }
+
+export const B2B_LM_PRODUCT_CODE = '97' // resource name on lincense manager = B2B

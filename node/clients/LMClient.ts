@@ -3,6 +3,8 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
 import { ExternalClient, ForbiddenError } from '@vtex/api'
 
+import { B2B_LM_PRODUCT_CODE } from '../utils/constants'
+
 export default class LMClient extends ExternalClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
     super(`http://${ctx.account}.vtexcommercestable.com.br/`, ctx, {
@@ -30,7 +32,7 @@ export default class LMClient extends ExternalClient {
     userEmail: string,
     resourceCode: string
   ) => {
-    const productCode = '97'
+    const productCode = B2B_LM_PRODUCT_CODE // resource name on lincense manager = B2B
 
     const checkOrgPermission = await this.get<boolean>(
       `/api/license-manager/pvt/accounts/${account}/products/${productCode}/logins/${userEmail}/resources/${resourceCode}/granted`
