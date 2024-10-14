@@ -11,6 +11,7 @@ type Query {
     sortedBy: String = "created"
   ): OrganizationRequestResult
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
+    @validateAdminUserAccess(orgPermission: "buyer_organization_view")
     @auditAccess
   getOrganizationRequestById(id: ID!): OrganizationRequest
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
@@ -24,6 +25,7 @@ type Query {
     sortedBy: String = "name"
   ): OrganizationResult
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
+    @validateAdminUserAccess(orgPermission: "buyer_organization_view")
     @validateStoreUserAccess
 
   getOrganizationsWithoutSalesManager: [Organization]
@@ -32,6 +34,7 @@ type Query {
 
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PRIVATE)
+    @validateAdminUserAccess(orgPermission: "buyer_organization_view")
     @checkUserAccess
   getOrganizationByIdStorefront(id: ID): Organization
     @withSession
@@ -43,7 +46,10 @@ type Query {
     pageSize: Int = 25
     sortOrder: String = "ASC"
     sortedBy: String = "name"
-  ): CostCenterResult @cacheControl(scope: PUBLIC, maxAge: SHORT) @auditAccess
+  ): CostCenterResult
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
+    @validateAdminUserAccess(orgPermission: "buyer_organization_view")
   getCostCentersByOrganizationId(
     id: ID
     search: String
@@ -53,6 +59,7 @@ type Query {
     sortedBy: String = "name"
   ): CostCenterResult
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
+    @validateAdminUserAccess(orgPermission: "buyer_organization_view")
     @checkUserAccess
   getCostCentersByOrganizationIdStorefront(
     id: ID
@@ -64,6 +71,7 @@ type Query {
   ): CostCenterResult @withSession @cacheControl(scope: PRIVATE) @auditAccess
   getCostCenterById(id: ID!): CostCenter
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
+    @validateAdminUserAccess(orgPermission: "buyer_organization_view")
     @checkUserAccess
   getCostCenterByIdStorefront(id: ID): CostCenter
     @withSession
@@ -72,6 +80,7 @@ type Query {
   getUsers(organizationId: ID, costCenterId: ID): [B2BUser]
     @withSession
     @checkUserAccess
+    @validateAdminUserAccess(orgPermission: "buyer_organization_view")
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getUsersPaginated(
     organizationId: ID
@@ -109,11 +118,15 @@ type Query {
   getB2BSettings: B2BSettings
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
-  getSellers: [Seller] @validateAdminUserAccess @cacheControl(scope: PRIVATE)
-  getSellersPaginated(page: Int, pageSize: Int): GetSellersPaginatedResponse
-    @validateAdminUserAccess
+  getSellers: [Seller]
+    @validateAdminUserAccess(orgPermission: "buyer_organization_view")
     @cacheControl(scope: PRIVATE)
-  getAccount: Account @validateAdminUserAccess @cacheControl(scope: PRIVATE)
+  getSellersPaginated(page: Int, pageSize: Int): GetSellersPaginatedResponse
+    @validateAdminUserAccess(orgPermission: "buyer_organization_view")
+    @cacheControl(scope: PRIVATE)
+  getAccount: Account
+    @validateAdminUserAccess(orgPermission: "buyer_organization_view")
+    @cacheControl(scope: PRIVATE)
 }
 
 type Account {
@@ -146,8 +159,12 @@ type Mutation {
     status: String!
     notes: String
     notifyUsers: Boolean
-  ): MutationResponse @auditAccess
-  deleteOrganizationRequest(id: ID!): MutationResponse @auditAccess
+  ): MutationResponse
+    @auditAccess
+    @validateAdminUserAccess(orgPermission: "buyer_organization_edit")
+  deleteOrganizationRequest(id: ID!): MutationResponse
+    @auditAccess
+    @validateAdminUserAccess(orgPermission: "buyer_organization_edit")
   createOrganization(
     input: OrganizationInput!
     notifyUsers: Boolean
@@ -165,6 +182,7 @@ type Mutation {
     @withSession
     @withPermissions
     @checkUserAccess
+    @validateAdminUserAccess(orgPermission: "buyer_organization_edit")
     @cacheControl(scope: PRIVATE)
   createCostCenterWithId(
     organizationId: ID
@@ -183,11 +201,15 @@ type Mutation {
     sellers: [SellerInput]
     permissions: PermissionsInput
     notifyUsers: Boolean
-  ): MutationResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
+  ): MutationResponse
+    @checkAdminAccess
+    @cacheControl(scope: PRIVATE)
+    @validateAdminUserAccess(orgPermission: "buyer_organization_edit")
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
     @withPermissions
     @checkUserAccess
+    @validateAdminUserAccess(orgPermission: "buyer_organization_edit")
     @cacheControl(scope: PRIVATE)
   createCostCenterAddress(
     costCenterId: ID
@@ -207,11 +229,13 @@ type Mutation {
     @cacheControl(scope: PRIVATE)
   deleteOrganization(id: ID!): MutationResponse
     @checkAdminAccess
+    @validateAdminUserAccess(orgPermission: "buyer_organization_edit")
     @cacheControl(scope: PRIVATE)
   deleteCostCenter(id: ID!): MutationResponse
     @withSession
     @withPermissions
     @checkUserAccess
+    @validateAdminUserAccess(orgPermission: "buyer_organization_edit")
     @cacheControl(scope: PRIVATE)
   saveUser(
     id: ID
@@ -249,6 +273,7 @@ type Mutation {
     @withSession
     @withPermissions
     @checkUserAccess
+    @validateAdminUserAccess(orgPermission: "buyer_organization_edit")
     @cacheControl(scope: PRIVATE)
   """
   createUserWithEmail is a simplified version of addUser. Both
@@ -318,7 +343,7 @@ type Mutation {
   saveB2BSettings(input: B2BSettingsInput): MutationResponse
     @withSession
     @withPermissions
-    @validateAdminUserAccess
+    @validateAdminUserAccess(orgPermission: "buyer_organization_edit")
 }
 
 type SettingsResponse {
