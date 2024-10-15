@@ -26,11 +26,11 @@ type Query {
   ): OrganizationResult
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @validateAdminUserAccess(orgPermission: "buyer_organization_view")
-    @validateStoreUserAccess
+    @validateStoreUserAccess(orgPermission: "buyer_organization_view")
 
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
-    @validateAdminUserAccess
+    @validateAdminUserAccess(orgPermission: "buyer_organization_view")
 
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PRIVATE)
@@ -250,7 +250,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @validateStoreUserAccess
+    @validateStoreUserAccess(orgPermission: "buyer_organization_edit")
     @cacheControl(scope: PRIVATE)
   """
   addUser will create an user with the provided parameters.

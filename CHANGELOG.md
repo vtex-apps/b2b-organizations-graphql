@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
-- Added optional argument to validateAdminUserAccess directive to check specific user permissions via LM API.
+- Added optional argument to validateAdminUserAccess and validateStoreUserAccess directives to check specific user permissions via LM API.
 
 ## [0.60.0] - 2024-10-09
 
