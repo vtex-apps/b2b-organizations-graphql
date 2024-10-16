@@ -524,6 +524,7 @@ type TransactionEmailSettings {
 type UISettings {
   showModal: Boolean
   clearCart: Boolean
+  fullImpersonation: Boolean
 }
 
 scalar Data
@@ -679,6 +680,7 @@ input TransactionEmailSettingsInput {
 input UISettingsInput {
   showModal: Boolean
   clearCart: Boolean
+  fullImpersonation: Boolean
 }
 
 input B2BSettingsInput {
