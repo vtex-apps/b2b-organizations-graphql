@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added `tradeName` and `id` to organization search on getOrganizations and getOrganizationRequests queries
+
 ## [0.61.0] - 2024-10-16
 
 ### Added
