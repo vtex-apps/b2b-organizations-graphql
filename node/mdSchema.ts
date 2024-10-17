@@ -15,7 +15,7 @@ export const ORGANIZATION_REQUEST_FIELDS = [
   'sellers',
   'customFields',
 ]
-export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.1.2'
+export const ORGANIZATION_REQUEST_SCHEMA_VERSION = 'v0.1.1'
 
 export const ORGANIZATION_DATA_ENTITY = 'organizations'
 export const ORGANIZATION_FIELDS = [
@@ -33,7 +33,7 @@ export const ORGANIZATION_FIELDS = [
   'customFields',
   'permissions',
 ]
-export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.9'
+export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.8'
 
 export const COST_CENTER_DATA_ENTITY = 'cost_centers'
 export const COST_CENTER_FIELDS = [
