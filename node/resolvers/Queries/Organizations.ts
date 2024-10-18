@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import {
   ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_FIELDS,
@@ -6,9 +7,13 @@ import {
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
-import type { Organization } from '../../typings'
+import type {
+  GetOrganizationsByEmailWithStatus,
+  Organization,
+} from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
+import { organizationStatus } from '../fieldResolvers'
 
 const getWhereByStatus = ({ status }: { status: string[] }) => {
   const whereArray = []
@@ -182,11 +187,13 @@ const Organizations = {
   getOrganizationsByEmail: async (
     _: void,
     { email }: { email: string },
-    {
+    ctx: Context
+  ) => {
+    const {
       clients: { storefrontPermissions, session },
       vtex: { logger, sessionToken, adminUserAuthToken },
-    }: any
-  ) => {
+    } = ctx
+
     const organizationFilters: string[] = []
     let fromSession = false
 
@@ -259,8 +266,25 @@ const Organizations = {
       )
     })
 
+    const organizationsWithStatus: GetOrganizationsByEmailWithStatus[] =
+      await Promise.all(
+        organizations.map(async (organization: { orgId: string }) => {
+          const status = await organizationStatus(
+            { orgId: organization.orgId },
+            _,
+            ctx
+          )
+
+          return { ...organization, status }
+        })
+      )
+
+    const activeOrganizations = organizationsWithStatus.filter(
+      (organization) => organization.status === 'active'
+    )
+
     try {
-      return organizations
+      return activeOrganizations
     } catch (error) {
       logger.error({
         error,
