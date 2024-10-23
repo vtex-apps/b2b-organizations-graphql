@@ -143,10 +143,8 @@ const Organizations = {
     const whereArray = getWhereByStatus({ status })
 
     if (document) {
-      const documentFormatted = formatDocument(document)
-
       try {
-        const where = `businessDocument="*${documentFormatted}*"`
+        const where = `businessDocument="*${document}*"`
         const costCenterData =
           await masterdata.searchDocumentsWithPaginationInfo({
             dataEntity: COST_CENTER_DATA_ENTITY,
@@ -467,30 +465,6 @@ const Organizations = {
       throw new GraphQLError(getErrorMessage(error))
     }
   },
-}
-
-function formatDocument(document: string): string {
-  const documentFormatRemoved = document.replace(/[^0-9]/gu, '')
-
-  const documentArray = documentFormatRemoved.split('')
-
-  const formattedDocument = documentArray.map((char, index) => {
-    if (index === 2 || index === 5) {
-      return `.${char}`
-    }
-
-    if (index === 8) {
-      return `/${char}`
-    }
-
-    if (index === 12) {
-      return `-${char}`
-    }
-
-    return char
-  })
-
-  return formattedDocument.join('')
 }
 
 export default Organizations
