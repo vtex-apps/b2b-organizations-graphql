@@ -35,23 +35,27 @@ const getUserAndPermissions = async (ctx: Context) => {
     throw new ForbiddenError('Access denied')
   }
 
-  const {
-    data: { checkUserPermission },
-  }: any = await storefrontPermissions
-    // It is necessary to send the app name, because the check user return the permissions relative to orders-history to access the page.
-    .checkUserPermission('vtex.b2b-orders-history@0.x')
-    .catch((error: any) => {
-      logger.error({
-        message: 'checkUserPermission-error',
-        error,
+  let checkUserPermission = null
+
+  if (sessionData?.namespaces) {
+    const checkUserPermissionResult = await storefrontPermissions
+      // It is necessary to send the app name, because the check user return the permissions relative to orders-history to access the page.
+      .checkUserPermission('vtex.b2b-orders-history@0.x')
+      .catch((error: any) => {
+        logger.error({
+          message: 'checkUserPermission-error',
+          error,
+        })
+
+        return {
+          data: {
+            checkUserPermission: null,
+          },
+        }
       })
 
-      return {
-        data: {
-          checkUserPermission: null,
-        },
-      }
-    })
+    checkUserPermission = checkUserPermissionResult?.data?.checkUserPermission
+  }
 
   const organizationId =
     sessionData?.namespaces['storefront-permissions']?.organization?.value

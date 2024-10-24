@@ -313,22 +313,26 @@ const costCenters = {
       throw new Error('This organization is not active')
     }
 
-    const {
-      data: { checkUserPermission },
-    }: any = await storefrontPermissions
-      .checkUserPermission('vtex.b2b-organizations@1.x')
-      .catch((error: any) => {
-        logger.error({
-          error,
-          message: 'checkUserPermission-error',
+    let checkUserPermission = null
+
+    if (sessionData?.namespaces) {
+      const checkUserPermissionResult = await storefrontPermissions
+        .checkUserPermission('vtex.b2b-organizations@1.x')
+        .catch((error: any) => {
+          logger.error({
+            error,
+            message: 'checkUserPermission-error',
+          })
+
+          return {
+            data: {
+              checkUserPermission: null,
+            },
+          }
         })
 
-        return {
-          data: {
-            checkUserPermission: null,
-          },
-        }
-      })
+      checkUserPermission = checkUserPermissionResult?.data?.checkUserPermission
+    }
 
     const isSalesAdmin = checkUserPermission?.role.slug.match(/sales-admin/)
 

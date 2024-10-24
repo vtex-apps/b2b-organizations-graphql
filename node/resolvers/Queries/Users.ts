@@ -122,10 +122,15 @@ const checkUserPermissions = async ({
   logger,
 }: any) => {
   const { sessionData } = vtex
-  const { checkUserPermission } = await getCheckUserPermission({
-    logger,
-    storefrontPermissions,
-  })
+
+  let checkUserPermission = null
+
+  if (sessionData?.namespaces) {
+    checkUserPermission = await getCheckUserPermission({
+      logger,
+      storefrontPermissions,
+    })
+  }
 
   const condition = validateUserAdmin
     ? !adminUserAuthToken && !isSalesAdmin(checkUserPermission)
@@ -234,13 +239,17 @@ const Users = {
   ) => {
     const {
       clients: { storefrontPermissions, masterdata },
-      vtex: { adminUserAuthToken, logger },
-    } = ctx
+      vtex: { adminUserAuthToken, logger, sessionData },
+    } = ctx as any
 
-    const { checkUserPermission } = await getCheckUserPermission({
-      logger,
-      storefrontPermissions,
-    })
+    let checkUserPermission = null
+
+    if (sessionData?.namespaces) {
+      checkUserPermission = await getCheckUserPermission({
+        logger,
+        storefrontPermissions,
+      })
+    }
 
     if (!adminUserAuthToken && !isSalesAdmin(checkUserPermission)) {
       throw new GraphQLError('operation-not-permitted')
@@ -252,7 +261,7 @@ const Users = {
       .then((result: any) => {
         return result.data.listAllUsers
       })
-      .catch((error) => {
+      .catch((error: any) => {
         logger.error({
           error,
           message: 'getOrganizationsWithoutSalesManager-getUsers-error',
