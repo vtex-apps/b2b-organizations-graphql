@@ -238,9 +238,23 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, masterdata },
-      vtex: { adminUserAuthToken, logger, sessionData },
-    } = ctx as any
+      clients: { storefrontPermissions, session, masterdata },
+      vtex: { adminUserAuthToken, logger, sessionToken },
+    } = ctx
+
+    const sessionData = await session
+      .getSession(sessionToken as string, ['*'])
+      .then((currentSession: any) => {
+        return currentSession.sessionData
+      })
+      .catch((error: any) => {
+        logger.warn({
+          error,
+          message: 'getOrganizationsByEmail-session-error',
+        })
+
+        return null
+      })
 
     let checkUserPermission = null
 
