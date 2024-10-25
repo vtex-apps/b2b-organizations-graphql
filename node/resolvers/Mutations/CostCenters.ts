@@ -217,14 +217,9 @@ const CostCenters = {
         ctx
       )
 
-      await Promise.all(
-        users.map((user: any) =>
-          masterdata.deleteDocument({
-            dataEntity: 'b2b_users',
-            id: user.id,
-          })
-        )
-      )
+      if (users.length > 0) {
+        throw new Error('Cost Center has users')
+      }
 
       await masterdata.deleteDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
