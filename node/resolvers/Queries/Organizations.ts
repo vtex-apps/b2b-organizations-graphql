@@ -7,13 +7,19 @@ import {
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
-import type {
-  GetOrganizationsByEmailWithStatus,
-  Organization,
-} from '../../typings'
+import type { Organization } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
 import { organizationStatus } from '../fieldResolvers'
+
+export interface GetOrganizationsByEmailWithStatus {
+  costId: string
+  orgId: string
+  roleId: string
+  id: string
+  clId: string
+  status: string
+}
 
 const getWhereByStatus = ({ status }: { status: string[] }) => {
   const whereArray = []
@@ -265,6 +271,32 @@ const Organizations = {
           : true)
       )
     })
+
+    try {
+      return organizations
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getOrganizationsByEmail-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
+    }
+  },
+
+  getActiveOrganizationsByEmail: async (
+    _: void,
+    { email }: { email: string },
+    ctx: Context
+  ) => {
+    const {
+      vtex: { logger },
+    } = ctx
+
+    const organizations = await Organizations.getOrganizationsByEmail(
+      _,
+      { email },
+      ctx
+    )
 
     const organizationsWithStatus: GetOrganizationsByEmailWithStatus[] =
       await Promise.all(

@@ -163,15 +163,6 @@ interface Organization {
   sellers?: Seller[]
 }
 
-export type GetOrganizationsByEmailWithStatus = {
-  costId: string
-  orgId: string
-  roleId: string
-  id: string
-  clId: string
-  status: string
-}
-
 interface Collection {
   id: string
   name: string
