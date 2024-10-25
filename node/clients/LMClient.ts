@@ -26,22 +26,22 @@ export default class LMClient extends ExternalClient {
     })
   }
 
-  public checkUserAdminPermission = async (
+  public checkAdminUserRequiredPermission = async (
     account: string,
     userEmail: string,
     resourceCode: string
   ) => {
-    const productCode = B2B_LM_PRODUCT_CODE // resource name on lincense manager = B2B
+    const productCode = B2B_LM_PRODUCT_CODE // resource name on lincense manager = Buyer Organization
 
-    const checkOrgPermission = await this.get<boolean>(
+    const checkrequiredPermission = await this.get<boolean>(
       `/api/license-manager/pvt/accounts/${account}/products/${productCode}/logins/${userEmail}/resources/${resourceCode}/granted`
     )
 
-    if (!checkOrgPermission) {
+    if (!checkrequiredPermission) {
       throw new ForbiddenError('Unauthorized Access')
     }
 
-    return checkOrgPermission
+    return checkrequiredPermission
   }
 
   public getAccount = async () => {
