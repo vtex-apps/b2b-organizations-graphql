@@ -2,7 +2,8 @@ import { isUserPartOfBuyerOrg } from '../Queries/Users'
 
 export const validateAdminToken = async (
   context: Context,
-  adminUserAuthToken: string
+  adminUserAuthToken: string,
+  requiredPermission?: 'buyer_organization_edit' | 'buyer_organization_view'
 ): Promise<{
   hasAdminToken: boolean
   hasValidAdminToken: boolean
@@ -16,12 +17,12 @@ export const validateAdminToken = async (
   // check if has admin token and if it is valid
   const hasAdminToken = !!adminUserAuthToken
   let hasValidAdminToken = false
-  // this is used to check if the token is valid by current standards
   let hasCurrentValidAdminToken = false
+  let authUser: any
 
   if (hasAdminToken) {
     try {
-      const authUser = await identity.validateToken({
+      authUser = await identity.validateToken({
         token: adminUserAuthToken,
       })
 
@@ -42,6 +43,18 @@ export const validateAdminToken = async (
         err,
       })
     }
+  }
+
+  if (
+    hasValidAdminToken &&
+    requiredPermission &&
+    authUser.tokenType === 'user'
+  ) {
+    await lm.checkAdminUserRequiredPermission(
+      account,
+      authUser.user,
+      requiredPermission
+    )
   }
 
   return { hasAdminToken, hasValidAdminToken, hasCurrentValidAdminToken }

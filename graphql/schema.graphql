@@ -24,11 +24,11 @@ type Query {
     sortedBy: String = "name"
   ): OrganizationResult
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
-    @validateStoreUserAccess
+    @validateStoreUserAccess(requiredPermission: "buyer_organization_view")
 
   getOrganizationsWithoutSalesManager: [Organization]
     @cacheControl(scope: PRIVATE)
-    @validateAdminUserAccess
+    @validateAdminUserAccess(requiredPermission: "buyer_organization_view")
 
   getOrganizationById(id: ID): Organization
     @cacheControl(scope: PRIVATE)
@@ -109,11 +109,15 @@ type Query {
   getB2BSettings: B2BSettings
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
-  getSellers: [Seller] @validateAdminUserAccess @cacheControl(scope: PRIVATE)
-  getSellersPaginated(page: Int, pageSize: Int): GetSellersPaginatedResponse
-    @validateAdminUserAccess
+  getSellers: [Seller]
+    @validateAdminUserAccess(requiredPermission: "buyer_organization_view")
     @cacheControl(scope: PRIVATE)
-  getAccount: Account @validateAdminUserAccess @cacheControl(scope: PRIVATE)
+  getSellersPaginated(page: Int, pageSize: Int): GetSellersPaginatedResponse
+    @validateAdminUserAccess(requiredPermission: "buyer_organization_view")
+    @cacheControl(scope: PRIVATE)
+  getAccount: Account
+    @validateAdminUserAccess(requiredPermission: "buyer_organization_view")
+    @cacheControl(scope: PRIVATE)
 }
 
 type Account {
@@ -153,7 +157,7 @@ type Mutation {
     notifyUsers: Boolean
   ): OrganizationCostCenterResponse
     @checkAdminAccess
-    @cacheControl(scope: PRIVATE)
+    @cacheControl(scope: PRIVATE, maxAge: 300)
   createOrganizationAndCostCentersWithId(
     input: NormalizedOrganizationInput!
   ): MasterDataResponse @checkAdminAccess @cacheControl(scope: PRIVATE)
@@ -164,6 +168,7 @@ type Mutation {
     @withSession
     @withPermissions
     @checkUserAccess
+    @validateAdminUserAccess(requiredPermission: "buyer_organization_edit")
     @cacheControl(scope: PRIVATE)
   createCostCenterWithId(
     organizationId: ID
@@ -225,7 +230,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @validateStoreUserAccess
+    @validateStoreUserAccess(requiredPermission: "buyer_organization_edit")
     @cacheControl(scope: PRIVATE)
   """
   addUser will create an user with the provided parameters.
@@ -267,12 +272,16 @@ type Mutation {
     name: String!
     email: String!
     canImpersonate: Boolean = false
-  ): MutationResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
+  ): MutationResponse
+    @validateAdminUserAccess(requiredPermission: "buyer_organization_edit")
+    @cacheControl(scope: PRIVATE)
   removeUserWithEmail(
     orgId: ID!
     costId: ID!
     email: String!
-  ): MutationResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
+  ): MutationResponse
+    @validateAdminUserAccess(requiredPermission: "buyer_organization_edit")
+    @cacheControl(scope: PRIVATE)
   updateUser(
     id: ID
     roleId: ID!
@@ -317,7 +326,7 @@ type Mutation {
   saveB2BSettings(input: B2BSettingsInput): MutationResponse
     @withSession
     @withPermissions
-    @validateAdminUserAccess
+    @validateAdminUserAccess(requiredPermission: "buyer_organization_edit")
 }
 
 type SettingsResponse {

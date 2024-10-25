@@ -15,6 +15,7 @@ import {
 export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
     const { resolve = defaultFieldResolver } = field
+    const { requiredPermission } = this.args
 
     field.resolve = async (
       root: any,
@@ -44,7 +45,8 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
 
       const { hasAdminToken, hasValidAdminToken } = await validateAdminToken(
         context,
-        adminUserAuthToken as string
+        adminUserAuthToken as string,
+        requiredPermission
       )
 
       // add admin token metrics
