@@ -250,7 +250,7 @@ const Users = {
       .catch((error: any) => {
         logger.warn({
           error,
-          message: 'getOrganizationsByEmail-session-error',
+          message: 'getOrganizationsWithoutSalesManager-session-error',
         })
 
         return null
