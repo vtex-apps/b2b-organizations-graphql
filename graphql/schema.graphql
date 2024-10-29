@@ -94,7 +94,6 @@ type Query {
     @cacheControl(scope: PRIVATE)
 
   getActiveOrganizationsByEmail(email: String): [B2BOrganization]
-    @checkUserAccess
     @cacheControl(scope: PRIVATE)
     @validateStoreUserAccess
 
