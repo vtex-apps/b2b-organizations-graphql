@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.61.1] - 2024-10-29
+
 ### Fixed
 - Avoid calls to checkUserPermissions when session data is not available
 
