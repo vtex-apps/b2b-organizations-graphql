@@ -189,42 +189,47 @@ const Organizations = {
   ) => {
     const organizationFilters: string[] = []
     let fromSession = false
-    const {
-      data: { checkUserPermission },
-    }: any = await storefrontPermissions
-      .checkUserPermission('vtex.b2b-organizations@1.x')
+
+    const sessionData = await session
+      .getSession(sessionToken as string, ['*'])
+      .then((currentSession: any) => {
+        return currentSession.sessionData
+      })
       .catch((error: any) => {
-        logger.error({
+        logger.warn({
           error,
-          message: 'checkUserPermission-error',
+          message: 'getOrganizationsByEmail-session-error',
         })
 
-        return {
-          data: {
-            checkUserPermission: null,
-          },
-        }
+        return null
       })
+
+    let checkUserPermission = null
+
+    if (sessionData?.namespaces) {
+      const checkUserPermissionResult = await storefrontPermissions
+        .checkUserPermission('vtex.b2b-organizations@1.x')
+        .catch((error: any) => {
+          logger.error({
+            error,
+            message: 'checkUserPermission-error',
+          })
+
+          return {
+            data: {
+              checkUserPermission: null,
+            },
+          }
+        })
+
+      checkUserPermission = checkUserPermissionResult?.data?.checkUserPermission
+    }
 
     if (
       (!adminUserAuthToken &&
         !checkUserPermission?.permissions.includes('add-sales-users-all')) ||
       !(email?.length > 0)
     ) {
-      const sessionData = await session
-        .getSession(sessionToken as string, ['*'])
-        .then((currentSession: any) => {
-          return currentSession.sessionData
-        })
-        .catch((error: any) => {
-          logger.warn({
-            error,
-            message: 'getOrganizationsByEmail-session-error',
-          })
-
-          return null
-        })
-
       if (checkUserPermission?.permissions.includes('add-users-organization')) {
         const orgId =
           sessionData?.namespaces?.['storefront-permissions']?.organization
