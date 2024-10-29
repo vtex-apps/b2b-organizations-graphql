@@ -167,6 +167,14 @@ interface Collection {
   id: string
   name: string
 }
+interface GetOrganizationsByEmailWithStatus {
+  costId: string
+  orgId: string
+  roleId: string
+  id: string
+  clId: string
+  status: string
+}
 
 interface CostCenter {
   id: string
