@@ -202,7 +202,7 @@ const createOrganizationAndCostCenterWithAdminUser = async (
   ctx: Context
 ) => {
   const {
-    clients: { storefrontPermissions },
+    clients: { storefrontPermissions, mail },
     vtex: { logger },
   } = ctx
 
@@ -306,6 +306,12 @@ const createOrganizationAndCostCenterWithAdminUser = async (
         storefrontPermissions,
       })
     }
+
+    message({
+      logger,
+      mail,
+      storefrontPermissions,
+    }).organizationCreated(organizationInput.name)
 
     return {
       href: createOrganizationResult.Href,
