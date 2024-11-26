@@ -102,6 +102,12 @@ type Query {
     @cacheControl(scope: PRIVATE)
     @validateStoreUserAccess
 
+  getOrganizationsPaginatedByEmail(
+    email: String
+    page: Int = 1
+    pageSize: Int = 25
+  ): B2BOrganizationPaginated @checkUserAccess @cacheControl(scope: PRIVATE)
+
   checkOrganizationIsActive(id: String): Boolean
     @cacheControl(scope: PRIVATE)
     @auditAccess
@@ -505,6 +511,11 @@ type B2BOrganization {
   organizationName: String
   organizationStatus: String
   costCenterName: String
+}
+
+type B2BOrganizationPaginated {
+  data: [B2BOrganization]
+  pagination: Pagination
 }
 
 type SimpleRole {
