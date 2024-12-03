@@ -6,9 +6,13 @@ import {
   ORGANIZATION_REQUEST_SCHEMA_VERSION,
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
-import type { Organization } from '../../typings'
+import type {
+  GetOrganizationsByEmailWithStatus,
+  Organization,
+} from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig from '../config'
+import { organizationStatus } from '../fieldResolvers'
 
 const getWhereByStatus = ({ status }: { status: string[] }) => {
   const whereArray = []
@@ -182,11 +186,13 @@ const Organizations = {
   getOrganizationsByEmail: async (
     _: void,
     { email }: { email: string },
-    {
+    ctx: Context
+  ) => {
+    const {
       clients: { storefrontPermissions, session },
       vtex: { logger, sessionToken, adminUserAuthToken },
-    }: any
-  ) => {
+    } = ctx
+
     const organizationFilters: string[] = []
     let fromSession = false
 
@@ -265,6 +271,49 @@ const Organizations = {
       logger.error({
         error,
         message: 'getOrganizationsByEmail-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
+    }
+  },
+
+  getActiveOrganizationsByEmail: async (
+    _: void,
+    { email }: { email: string },
+    ctx: Context
+  ) => {
+    const {
+      vtex: { logger },
+    } = ctx
+
+    const organizations = await Organizations.getOrganizationsByEmail(
+      _,
+      { email },
+      ctx
+    )
+
+    const organizationsWithStatus: GetOrganizationsByEmailWithStatus[] =
+      await Promise.all(
+        organizations.map(async (organization: { orgId: string }) => {
+          const status = await organizationStatus(
+            { orgId: organization.orgId },
+            _,
+            ctx
+          )
+
+          return { ...organization, status }
+        })
+      )
+
+    const activeOrganizations = organizationsWithStatus.filter(
+      (organization) => organization.status === 'active'
+    )
+
+    try {
+      return activeOrganizations
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getActiveOrganizationsByEmail-error',
       })
       throw new GraphQLError(getErrorMessage(error))
     }
