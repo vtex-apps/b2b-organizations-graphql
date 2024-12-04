@@ -525,10 +525,19 @@ type TransactionEmailSettings {
   organizationStatusChanged: Boolean
 }
 
+type TopBarSettings {
+  name: String
+  hexColor: String
+}
+
 type UISettings {
   showModal: Boolean
   clearCart: Boolean
+<<<<<<< HEAD
   fullImpersonation: Boolean
+=======
+  topBar: TopBarSettings
+>>>>>>> 723475d (feat: add topBar settings type)
 }
 
 scalar Data
@@ -681,10 +690,19 @@ input TransactionEmailSettingsInput {
   organizationStatusChanged: Boolean
 }
 
+input TopBarSettingsInput {
+  name: String
+  hexColor: String
+}
+
 input UISettingsInput {
   showModal: Boolean
   clearCart: Boolean
+<<<<<<< HEAD
   fullImpersonation: Boolean
+=======
+  topBar: TopBarSettingsInput
+>>>>>>> 723475d (feat: add topBar settings type)
 }
 
 input B2BSettingsInput {
