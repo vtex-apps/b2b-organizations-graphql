@@ -276,6 +276,58 @@ const Organizations = {
     }
   },
 
+  getOrganizationsPaginatedByEmail: async (
+    _: void,
+    {
+      email,
+      page = 1,
+      pageSize = 25,
+    }: {
+      email?: string
+      page: number
+      pageSize: number
+    },
+    {
+      clients: { storefrontPermissions },
+      vtex: { logger },
+    }: any
+  ) => {
+    try {
+      const organizationFilters: string[] = []
+      const fromSession = false
+
+      const response =
+        await storefrontPermissions.getOrganizationsPaginatedByEmail(
+          email,
+          page,
+          pageSize
+        )
+
+      const {
+        data: rawOrganizations = [],
+        pagination,
+      } = response?.data?.getOrganizationsPaginatedByEmail || {}
+
+      const organizations =
+        organizationFilters.length > 0
+          ? rawOrganizations.filter(({ orgId }: { orgId: string }) =>
+              organizationFilters.includes(orgId) || fromSession
+            )
+          : rawOrganizations
+
+      return {
+        data: organizations,
+        pagination,
+      }
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getOrganizationsPaginatedByEmail-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
+    }
+  },
+
   getActiveOrganizationsByEmail: async (
     _: void,
     { email }: { email: string },
