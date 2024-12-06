@@ -331,89 +331,36 @@ const Organizations = {
       pageSize: number
     },
     {
-      clients: { storefrontPermissions, session },
-      vtex: { logger, sessionToken, adminUserAuthToken },
+      clients: { storefrontPermissions },
+      vtex: { logger },
     }: any
   ) => {
-    const organizationFilters: string[] = []
-    let fromSession = false
-    const {
-      data: { checkUserPermission },
-    }: any = await storefrontPermissions
-      .checkUserPermission('vtex.b2b-organizations@1.x')
-      .catch((error: any) => {
-        logger.error({
-          error,
-          message: 'checkUserPermission-error',
-        })
-
-        return {
-          data: {
-            checkUserPermission: null,
-          },
-        }
-      })
-
-    if (
-      (!adminUserAuthToken &&
-        !checkUserPermission?.permissions.includes('add-sales-users-all')) ||
-      !email?.length
-    ) {
-      const sessionData = await session
-        .getSession(sessionToken as string, ['*'])
-        .then((currentSession: any) => {
-          return currentSession.sessionData
-        })
-        .catch((error: any) => {
-          logger.warn({
-            error,
-            message: 'getOrganizationsPaginatedByEmail-session-error',
-          })
-
-          return null
-        })
-
-      if (checkUserPermission?.permissions.includes('add-users-organization')) {
-        const orgId =
-          sessionData?.namespaces?.['storefront-permissions']?.organization
-            ?.value
-
-        if (!orgId) {
-          throw new Error('No permission for getting the organizations')
-        }
-
-        organizationFilters.push(orgId)
-      }
-
-      if (!email?.length) {
-        email = sessionData?.namespaces?.profile?.email?.value
-        fromSession = true
-      }
-    }
-
-    const response =
-      await storefrontPermissions.getOrganizationsPaginatedByEmail(
-        email,
-        page,
-        pageSize
-      )
-
-    const organizations =
-      response?.data?.getOrganizationsPaginatedByEmail?.data?.filter(
-        ({ orgId }: { orgId: string }) => {
-          return (
-            fromSession ||
-            (organizationFilters.length > 0
-              ? organizationFilters.find((id: string) => orgId === id)
-              : true)
-          )
-        }
-      )
-
     try {
+      const organizationFilters: string[] = []
+      const fromSession = false
+
+      const response =
+        await storefrontPermissions.getOrganizationsPaginatedByEmail(
+          email,
+          page,
+          pageSize
+        )
+
+      const {
+        data: rawOrganizations = [],
+        pagination,
+      } = response?.data?.getOrganizationsPaginatedByEmail || {}
+
+      const organizations =
+        organizationFilters.length > 0
+          ? rawOrganizations.filter(({ orgId }: { orgId: string }) =>
+              organizationFilters.includes(orgId) || fromSession
+            )
+          : rawOrganizations
+
       return {
         data: organizations,
-        pagination: response.data?.getOrganizationsPaginatedByEmail?.pagination,
+        pagination,
       }
     } catch (error) {
       logger.error({
