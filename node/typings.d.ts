@@ -167,6 +167,14 @@ interface Collection {
   id: string
   name: string
 }
+interface GetOrganizationsByEmailWithStatus {
+  costId: string
+  orgId: string
+  roleId: string
+  id: string
+  clId: string
+  status: string
+}
 
 interface CostCenter {
   id: string
@@ -231,10 +239,16 @@ interface Price {
   id: string
 }
 
+interface TopBarSetting {
+  name: string
+  hexColor: string
+}
+
 interface UISettings {
   showModal: boolean
   clearCart: boolean
   fullImpersonation: boolean
+  topBar?: TopBarSetting | null
 }
 
 interface CustomField {

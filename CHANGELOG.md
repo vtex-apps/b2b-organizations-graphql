@@ -11,10 +11,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added mail notification to `createOrganizationAndCostCenterWithAdminUser` mutation
 
+## [0.63.0] - 2024-12-04
+### Fixed
+- Remove merge marker from code
+
+## [0.62.1] - 2024-12-04
+### Added
+- Add TopBarSettings type in B2B settings and updated saveB2BSettings to use the new topBar field in UISettings
+
+## [0.62.0] - 2024-12-03
+### Added
+
+- Add getActiveOrganizationsByEmail to return only active organizations
+
 ## [0.61.1] - 2024-10-29
 
 ### Fixed
 - Avoid calls to checkUserPermissions when session data is not available
+
 
 ## [0.61.0] - 2024-10-16
 
