@@ -307,7 +307,13 @@ const createOrganizationAndCostCenterWithAdminUser = async (
       })
     }
 
+if(settings?.transactionEmailSettings?.organizationCreated) {
     message({
+          logger,
+          mail,
+      storefrontPermissions,
+    }).organizationCreated(organizationInput.name)
+}
       logger,
       mail,
       storefrontPermissions,
