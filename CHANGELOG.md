@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.63.1] - 2024-12-10
+
 ### Added
 
 - Added mail notification to `createOrganizationAndCostCenterWithAdminUser` mutation
