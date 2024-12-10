@@ -9,14 +9,14 @@ import {
 } from '../../mdSchema'
 import type {
   B2BSettingsInput,
+  Collection,
   DefaultCostCenterInput,
+  NormalizedOrganizationInput,
   Organization,
   OrganizationInput,
-  NormalizedOrganizationInput,
   OrganizationRequest,
   PaymentTerm,
   Price,
-  Collection,
 } from '../../typings'
 import {
   ORGANIZATION_REQUEST_STATUSES,
@@ -246,6 +246,12 @@ const createOrganizationAndCostCenterWithAdminUser = async (
     const { defaultCostCenter, costCenters } = organization
     const { email, firstName, lastName } = organization.b2bCustomerAdmin
 
+    const settings = (await B2BSettings.getB2BSettings(
+      undefined,
+      undefined,
+      ctx
+    )) as B2BSettingsInput
+
     if (costCenters?.length) {
       await Promise.all(
         costCenters?.map(async (costCenter: DefaultCostCenterInput) => {
@@ -307,17 +313,13 @@ const createOrganizationAndCostCenterWithAdminUser = async (
       })
     }
 
-if(settings?.transactionEmailSettings?.organizationCreated) {
-    message({
-          logger,
-          mail,
-      storefrontPermissions,
-    }).organizationCreated(organizationInput.name)
-}
-      logger,
-      mail,
-      storefrontPermissions,
-    }).organizationCreated(organizationInput.name)
+    if (settings?.transactionEmailSettings?.organizationCreated) {
+      message({
+        logger,
+        mail,
+        storefrontPermissions,
+      }).organizationCreated(organizationInput.name)
+    }
 
     return {
       href: createOrganizationResult.Href,
