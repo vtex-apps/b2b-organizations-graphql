@@ -6,9 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Fix `saveB2BSettings` mutation when `uiSettings` is absent
 
 ## [0.63.1] - 2024-12-10
-
 ### Added
 
 - Added mail notification to `createOrganizationAndCostCenterWithAdminUser` mutation
