@@ -336,32 +336,14 @@ const Organizations = {
     }: any
   ) => {
     try {
-      const organizationFilters: string[] = []
-      const fromSession = false
-
-      const response =
+      const { data: { getOrganizationsPaginatedByEmail } } =
         await storefrontPermissions.getOrganizationsPaginatedByEmail(
           email,
           page,
           pageSize
         )
 
-      const {
-        data: rawOrganizations = [],
-        pagination,
-      } = response?.data?.getOrganizationsPaginatedByEmail || {}
-
-      const organizations =
-        organizationFilters.length > 0
-          ? rawOrganizations.filter(({ orgId }: { orgId: string }) =>
-              organizationFilters.includes(orgId) || fromSession
-            )
-          : rawOrganizations
-
-      return {
-        data: organizations,
-        pagination,
-      }
+      return getOrganizationsPaginatedByEmail;
     } catch (error) {
       logger.error({
         error,
