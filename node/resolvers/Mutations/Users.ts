@@ -378,12 +378,15 @@ const Users = {
       vtex: { logger },
     } = ctx as any
 
-    storefrontPermissionsClient
+    return storefrontPermissionsClient
       .getUsersByEmail(email, orgId, costId)
       .then((result: any) => {
         const user = result.data.getUsersByEmail[0]
 
-        if (!user) return
+        if (!user) {
+          logger.error({ message: 'User not found' })
+          return { status: 'error', message: 'User not found' }
+        }
 
         const { id } = user
         const { userId } = user
