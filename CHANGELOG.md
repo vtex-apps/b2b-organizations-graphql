@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.63.4] - 2025-02-21
+
 ### Fixed
 
 - Bug fix on `withPermissions` directive to allow the use of the `sender` directive
