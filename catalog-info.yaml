@@ -4,6 +4,7 @@ metadata:
   name: b2b-organizations-graphql
   annotations:
     github.com/project-slug: vtex-apps/b2b-organizations-graphql
+    vtex.com/application-id: 5GZ9FKXZ
 spec:
   system: b2b-suite
   type: backend-api
