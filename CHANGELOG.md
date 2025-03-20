@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Add `notes` when updating organization request document
 
+## [0.63.4] - 2025-02-21
+
+### Fixed
+
+- Bug fix on `withPermissions` directive to allow the use of the `sender` directive
+
+## [0.63.3] - 2025-01-28
+### Fixed
+- Fix return from `removeUserWithEmail`
+
 ## [0.63.2] - 2024-12-19
 ### Fixed
 - Fix `saveB2BSettings` mutation when `uiSettings` is absent
