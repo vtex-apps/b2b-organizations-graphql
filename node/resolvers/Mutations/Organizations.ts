@@ -812,7 +812,7 @@ const Organizations = {
 
           await masterdata.updatePartialDocument({
             dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
-            fields: { status },
+            fields: { status, notes },
             id,
           })
 
