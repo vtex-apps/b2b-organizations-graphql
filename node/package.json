@@ -1,6 +1,6 @@
 {
   "name": "vtex.b2b-organizations",
-  "version": "0.63.4",
+  "version": "0.64.0",
   "dependencies": {
     "@types/lodash": "4.14.74",
     "@vtex/api": "6.48.0",
