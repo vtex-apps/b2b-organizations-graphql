@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- Fixed token validation directives
+
 ## [0.65.0] - 2025-04-11
 
 ## [0.64.0] - 2025-03-21
