@@ -40,7 +40,7 @@ const getUserAndPermissions = async (ctx: Context) => {
   if (sessionData?.namespaces) {
     const checkUserPermissionResult = await storefrontPermissions
       // It is necessary to send the app name, because the check user return the permissions relative to orders-history to access the page.
-      .checkUserPermission('vtex.b2b-orders-history@0.x')
+      .checkUserPermission('vtex.b2b-orders-history@1.x')
       .catch((error: any) => {
         logger.error({
           message: 'checkUserPermission-error',
