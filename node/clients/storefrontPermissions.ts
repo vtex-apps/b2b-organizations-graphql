@@ -19,7 +19,7 @@ import listUsersPaginated from '../queries/listUsersPaginated'
 
 export default class StorefrontPermissions extends AppGraphQLClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
-    super('vtex.storefront-permissions@1.x', ctx, options)
+    super('vtex.storefront-permissions@2.x', ctx, options)
   }
 
   public checkUserPermission = async (app?: string): Promise<any> => {
@@ -337,11 +337,11 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }
 
   private getPersistedQuery = (
-    sender = 'vtex.b2b-organizations-graphql@0.x'
+    sender = 'vtex.b2b-organizations-graphql@1.x'
   ) => {
     return {
       persistedQuery: {
-        provider: 'vtex.storefront-permissions@1.x',
+        provider: 'vtex.storefront-permissions@2.x',
         sender,
       },
     }
