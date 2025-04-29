@@ -63,7 +63,7 @@ const getCheckUserPermission = async ({
   const {
     data: { checkUserPermission },
   }: any = await storefrontPermissions
-    .checkUserPermission('vtex.b2b-organizations@1.x')
+    .checkUserPermission('vtex.b2b-organizations@2.x')
     .catch((error: any) => {
       logger.error({
         error,
