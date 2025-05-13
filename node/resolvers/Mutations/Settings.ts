@@ -105,9 +105,9 @@ const Settings = {
           currentB2BSettings?.transactionEmailSettings,
         uiSettings: {
           showModal:
-            uiSettings?.showModal ?? currentB2BSettings?.uiSettings.showModal,
+            uiSettings?.showModal ?? currentB2BSettings?.uiSettings?.showModal,
           clearCart:
-            uiSettings?.clearCart ?? currentB2BSettings?.uiSettings.clearCart,
+            uiSettings?.clearCart ?? currentB2BSettings?.uiSettings?.clearCart,
           topBar: uiSettings?.topBar ?? currentB2BSettings?.uiSettings?.topBar,
         },
       }
