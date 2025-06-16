@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- Invalidate admin token if an invalid token is provided
+
 ## [1.0.1] - 2025-05-27
 
 ### Fixed
