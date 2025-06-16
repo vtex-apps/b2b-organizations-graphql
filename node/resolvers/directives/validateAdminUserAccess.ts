@@ -81,6 +81,9 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
 
       // allow access if has valid admin token
       if (hasValidAdminTokenOnHeader) {
+        // set adminUserAuthToken on context so it can be used later
+        context.vtex.adminUserAuthToken = context?.headers
+          .vtexidclientautcookie as string
         sendAuthMetric(
           context,
           logger,

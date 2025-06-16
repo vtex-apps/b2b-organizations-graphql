@@ -82,6 +82,9 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
 
       // allow access if has valid admin token
       if (hasValidAdminTokenOnHeader) {
+        // set adminUserAuthToken on context so it can be used later
+        context.vtex.adminUserAuthToken = context?.headers
+          .vtexidclientautcookie as string
         sendAuthMetric(
           context,
           logger,
@@ -94,6 +97,10 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
 
         return resolve(root, args, context, info)
       }
+
+      // If there's no valid admin token on context or header,
+      // invalidate the adminUserAuthToken on context
+      context.vtex.adminUserAuthToken = undefined
 
       const { hasApiToken, hasValidApiToken } = await validateApiToken(context)
 
