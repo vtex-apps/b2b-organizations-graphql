@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- Changed getOrganizationRequestById and getCostCenters cache control to private, allowing auth cookies to be sent
+
 ## [1.0.2] - 2025-06-16
 
 ### Fixed
