@@ -13,7 +13,7 @@ type Query {
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @validateAdminUserAccess
   getOrganizationRequestById(id: ID!): OrganizationRequest
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @validateAdminUserAccess
   getOrganizations(
     status: [String]
@@ -44,7 +44,7 @@ type Query {
     sortOrder: String = "ASC"
     sortedBy: String = "name"
   ): CostCenterResult
-    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
     @validateStoreUserAccess
   getCostCentersByOrganizationId(
     id: ID
