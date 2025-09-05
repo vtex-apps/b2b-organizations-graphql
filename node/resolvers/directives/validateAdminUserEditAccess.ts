@@ -10,8 +10,9 @@ import {
   validateAdminTokenOnHeader,
   validateApiToken,
 } from './helper'
+import { LICENSE_MANAGER_ROLES } from '../../constants'
 
-export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
+export class ValidateAdminUserEditAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
     const { resolve = defaultFieldResolver } = field
 
@@ -43,7 +44,8 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
 
       const { hasAdminToken, hasValidAdminToken, hasValidAdminRole } = await validateAdminToken(
         context,
-        adminUserAuthToken as string
+        adminUserAuthToken as string,
+        LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_EDIT
       )
 
       // add admin token metrics
@@ -62,7 +64,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
           new AuthMetric(
             context?.vtex?.account,
             metricFields,
-            'ValidateAdminUserAccessAudit'
+            'ValidateAdminUserEditAccessAudit'
           )
         )
 
@@ -71,7 +73,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
 
       // If there's no valid admin token on context, search for it on header
       const { hasAdminTokenOnHeader, hasValidAdminTokenOnHeader, hasValidAdminRoleOnHeader } =
-        await validateAdminTokenOnHeader(context)
+        await validateAdminTokenOnHeader(context, LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_EDIT)
 
       // add admin header token metrics
       metricFields = {
@@ -92,14 +94,17 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
           new AuthMetric(
             context?.vtex?.account,
             metricFields,
-            'ValidateAdminUserAccessAudit'
+            'ValidateAdminUserEditAccessAudit'
           )
         )
 
         return resolve(root, args, context, info)
       }
 
-      const { hasApiToken, hasValidApiToken, hasValidApiRole } = await validateApiToken(context)
+      const { hasApiToken, hasValidApiToken, hasValidApiRole } = await validateApiToken(
+        context,
+        LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_EDIT
+      )
 
       // add API token metrics
       metricFields = {
@@ -117,7 +122,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
           new AuthMetric(
             context?.vtex?.account,
             metricFields,
-            'ValidateAdminUserAccessAudit'
+            'ValidateAdminUserEditAccessAudit'
           )
         )
 
@@ -127,7 +132,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
       // deny access if no tokens were provided
       if (!hasAdminToken && !hasAdminTokenOnHeader && !hasApiToken) {
         logger.warn({
-          message: 'ValidateAdminUserAccess: No token provided',
+          message: 'ValidateAdminUserEditAccess: No token provided',
           ...metricFields,
         })
         throw new AuthenticationError('No token was provided')
@@ -135,10 +140,10 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
 
       // deny access if no valid tokens were provided or no valid role
       logger.warn({
-        message: 'ValidateAdminUserAccess: Invalid token or insufficient role permissions',
+        message: 'ValidateAdminUserEditAccess: Invalid token or insufficient role permissions',
         ...metricFields,
       })
-      throw new ForbiddenError('Unauthorized Access - License Manager role required')
+      throw new ForbiddenError('Unauthorized Access - License Manager edit role required')
     }
   }
 }
