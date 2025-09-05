@@ -42,7 +42,13 @@ export const validateAdminToken = async (
         userRoles = await lm.getUserRolePermissions(
           account,
           authUser.id
-        )
+        ).then((res: any) => {
+          logger.info({
+            message: 'userRoles',
+            res,
+          })
+          return res
+        })
 
         hasValidAdminRole = userRoles.filter( (role : any) => role.resourceKey == LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW).length ? true : false;
       }
