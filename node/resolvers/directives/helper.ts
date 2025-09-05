@@ -1,5 +1,5 @@
 import { isUserPartOfBuyerOrg } from '../Queries/Users'
-import { LICENSE_MANAGER_ROLES } from '../../constants'
+import { LICENSE_MANAGER_ROLES, B2B_LM_PRODUCT_CODE } from '../../constants'
 
 export const validateAdminToken = async (
   context: Context,
@@ -39,18 +39,25 @@ export const validateAdminToken = async (
           account,
           authUser.id
         )
-        userRoles = await lm.getUserRolePermissions(
-          account,
-          authUser.id
-        ).then((res: any) => {
-          logger.info({
-            message: 'userRoles',
-            res,
-          })
-          return res
-        })
+        // Check for specific role using the new endpoint
+        try {
+          const roleCheckResponse = await lm.checkUserSpecificRole(
+            account,
+            authUser.id,
+            B2B_LM_PRODUCT_CODE,
+            LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
+          )
+          
+          hasValidAdminRole = !!roleCheckResponse
+        } catch (roleCheckError) {
+          // Fallback to old method if new one fails
+          userRoles = await lm.getUserRolePermissions(
+            account,
+            authUser.id
+          )
 
-        hasValidAdminRole = userRoles.filter( (role : any) => role.resourceKey == LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW).length ? true : false;
+          hasValidAdminRole = userRoles.filter( (role : any) => role.resourceKey == LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW).length ? true : false;
+        }
       }
     } catch (err) {
       // noop so we leave hasValidAdminToken as false
@@ -111,12 +118,25 @@ export const validateApiToken = async (
           account,
           authUser.id
         )
-        userRoles = await lm.getUserRolePermissions(
-          account,
-          authUser.id
-        )
+        // Check for specific role using the new endpoint
+        try {
+          const roleCheckResponse = await lm.checkUserSpecificRole(
+            account,
+            authUser.id,
+            B2B_LM_PRODUCT_CODE,
+            LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
+          )
+          
+          hasValidApiRole = !!roleCheckResponse
+        } catch (roleCheckError) {
+          // Fallback to old method if new one fails
+          userRoles = await lm.getUserRolePermissions(
+            account,
+            authUser.id
+          )
 
-        hasValidApiRole = userRoles.filter( (role : any) => role.resourceKey == LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW).length ? true : false;
+          hasValidApiRole = userRoles.filter( (role : any) => role.resourceKey == LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW).length ? true : false;
+        }
       }
     } catch (err) {
       // noop so we leave hasValidApiToken as false
