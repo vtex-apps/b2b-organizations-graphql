@@ -42,7 +42,7 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
         userAgent,
       }
 
-      const { hasAdminToken, hasValidAdminToken } = await validateAdminToken(
+      const { hasAdminToken, hasValidAdminToken, hasValidAdminRole } = await validateAdminToken(
         context,
         adminUserAuthToken as string
       )
@@ -52,10 +52,11 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
         ...metricFields,
         hasAdminToken,
         hasValidAdminToken,
+        hasValidAdminRole,
       }
 
-      // allow access if has valid admin token
-      if (hasValidAdminToken) {
+      // allow access if has valid admin token and valid admin role
+      if (hasValidAdminToken && hasValidAdminRole) {
         sendAuthMetric(
           context,
           logger,
@@ -70,7 +71,7 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       }
 
       // If there's no valid admin token on context, search for it on header
-      const { hasAdminTokenOnHeader, hasValidAdminTokenOnHeader } =
+      const { hasAdminTokenOnHeader, hasValidAdminTokenOnHeader, hasValidAdminRoleOnHeader } =
         await validateAdminTokenOnHeader(context)
 
       // add admin header token metrics
@@ -78,10 +79,11 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
         ...metricFields,
         hasAdminTokenOnHeader,
         hasValidAdminTokenOnHeader,
+        hasValidAdminRoleOnHeader,
       }
 
-      // allow access if has valid admin token
-      if (hasValidAdminTokenOnHeader) {
+      // allow access if has valid admin token and valid admin role
+      if (hasValidAdminTokenOnHeader && hasValidAdminRoleOnHeader) {
         // set adminUserAuthToken on context so it can be used later
         context.vtex.adminUserAuthToken = context?.headers
           .vtexidclientautcookie as string
@@ -102,17 +104,18 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       // invalidate the adminUserAuthToken on context
       context.vtex.adminUserAuthToken = undefined
 
-      const { hasApiToken, hasValidApiToken } = await validateApiToken(context)
+      const { hasApiToken, hasValidApiToken, hasValidApiRole } = await validateApiToken(context)
 
       // add API token metrics
       metricFields = {
         ...metricFields,
         hasApiToken,
         hasValidApiToken,
+        hasValidApiRole,
       }
 
-      // allow access if has valid API token
-      if (hasValidApiToken) {
+      // allow access if has valid API token and valid API role
+      if (hasValidApiToken && hasValidApiRole) {
         sendAuthMetric(
           context,
           logger,
@@ -162,12 +165,12 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
         throw new AuthenticationError('No token was provided')
       }
 
-      // deny access if no valid tokens were provided
+      // deny access if no valid tokens were provided or no valid role
       logger.warn({
-        message: `ValidateStoreUserAccess: Invalid token`,
+        message: `ValidateStoreUserAccess: Invalid token or insufficient role permissions`,
         ...metricFields,
       })
-      throw new ForbiddenError('Unauthorized Access')
+      throw new ForbiddenError('Unauthorized Access - License Manager role required for admin access')
     }
   }
 }

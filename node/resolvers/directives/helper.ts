@@ -1,4 +1,5 @@
 import { isUserPartOfBuyerOrg } from '../Queries/Users'
+import { LICENSE_MANAGER_ROLES } from '../../constants'
 
 export const validateAdminToken = async (
   context: Context,
@@ -7,6 +8,7 @@ export const validateAdminToken = async (
   hasAdminToken: boolean
   hasValidAdminToken: boolean
   hasCurrentValidAdminToken: boolean
+  hasValidAdminRole: boolean
 }> => {
   const {
     clients: { identity, lm },
@@ -18,6 +20,9 @@ export const validateAdminToken = async (
   let hasValidAdminToken = false
   // this is used to check if the token is valid by current standards
   let hasCurrentValidAdminToken = false
+  let hasValidAdminRole = false
+  let userRoles=[]
+  
 
   if (hasAdminToken) {
     try {
@@ -34,6 +39,12 @@ export const validateAdminToken = async (
           account,
           authUser.id
         )
+        userRoles = await lm.getUserRolePermissions(
+          account,
+          authUser.id
+        )
+
+        hasValidAdminRole = userRoles.filter( (role : any) => role.resourceKey == LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW).length ? true : false;
       }
     } catch (err) {
       // noop so we leave hasValidAdminToken as false
@@ -44,7 +55,7 @@ export const validateAdminToken = async (
     }
   }
 
-  return { hasAdminToken, hasValidAdminToken, hasCurrentValidAdminToken }
+  return { hasAdminToken, hasValidAdminToken, hasCurrentValidAdminToken, hasValidAdminRole }
 }
 
 export const validateApiToken = async (
@@ -53,6 +64,7 @@ export const validateApiToken = async (
   hasApiToken: boolean
   hasValidApiToken: boolean
   hasCurrentValidApiToken: boolean
+  hasValidApiRole: boolean
 }> => {
   const {
     clients: { identity, lm },
@@ -67,6 +79,8 @@ export const validateApiToken = async (
 
   // this is used to check if the token is valid by current standards
   let hasCurrentValidApiToken = false
+  let hasValidApiRole = false
+  let userRoles = []
 
   if (hasApiToken) {
     try {
@@ -91,6 +105,12 @@ export const validateApiToken = async (
           account,
           authUser.id
         )
+        userRoles = await lm.getUserRolePermissions(
+          account,
+          authUser.id
+        )
+
+        hasValidApiRole = userRoles.filter( (role : any) => role.resourceKey == LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW).length ? true : false;
       }
     } catch (err) {
       // noop so we leave hasValidApiToken as false
@@ -101,7 +121,7 @@ export const validateApiToken = async (
     }
   }
 
-  return { hasApiToken, hasValidApiToken, hasCurrentValidApiToken }
+  return { hasApiToken, hasValidApiToken, hasCurrentValidApiToken, hasValidApiRole }
 }
 
 export const validateStoreToken = async (
@@ -174,6 +194,7 @@ export const validateAdminTokenOnHeader = async (
   hasAdminTokenOnHeader: boolean
   hasValidAdminTokenOnHeader: boolean
   hasCurrentValidAdminTokenOnHeader: boolean
+  hasValidAdminRoleOnHeader: boolean
 }> => {
   const adminUserAuthToken = context?.headers.vtexidclientautcookie as string
   const hasAdminTokenOnHeader = !!adminUserAuthToken?.length
@@ -183,15 +204,17 @@ export const validateAdminTokenOnHeader = async (
       hasAdminTokenOnHeader: false,
       hasValidAdminTokenOnHeader: false,
       hasCurrentValidAdminTokenOnHeader: false,
+      hasValidAdminRoleOnHeader: false,
     }
   }
 
-  const { hasAdminToken, hasCurrentValidAdminToken, hasValidAdminToken } =
+  const { hasAdminToken, hasCurrentValidAdminToken, hasValidAdminToken, hasValidAdminRole } =
     await validateAdminToken(context, adminUserAuthToken)
 
   return {
     hasAdminTokenOnHeader: hasAdminToken,
     hasValidAdminTokenOnHeader: hasValidAdminToken,
     hasCurrentValidAdminTokenOnHeader: hasCurrentValidAdminToken,
+    hasValidAdminRoleOnHeader: hasValidAdminRole,
   }
 }
