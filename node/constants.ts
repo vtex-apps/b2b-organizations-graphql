@@ -34,6 +34,7 @@ export const enum MessageSFPUserAddError {
 
 export const LICENSE_MANAGER_ROLES = {
   B2B_ORGANIZATIONS_VIEW: 'buyer_organization_view',
+  B2B_ORGANIZATIONS_EDIT: 'buyer_organization_edit',
 } as const
 
 export const B2B_LM_PRODUCT_CODE = 97

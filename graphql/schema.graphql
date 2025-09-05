@@ -155,17 +155,17 @@ type Mutation {
     status: String!
     notes: String
     notifyUsers: Boolean
-  ): MutationResponse @validateAdminUserAccess
-  deleteOrganizationRequest(id: ID!): MutationResponse @validateAdminUserAccess
+  ): MutationResponse @validateAdminUserEditAccess
+  deleteOrganizationRequest(id: ID!): MutationResponse @validateAdminUserEditAccess
   createOrganization(
     input: OrganizationInput!
     notifyUsers: Boolean
   ): OrganizationCostCenterResponse
-    @validateAdminUserAccess
+    @validateAdminUserEditAccess
     @cacheControl(scope: PRIVATE)
   createOrganizationAndCostCentersWithId(
     input: NormalizedOrganizationInput!
-  ): MasterDataResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
+  ): MasterDataResponse @validateAdminUserEditAccess @cacheControl(scope: PRIVATE)
   createCostCenter(
     organizationId: ID
     input: CostCenterInput!
@@ -177,7 +177,7 @@ type Mutation {
   createCostCenterWithId(
     organizationId: ID
     input: CostCenterInput!
-  ): MasterDataResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
+  ): MasterDataResponse @validateAdminUserEditAccess @cacheControl(scope: PRIVATE)
   updateOrganization(
     id: ID!
     name: String!
@@ -191,7 +191,7 @@ type Mutation {
     sellers: [SellerInput]
     permissions: PermissionsInput
     notifyUsers: Boolean
-  ): MutationResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
+  ): MutationResponse @validateAdminUserEditAccess @cacheControl(scope: PRIVATE)
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
     @withPermissions
@@ -214,7 +214,7 @@ type Mutation {
     @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   deleteOrganization(id: ID!): MutationResponse
-    @validateAdminUserAccess
+    @validateAdminUserEditAccess
     @cacheControl(scope: PRIVATE)
   deleteCostCenter(id: ID!): MutationResponse
     @withSession
@@ -276,12 +276,12 @@ type Mutation {
     name: String!
     email: String!
     canImpersonate: Boolean = false
-  ): MutationResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
+  ): MutationResponse @validateAdminUserEditAccess @cacheControl(scope: PRIVATE)
   removeUserWithEmail(
     orgId: ID!
     costId: ID!
     email: String!
-  ): MutationResponse @validateAdminUserAccess @cacheControl(scope: PRIVATE)
+  ): MutationResponse @validateAdminUserEditAccess @cacheControl(scope: PRIVATE)
   updateUser(
     id: ID
     roleId: ID!
@@ -314,11 +314,11 @@ type Mutation {
     @cacheControl(scope: PRIVATE)
     @auditAccess
   saveSalesChannels(channels: [SalesChannelsInput]!): MutationResponse
-    @validateAdminUserAccess
+    @validateAdminUserEditAccess
     @cacheControl(scope: PRIVATE)
 
   setMarketingTags(costId: ID!, tags: [String]!): MutationResponse
-    @validateAdminUserAccess
+    @validateAdminUserEditAccess
     @withSession
     @withPermissions
     @cacheControl(scope: PRIVATE)
@@ -326,7 +326,7 @@ type Mutation {
   saveB2BSettings(input: B2BSettingsInput): MutationResponse
     @withSession
     @withPermissions
-    @validateAdminUserAccess
+    @validateAdminUserEditAccess
 }
 
 type SettingsResponse {

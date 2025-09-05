@@ -3,7 +3,8 @@ import { LICENSE_MANAGER_ROLES, B2B_LM_PRODUCT_CODE } from '../../constants'
 
 export const validateAdminToken = async (
   context: Context,
-  adminUserAuthToken: string
+  adminUserAuthToken: string,
+  requiredRole: string = LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
 ): Promise<{
   hasAdminToken: boolean
   hasValidAdminToken: boolean
@@ -43,7 +44,7 @@ export const validateAdminToken = async (
           account,
           authUser.id,
           B2B_LM_PRODUCT_CODE,
-          LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
+          requiredRole
         )
         
         hasValidAdminRole = !!roleCheckResponse
@@ -61,7 +62,8 @@ export const validateAdminToken = async (
 }
 
 export const validateApiToken = async (
-  context: Context
+  context: Context,
+  requiredRole: string = LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
 ): Promise<{
   hasApiToken: boolean
   hasValidApiToken: boolean
@@ -111,7 +113,7 @@ export const validateApiToken = async (
           account,
           authUser.id,
           B2B_LM_PRODUCT_CODE,
-          LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
+          requiredRole
         )
         
         hasValidApiRole = !!roleCheckResponse
@@ -193,7 +195,8 @@ export const validateStoreToken = async (
 }
 
 export const validateAdminTokenOnHeader = async (
-  context: Context
+  context: Context,
+  requiredRole: string = LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
 ): Promise<{
   hasAdminTokenOnHeader: boolean
   hasValidAdminTokenOnHeader: boolean
@@ -213,7 +216,7 @@ export const validateAdminTokenOnHeader = async (
   }
 
   const { hasAdminToken, hasCurrentValidAdminToken, hasValidAdminToken, hasValidAdminRole } =
-    await validateAdminToken(context, adminUserAuthToken)
+    await validateAdminToken(context, adminUserAuthToken, requiredRole)
 
   return {
     hasAdminTokenOnHeader: hasAdminToken,
