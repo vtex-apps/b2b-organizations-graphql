@@ -318,7 +318,7 @@ const Index = {
 
     const requestCancellationResponse = await checkout.requestCancellation(
       orderId as string,
-      reason as string
+      reason
     )
 
     ctx.set('Content-Type', 'application/json')
