@@ -6,10 +6,10 @@ export default class Checkout extends JanusClient {
     super(ctx, { ...options })
   }
 
-  public async requestCancellation(orderId: string) {
+  public async requestCancellation(orderId: string, reason: string) {
     return this.http.postRaw(
       `${this.routes.requestCancellation(orderId)}`,
-      {},
+      { reason },
       {
         headers: {
           VtexIdclientAutCookie: this.context.authToken,
