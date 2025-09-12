@@ -7,12 +7,30 @@ const MarketingTags = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase },
-      vtex: { logger },
+      clients: { vbase, audit, licenseManager },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx
 
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
+
     try {
-      return await vbase.getJSON(MARKETING_TAGS.VBASE_BUCKET, costId)
+      const result = await vbase.getJSON(MARKETING_TAGS.VBASE_BUCKET, costId)
+
+      await audit.sendEvent({
+        subjectId: 'get-marketing-tags-event',
+        operation: 'GET_MARKETING_TAGS',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'GetMarketingTags',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({ costId }),
+          entityAfterAction: JSON.stringify({}),
+        },
+      }, { })
+
+      return result
     } catch (error) {
       const { data } = error.response as any
 

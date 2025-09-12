@@ -171,25 +171,28 @@ const sleep = (ms: number) => {
 const Users = {
   getAppSettings: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { masterdata, vbase },
-      vtex: { logger },
+      clients: { masterdata, vbase, audit, licenseManager },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx
 
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
+
     const app: string = getAppId()
-    const settings: any = await vbase.getJSON('b2borg', app).catch((error) => {
-      logger.error({
-        error,
-        message: 'b2borg.getAppSettings-Error',
+    try {
+      const settings: any = await vbase.getJSON('b2borg', app).catch((error) => {
+        logger.error({
+          error,
+          message: 'b2borg.getAppSettings-Error',
+        })
+        return {}
       })
 
-      return {}
-    })
+      if (!settings.adminSetup) {
+        settings.adminSetup = {}
+      }
 
-    if (!settings.adminSetup) {
-      settings.adminSetup = {}
-    }
-
-    const currHash = toHash(schemas)
+      const currHash = toHash(schemas)
 
     if (
       !settings.adminSetup?.schemaHash ||
@@ -229,7 +232,27 @@ const Users = {
       await vbase.saveJSON('b2borg', app, settings)
     }
 
-    return settings
+      // Auditoría del acceso a getAppSettings
+      await audit.sendEvent({
+        subjectId: 'get-app-settings-event',
+        operation: 'GET_APP_SETTINGS',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'GetAppSettings',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify(settings.adminSetup),
+          entityAfterAction: JSON.stringify({}),
+        },
+      }, {})
+
+      return settings
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'b2borg.getAppSettings-Error',
+      })
+      throw error
+    }
   },
 
   getOrganizationsWithoutSalesManager: async (
@@ -238,9 +261,13 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, session, masterdata },
+      clients: { storefrontPermissions, session, masterdata, audit, licenseManager },
       vtex: { adminUserAuthToken, logger, sessionToken },
+      ip
     } = ctx
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const sessionData = await session
       .getSession(sessionToken as string, ['*'])
@@ -252,7 +279,6 @@ const Users = {
           error,
           message: 'getOrganizationsWithoutSalesManager-session-error',
         })
-
         return null
       })
 
@@ -319,6 +345,26 @@ const Users = {
 
     try {
       await scrollMasterData()
+
+      const filteredOrganizations = organizations.filter((organization) => {
+        return !users
+          .filter((user: any) => user.role === 'sales-manager')
+          .find((user: any) => user.orgId === organization.id)
+      })
+
+      await audit.sendEvent({
+        subjectId: 'get-organizations-without-sales-manager-event',
+        operation: 'GET_ORGANIZATIONS_WITHOUT_SALES_MANAGER',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'GetOrganizationsWithoutSalesManager',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({ scrollSize: SCROLL_SIZE }),
+          entityAfterAction: JSON.stringify({}),
+        },
+      }, {})
+
+      return filteredOrganizations
     } catch (error) {
       logger.error({
         error,
@@ -326,12 +372,6 @@ const Users = {
       })
       throw new GraphQLError(getErrorMessage(error))
     }
-
-    return organizations.filter((organization) => {
-      return !users
-        .filter((user: any) => user.role === 'sales-manager')
-        .find((user: any) => user.orgId === organization.id)
-    })
   },
 
   getUsers: async (
@@ -343,9 +383,10 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions },
+      clients: { storefrontPermissions, audit, licenseManager },
       vtex: { adminUserAuthToken, logger },
       vtex,
+      ip
     } = ctx
 
     if (!adminUserAuthToken) {
@@ -361,6 +402,8 @@ const Users = {
       organizationId = orgId
     }
 
+      const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
+
     const variables = {
       ...(organizationId && { organizationId }),
       ...(costCenterId && { costCenterId }),
@@ -368,10 +411,24 @@ const Users = {
 
     return storefrontPermissions
       .listUsers(variables)
-      .then((result: any) => {
-        return result.data.listUsers
+      .then(async (result: any) => {
+      const returnValue = result.data.listUsers
+
+        await audit.sendEvent({
+          subjectId: 'get-users-event',
+          operation: 'GET_USERS',
+          authorId: profile.id || '',
+          meta: {
+            entityName: 'GetUsers',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify({ organizationId, costCenterId }),
+            entityAfterAction: JSON.stringify({}),
+          },
+        }, {})
+
+      return returnValue
       })
-      .catch((error) => {
+      .catch(async (error) => {
         logger.error({
           error,
           message: 'getUsers-getUsers-error',
@@ -403,8 +460,9 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions },
+      clients: { storefrontPermissions, audit, licenseManager },
       vtex: { adminUserAuthToken, logger },
+      ip,
       vtex,
     } = ctx
 
@@ -421,6 +479,8 @@ const Users = {
       organizationId = orgId
     }
 
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
+
     const variables = {
       ...(organizationId && { organizationId }),
       ...(costCenterId && { costCenterId }),
@@ -433,10 +493,24 @@ const Users = {
 
     return storefrontPermissions
       .listUsersPaginated(variables)
-      .then((result: any) => {
-        return result.data.listUsersPaginated
+      .then(async (result: any) => {
+        const returnValue = result.data.listUsersPaginated
+
+        await audit.sendEvent({
+          subjectId: 'get-users-paginated-event',
+          operation: 'GET_USERS_PAGINATED',
+          authorId: profile.id || '',
+          meta: {
+            entityName: 'GetUsersPaginated',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify({ organizationId, costCenterId, search, page, pageSize, sortOrder, sortedBy }),
+            entityAfterAction: JSON.stringify({}),
+          },
+        }, {})
+
+      return returnValue
       })
-      .catch((error) => {
+      .catch(async (error) => {
         logger.error({
           error,
           message: 'getUsers-error',
@@ -446,14 +520,49 @@ const Users = {
   },
 
   getSalesChannels: async (_: void, __: void, ctx: Context) => {
-    return getChannels(ctx)
+    const {
+      clients: { audit, licenseManager },
+      vtex: { logger, adminUserAuthToken },
+      ip
+    } = ctx
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
+
+    try {
+      const result = await getChannels(ctx)
+
+      await audit.sendEvent({
+        subjectId: 'get-sales-channels-event',
+        operation: 'GET_SALES_CHANNELS',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'GetSalesChannels',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      }, {})
+
+      return result
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getSalesChannels-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
+    }
   },
 
   getBinding: async (_: void, { email }: { email: string }, ctx: Context) => {
     const {
-      clients: { catalog },
-      vtex: { logger },
+      clients: { catalog, audit, licenseManager },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     let access = false
     let availableSalesChannels: any = {}
@@ -500,6 +609,18 @@ const Users = {
         message: 'getBinding-Error',
       })
     }
+
+    await audit.sendEvent({
+      subjectId: 'get-binding-event',
+      operation: 'GET_BINDING',
+      authorId: profile.id || '',
+      meta: {
+        entityName: 'GetBinding',
+        remoteIpAddress: ip,
+        entityBeforeAction: JSON.stringify({ email }),
+        entityAfterAction: JSON.stringify({}),
+      },
+    }, {})
 
     return access
   },

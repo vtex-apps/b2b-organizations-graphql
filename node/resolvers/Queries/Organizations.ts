@@ -38,9 +38,12 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { session },
+      clients: { session, audit, licenseManager },
       vtex: { logger, sessionToken, adminUserAuthToken },
+      ip
     } = ctx
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const sessionData = await session
       .getSession(sessionToken as string, ['*'])
@@ -77,6 +80,18 @@ const Organizations = {
       throw new Error('Organization not found')
     }
 
+    await audit.sendEvent({
+      subjectId: 'check-organization-is-active-event',
+      operation: 'CHECK_ORGANIZATION_IS_ACTIVE',
+      authorId: profile.id || '',
+      meta: {
+        entityName: 'CheckOrganizationIsActive',
+        remoteIpAddress: ip,
+        entityBeforeAction: JSON.stringify({ orgId }),
+        entityAfterAction: JSON.stringify({}),
+      },
+    }, { })
+
     return organization?.status === 'active'
   },
 
@@ -86,9 +101,12 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
-      vtex: { logger },
+      clients: { masterdata, audit, licenseManager },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
@@ -99,6 +117,18 @@ const Organizations = {
         fields: ORGANIZATION_FIELDS,
         id,
       })
+
+      await audit.sendEvent({
+        subjectId: 'get-organization-by-id-event',
+        operation: 'GET_ORGANIZATION_BY_ID',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'GetOrganizationById',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({ id }),
+          entityAfterAction: JSON.stringify({}),
+        },
+      }, { })
 
       return {
         ...org,
@@ -132,9 +162,14 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
-      vtex: { logger },
+      clients: { masterdata, audit, licenseManager },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx
+
+
+
+      const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
@@ -170,6 +205,18 @@ const Organizations = {
         }
       })
 
+      await audit.sendEvent({
+        subjectId: 'get-organizations-event',
+        operation: 'GET_ORGANIZATIONS',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'GetOrganizations',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({ status, search, page, pageSize, sortOrder, sortedBy}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      }, { })
+
       return {
         data: mappedOrganizations,
         pagination: organizationsDB.pagination,
@@ -189,9 +236,13 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, session },
+      clients: { storefrontPermissions, session, audit, licenseManager },
       vtex: { logger, sessionToken, adminUserAuthToken },
+      ip
     } = ctx
+
+  
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const organizationFilters: string[] = []
     let fromSession = false
@@ -266,7 +317,21 @@ const Organizations = {
     })
 
     try {
-      return organizations
+      const result = organizations
+
+      await audit.sendEvent({
+        subjectId: 'get-organizations-by-email-event',
+        operation: 'GET_ORGANIZATIONS_BY_EMAIL',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'GetOrganizationsByEmail',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({ email }),
+          entityAfterAction: JSON.stringify({}),
+        },
+      }, { })
+
+      return result
     } catch (error) {
       logger.error({
         error,
@@ -282,8 +347,13 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      vtex: { logger },
+      clients: { audit, licenseManager },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const organizations = await Organizations.getOrganizationsByEmail(
       _,
@@ -309,7 +379,21 @@ const Organizations = {
     )
 
     try {
-      return activeOrganizations
+      const result = activeOrganizations
+
+      await audit.sendEvent({
+        subjectId: 'get-active-organizations-by-email-event',
+        operation: 'GET_ACTIVE_ORGANIZATIONS_BY_EMAIL',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'GetActiveOrganizationsByEmail',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({ email }),
+          entityAfterAction: JSON.stringify({}),
+        },
+      }, { })
+
+      return result
     } catch (error) {
       logger.error({
         error,
@@ -325,12 +409,17 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
-      vtex: { sessionData, logger },
+      clients: { masterdata, audit, licenseManager },
+      vtex: { sessionData, logger, adminUserAuthToken },
+      ip
     } = ctx as any
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
+
 
     if (!sessionData?.namespaces['storefront-permissions']) {
       throw new GraphQLError('organization-data-not-found')
@@ -364,10 +453,24 @@ const Organizations = {
     }
 
     try {
-      return {
+      const result = {
         ...organization,
         permissions: organization.permissions ?? { createQuote: true },
       }
+
+      await audit.sendEvent({
+        subjectId: 'get-organization-by-id-storefront-event',
+        operation: 'GET_ORGANIZATION_BY_ID_STOREFRONT',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'GetOrganizationByIdStorefront',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({ id }),
+          entityAfterAction: JSON.stringify({}),
+        },
+      }, { })
+
+      return result
     } catch (error) {
       logger.error({
         error,
@@ -383,19 +486,37 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
-      vtex: { logger },
+      clients: { masterdata, audit, licenseManager },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx
+
+
+     const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
     try {
-      return await masterdata.getDocument({
+      const result = await masterdata.getDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         fields: ORGANIZATION_REQUEST_FIELDS,
         id,
       })
+
+      await audit.sendEvent({
+        subjectId: 'get-organization-request-by-id-event',
+        operation: 'GET_ORGANIZATION_REQUEST_BY_ID',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'GetOrganizationRequestById',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({id}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      }, { })
+
+      return result
     } catch (error) {
       logger.error({
         error,
@@ -425,9 +546,12 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
-      vtex: { logger },
+      clients: { masterdata, audit, licenseManager },
+      vtex: { logger, adminUserAuthToken},
+      ip
     } = ctx
+
+     const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
@@ -444,7 +568,7 @@ const Organizations = {
     const where = whereArray.join(' AND ')
 
     try {
-      return await masterdata.searchDocumentsWithPaginationInfo({
+      const result = await masterdata.searchDocumentsWithPaginationInfo({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         fields: ORGANIZATION_REQUEST_FIELDS,
         pagination: { page, pageSize },
@@ -452,6 +576,27 @@ const Organizations = {
         sort: `${sortedBy} ${sortOrder}`,
         ...(where && { where }),
       })
+
+      await audit.sendEvent({
+        subjectId: 'get-organization-requests-event',
+        operation: 'GET_ORGANIZATION_REQUESTS',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'GetOrganizationRequests',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            status,
+            search,
+            page,
+            pageSize,
+            sortOrder,
+            sortedBy,
+          }),
+          entityAfterAction: JSON.stringify({}),
+        },
+      }, { })
+
+      return result
     } catch (error) {
       logger.error({
         error,

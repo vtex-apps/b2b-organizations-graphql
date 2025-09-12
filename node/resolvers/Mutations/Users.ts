@@ -160,10 +160,18 @@ const getUserFromStorefrontPermissions = ({
 const Users = {
   impersonateB2BUser: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient },
+      clients: { 
+        storefrontPermissions: storefrontPermissionsClient,
+        audit,
+        licenseManager,
+      },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
+      ip
     } = ctx as Context | any
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const getB2BUserFromStorefrontPermissions = ({
       id: b2bId,
@@ -207,6 +215,7 @@ const Users = {
       }
     }
 
+    try {
     const impersonation = await storefrontPermissionsClient
       .impersonateUser({ userId: id })
       .catch((error: any) => {
@@ -249,11 +258,29 @@ const Users = {
 
     sendImpersonateB2BUserMetric(ctx, metricParams)
 
-    return (
-      impersonation?.data?.impersonateUser ?? {
+    const result = impersonation?.data?.impersonateUser ?? {
         status: 'error',
       }
-    )
+
+      await audit.sendEvent({
+        subjectId: 'impersonate-b2b-user-event',
+        operation: 'IMPERSONATE_B2B_USER',
+        authorId: profile?.id || 'unknown',
+        meta: {
+          entityName: 'ImpersonateB2BUser',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            id,
+            user
+          }),
+          entityAfterAction: JSON.stringify(result),
+        },
+      }, {})
+
+      return result
+    } catch (error) {
+      throw error
+    }
   },
   /**
    *
@@ -273,10 +300,16 @@ const Users = {
       clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
+        audit,
+        licenseManager,
       },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
+      ip
     } = ctx as Context | any
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     if (!adminUserAuthToken && clId) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
@@ -358,14 +391,35 @@ const Users = {
       }
     }
 
-    return impersonateUser(
-      ctx,
-      storefrontPermissionsClient,
-      userId,
-      logger,
-      sessionData?.namespaces?.account?.accountName,
-      sessionData?.namespaces['storefront-permissions']
-    )
+    try {
+      const result = await impersonateUser(
+        ctx,
+        storefrontPermissionsClient,
+        userId,
+        logger,
+        sessionData?.namespaces?.account?.accountName,
+        sessionData?.namespaces['storefront-permissions']
+      )
+
+      await audit.sendEvent({
+        subjectId: 'impersonate-user-event',
+        operation: 'IMPERSONATE_USER',
+        authorId: profile?.id || 'unknown',
+        meta: {
+          entityName: 'ImpersonateUser',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            clId,
+            userId
+          }),
+          entityAfterAction: JSON.stringify(result),
+        },
+      }, {})
+
+      return result
+    } catch (error) {
+      throw error
+    }
   },
 
   removeUserWithEmail: async (
@@ -374,13 +428,22 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { events, storefrontPermissions: storefrontPermissionsClient },
-      vtex: { logger },
+      clients: { 
+        events, 
+        storefrontPermissions: storefrontPermissionsClient,
+        audit,
+        licenseManager,
+      },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx as any
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     return storefrontPermissionsClient
       .getUsersByEmail(email, orgId, costId)
-      .then((result: any) => {
+      .then(async (result: any) => {
         const user = result.data.getUsersByEmail[0]
 
         if (!user) {
@@ -399,7 +462,24 @@ const Users = {
 
         return storefrontPermissionsClient
           .deleteUser(fields)
-          .then((response: any) => {
+          .then(async (response: any) => {
+            await audit.sendEvent({
+              subjectId: 'remove-user-with-email-event',
+              operation: 'REMOVE_USER_WITH_EMAIL',
+              authorId: profile?.id || 'unknown',
+              meta: {
+                entityName: 'RemoveUserWithEmail',
+                remoteIpAddress: ip,
+                entityBeforeAction: JSON.stringify({
+                  orgId,
+                  costId,
+                  email,
+                  user
+                }),
+                entityAfterAction: JSON.stringify(response.data.deleteUser),
+              },
+            }, {})
+
             events.sendEvent('', 'b2b-organizations-graphql.removeUser', {
               id,
               email,
@@ -408,7 +488,7 @@ const Users = {
 
             return response.data.deleteUser
           })
-          .catch((error: any) => {
+          .catch(async (error: any) => {
             logger.error({
               error,
               message: 'removeUser-deleteUserError',
@@ -417,7 +497,7 @@ const Users = {
             return { status: 'error', message: error }
           })
       })
-      .catch((error: any) => {
+      .catch(async (error: any) => {
         logger.error({
           error,
           message: 'getUsers-error',
@@ -443,8 +523,14 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { events, storefrontPermissions: storefrontPermissionsClient },
+      clients: { 
+        events, 
+        storefrontPermissions: storefrontPermissionsClient,
+        audit,
+        licenseManager,
+      },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
+      ip
     } = ctx as Context | any
 
     if (!id || !clId || !email) {
@@ -470,6 +556,8 @@ const Users = {
       }
     }
 
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
+
     const fields = {
       email,
       id,
@@ -478,7 +566,24 @@ const Users = {
 
     return storefrontPermissionsClient
       .deleteUser(fields)
-      .then((result: any) => {
+      .then(async (result: any) => {
+        await audit.sendEvent({
+          subjectId: 'remove-user-event',
+          operation: 'REMOVE_USER',
+          authorId: profile?.id || 'unknown',
+          meta: {
+            entityName: 'RemoveUser',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify({
+              id,
+              userId,
+              email,
+              clId
+            }),
+            entityAfterAction: JSON.stringify(result.data.deleteUser),
+          },
+        }, {})
+
         events.sendEvent('', 'b2b-organizations-graphql.removeUser', {
           id,
           email,
@@ -488,7 +593,7 @@ const Users = {
 
         return result.data.deleteUser
       })
-      .catch((error: any) => {
+      .catch(async (error: any) => {
         logger.error({
           error,
           message: 'removeUser-deleteUserError',
@@ -504,9 +609,17 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient },
+      clients: { 
+        storefrontPermissions: storefrontPermissionsClient,
+        audit,
+        licenseManager,
+      },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
+      ip
     } = ctx as any
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       await checkUserIsAllowed({
@@ -540,12 +653,33 @@ const Users = {
 
     return storefrontPermissionsClient
       .addUser(fields)
-      .then((result: any) => {
+      .then(async (result: any) => {
+        await audit.sendEvent({
+          subjectId: 'add-user-event',
+          operation: 'ADD_USER',
+          authorId: profile?.id || 'unknown',
+          meta: {
+            entityName: 'AddUser',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify({
+              id,
+              roleId,
+              userId,
+              orgId,
+              costId,
+              clId,
+              name,
+              email
+            }),
+            entityAfterAction: JSON.stringify(result.data.addUser),
+          },
+        }, {})
+
         sendAddUserMetric(ctx, logger, ctx.vtex.account, fields)
 
         return result.data.addUser
       })
-      .catch((error: any) => {
+      .catch(async (error: any) => {
         logger.error({
           error,
           message: 'addUser-error',
@@ -574,9 +708,17 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient },
-      vtex: { logger },
+      clients: { 
+        storefrontPermissions: storefrontPermissionsClient,
+        audit,
+        licenseManager,
+      },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx as any
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       const result = await storefrontPermissionsClient.addUser({
@@ -587,6 +729,25 @@ const Users = {
         email,
         canImpersonate,
       })
+
+      await audit.sendEvent({
+        subjectId: 'create-user-with-email-event',
+        operation: 'CREATE_USER_WITH_EMAIL',
+        authorId: profile?.id || 'unknown',
+        meta: {
+          entityName: 'CreateUserWithEmail',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            orgId,
+            costId,
+            roleId,
+            name,
+            email,
+            canImpersonate
+          }),
+          entityAfterAction: JSON.stringify(result.data.addUser),
+        },
+      }, {})
 
       return result.data.addUser
     } catch (error) {
@@ -620,9 +781,15 @@ const Users = {
       clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
+        audit,
+        licenseManager,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
+      ip
     } = ctx as any
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       await checkUserIsAllowed({
@@ -666,12 +833,33 @@ const Users = {
 
     return storefrontPermissionsClient
       .updateUser(fields)
-      .then((result: any) => {
+      .then(async (result: any) => {
+        await audit.sendEvent({
+          subjectId: 'update-user-event',
+          operation: 'UPDATE_USER',
+          authorId: profile?.id || 'unknown',
+          meta: {
+            entityName: 'UpdateUser',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify({
+              id,
+              roleId,
+              userId,
+              orgId,
+              costId,
+              clId,
+              name,
+              email
+            }),
+            entityAfterAction: JSON.stringify(result.data.updateUser),
+          },
+        }, {})
+
         sendUpdateUserMetric(ctx, logger, ctx.vtex.account, fields)
 
         return result.data.updateUser
       })
-      .catch((error: any) => {
+      .catch(async (error: any) => {
         logger.error({
           error,
           message: 'updateUser-error',
@@ -707,9 +895,15 @@ const Users = {
       clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
+        audit,
+        licenseManager,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
+      ip
     } = ctx as any
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       await checkUserIsAllowed({
@@ -751,10 +945,31 @@ const Users = {
         roleId,
         userId,
       })
-      .then((result: any) => {
+      .then(async (result: any) => {
+        await audit.sendEvent({
+          subjectId: 'save-user-event',
+          operation: 'SAVE_USER',
+          authorId: profile?.id || 'unknown',
+          meta: {
+            entityName: 'SaveUser',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify({
+              id,
+              roleId,
+              userId,
+              orgId,
+              costId,
+              clId,
+              name,
+              email
+            }),
+            entityAfterAction: JSON.stringify(result.data.saveUser),
+          },
+        }, {})
+
         return result.data.saveUser
       })
-      .catch((error: any) => {
+      .catch(async (error: any) => {
         logger.error({
           error,
           message: 'addUser-error',

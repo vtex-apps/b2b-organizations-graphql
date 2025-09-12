@@ -123,6 +123,17 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
 
       // deny access if no tokens were provided
       if (!hasAdminToken && !hasAdminTokenOnHeader && !hasApiToken) {
+        sendAuthMetric(
+          context,
+          logger,
+          new AuthMetric(
+            context?.vtex?.account,
+            metricFields,
+            'ValidateAdminUserAccessAudit'
+          ),
+          401,
+          false
+        )
         logger.warn({
           message: 'ValidateAdminUserAccess: No token provided',
           ...metricFields,
@@ -131,6 +142,18 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
       }
 
       // deny access if no valid tokens were provided
+
+      sendAuthMetric(
+        context,
+        logger,
+        new AuthMetric(
+          context?.vtex?.account,
+          metricFields,
+          'ValidateAdminUserAccessAudit'
+        ),
+        403,
+        false
+      )
       logger.warn({
         message: 'ValidateAdminUserAccess: Invalid token',
         ...metricFields,

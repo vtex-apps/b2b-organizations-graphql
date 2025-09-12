@@ -35,11 +35,16 @@ const CostCenters = {
   ) => {
     const {
       vtex,
-      vtex: { logger },
+      vtex: { logger, adminUserAuthToken },
+      clients: { audit, licenseManager },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     if (!organizationId) {
       // get user's organization from session
@@ -74,12 +79,30 @@ const CostCenters = {
         paymentTerms,
       }
 
-      return await CostCenterRepository.createCostCenter(
+      const result = await CostCenterRepository.createCostCenter(
         _,
         organizationId,
         costCenter,
         ctx
       )
+
+      // Auditoría del acceso a createCostCenter
+      await audit.sendEvent({
+        subjectId: 'create-cost-center-event',
+        operation: 'CREATE_COST_CENTER',
+        authorId: profile?.id || 'unknown',
+        meta: {
+          entityName: 'CreateCostCenter',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            organizationId,
+            costCenter
+          }),
+          entityAfterAction: JSON.stringify(result),
+        },
+      }, {})
+
+      return result
     } catch (error) {
       logger.error({
         error,
@@ -108,10 +131,20 @@ const CostCenters = {
     }: { organizationId: string; input: CostCenterInputWithId },
     ctx: Context
   ) => {
+    const {
+      vtex: { logger, adminUserAuthToken },
+      clients: { audit, licenseManager },
+      ip
+    } = ctx
+
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    // check if organization exists
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
+
+    try {
+      // check if organization exists
     const organization = (await Organizations.getOrganizationById(
       _,
       { id: organizationId },
@@ -158,7 +191,42 @@ const CostCenters = {
       ctx
     )
 
-    return { id: costCenterId }
+      await audit.sendEvent({
+        subjectId: 'create-cost-center-with-id-event',
+        operation: 'CREATE_COST_CENTER_WITH_ID',
+        authorId: profile?.id || 'unknown',
+        meta: {
+          entityName: 'CreateCostCenterWithId',
+          remoteIpAddress: ip,
+        entityBeforeAction: JSON.stringify({
+          organizationId,
+          input: {
+            id,
+            name,
+            addresses,
+            phoneNumber,
+            businessDocument,
+            stateRegistration,
+            customFields,
+            marketingTags,
+            sellers,
+            paymentTerms,
+          }
+        }),
+          entityAfterAction: JSON.stringify({
+            id: costCenterId
+          }),
+        },
+      }, {})
+
+      return { id: costCenterId }
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'createCostCenterWithId-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
+    }
   },
 
   createCostCenterAddress: async (
@@ -167,12 +235,16 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
-      vtex: { logger },
+      clients: { masterdata, audit, licenseManager },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       const costCenter: CostCenterInput = await masterdata.getDocument({
@@ -193,6 +265,24 @@ const CostCenters = {
         id: costCenterId,
       })
 
+      await audit.sendEvent({
+        subjectId: 'create-cost-center-address-event',
+        operation: 'CREATE_COST_CENTER_ADDRESS',
+        authorId: profile?.id || 'unknown',
+        meta: {
+          entityName: 'CreateCostCenterAddress',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            costCenterId,
+            address
+          }),
+          entityAfterAction: JSON.stringify({
+            costCenterId,
+            status: 'success'
+          }),
+        },
+      }, {})
+
       return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
@@ -205,14 +295,31 @@ const CostCenters = {
 
   deleteCostCenter: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit, licenseManager },
+      vtex: { adminUserAuthToken },
+      ip
     } = ctx
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       await masterdata.deleteDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
         id,
       })
+
+      await audit.sendEvent({
+        subjectId: 'delete-cost-center-event',
+        operation: 'DELETE_COST_CENTER',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'DeleteCostCenter',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({ id }),
+          entityAfterAction: JSON.stringify({ deleted: true, id }),
+        },
+      }, {})
 
       return { status: 'success', message: '' }
     } catch (e) {
@@ -222,14 +329,31 @@ const CostCenters = {
 
   deleteOrganization: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit, licenseManager },
+      vtex: { adminUserAuthToken },
+      ip
     } = ctx
+
+  
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       await masterdata.deleteDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
         id,
       })
+
+      await audit.sendEvent({
+        subjectId: 'delete-organization-event',
+        operation: 'DELETE_ORGANIZATION',
+        authorId: profile.id || '',
+        meta: {
+          entityName: 'DeleteOrganization',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({ id }),
+          entityAfterAction: JSON.stringify({ deleted: true, id }),
+        },
+      }, {})
 
       return { status: 'success', message: '' }
     } catch (e) {
@@ -254,12 +378,16 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
-      vtex: { logger },
+      clients: { masterdata, audit, licenseManager },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
+
+
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       await masterdata.updatePartialDocument({
@@ -282,6 +410,32 @@ const CostCenters = {
         id,
       })
 
+      await audit.sendEvent({
+        subjectId: 'update-cost-center-event',
+        operation: 'UPDATE_COST_CENTER',
+        authorId: profile?.id || 'unknown',
+        meta: {
+          entityName: 'UpdateCostCenter',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            id,
+            input: {
+              name,
+              addresses,
+              paymentTerms,
+              phoneNumber,
+              businessDocument,
+              stateRegistration,
+              customFields,
+            }
+          }),
+          entityAfterAction: JSON.stringify({
+            id,
+            status: 'success'
+          }),
+        },
+      }, {})
+
       return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
@@ -298,12 +452,15 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
-      vtex: { logger },
+      clients: { masterdata, audit, licenseManager },
+      vtex: { logger, adminUserAuthToken },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
+    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
+    
     try {
       const costCenter: CostCenterInput = await masterdata.getDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
@@ -328,6 +485,25 @@ const CostCenters = {
         },
         id: costCenterId,
       })
+
+      await audit.sendEvent({
+        subjectId: 'update-cost-center-address-event',
+        operation: 'UPDATE_COST_CENTER_ADDRESS',
+        authorId: profile?.id || 'unknown',
+        meta: {
+          entityName: 'UpdateCostCenterAddress',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            costCenterId,
+            address
+          }),
+          entityAfterAction: JSON.stringify({
+            costCenterId,
+            addresses,
+            status: 'success'
+          }),
+        },
+      }, {})
 
       return { status: 'success', message: '' }
     } catch (error) {
