@@ -154,9 +154,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
         requiredRole,
         ...metricFields,
       })
-      throw new ForbiddenError(
-        `Unauthorized Access - License Manager ${roleArg} role required`
-      )
+      throw new ForbiddenError(`Unauthorized Access`)
     }
   }
 }

@@ -42,10 +42,8 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
         userAgent,
       }
 
-      const { hasAdminToken, hasValidAdminToken, hasValidAdminRole } = await validateAdminToken(
-        context,
-        adminUserAuthToken as string
-      )
+      const { hasAdminToken, hasValidAdminToken, hasValidAdminRole } =
+        await validateAdminToken(context, adminUserAuthToken as string)
 
       // add admin token metrics
       metricFields = {
@@ -71,8 +69,11 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       }
 
       // If there's no valid admin token on context, search for it on header
-      const { hasAdminTokenOnHeader, hasValidAdminTokenOnHeader, hasValidAdminRoleOnHeader } =
-        await validateAdminTokenOnHeader(context)
+      const {
+        hasAdminTokenOnHeader,
+        hasValidAdminTokenOnHeader,
+        hasValidAdminRoleOnHeader,
+      } = await validateAdminTokenOnHeader(context)
 
       // add admin header token metrics
       metricFields = {
@@ -104,7 +105,8 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       // invalidate the adminUserAuthToken on context
       context.vtex.adminUserAuthToken = undefined
 
-      const { hasApiToken, hasValidApiToken, hasValidApiRole } = await validateApiToken(context)
+      const { hasApiToken, hasValidApiToken, hasValidApiRole } =
+        await validateApiToken(context)
 
       // add API token metrics
       metricFields = {
@@ -170,7 +172,7 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
         message: `ValidateStoreUserAccess: Invalid token or insufficient role permissions`,
         ...metricFields,
       })
-      throw new ForbiddenError('Unauthorized Access - License Manager role required for admin access')
+      throw new ForbiddenError('Unauthorized Access')
     }
   }
 }
