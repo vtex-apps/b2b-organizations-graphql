@@ -1,7 +1,8 @@
 directive @withSession on FIELD | FIELD_DEFINITION
 directive @withPermissions on FIELD | FIELD_DEFINITION
-directive @validateAdminUserAccess on FIELD | FIELD_DEFINITION
-directive @validateAdminUserEditAccess on FIELD | FIELD_DEFINITION
+directive @validateAdminUserAccess(
+  role: String = "B2B_ORGANIZATIONS_VIEW"
+) on FIELD | FIELD_DEFINITION
 directive @validateStoreUserAccess on FIELD | FIELD_DEFINITION
 directive @checkUserAccess on FIELD | FIELD_DEFINITION
 directive @checkAdminAccess on FIELD | FIELD_DEFINITION

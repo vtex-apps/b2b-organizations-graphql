@@ -10,6 +10,7 @@ import {
   validateAdminTokenOnHeader,
   validateApiToken,
 } from './helper'
+import { LICENSE_MANAGER_ROLES } from '../../constants'
 
 export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -24,6 +25,13 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
       const {
         vtex: { adminUserAuthToken, logger },
       } = context
+
+      // Get the role from directive arguments, defaulting to VIEW role
+      const roleArg = this.args?.role || 'B2B_ORGANIZATIONS_VIEW'
+      const requiredRole =
+        roleArg === 'B2B_ORGANIZATIONS_VIEW'
+          ? LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
+          : LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_EDIT
 
       // get metrics data
       const operation = field?.astNode?.name?.value ?? context?.request?.url
@@ -41,10 +49,12 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
         userAgent,
       }
 
-      const { hasAdminToken, hasValidAdminToken, hasValidAdminRole } = await validateAdminToken(
-        context,
-        adminUserAuthToken as string
-      )
+      const { hasAdminToken, hasValidAdminToken, hasValidAdminRole } =
+        await validateAdminToken(
+          context,
+          adminUserAuthToken as string,
+          requiredRole
+        )
 
       // add admin token metrics
       metricFields = {
@@ -70,8 +80,11 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
       }
 
       // If there's no valid admin token on context, search for it on header
-      const { hasAdminTokenOnHeader, hasValidAdminTokenOnHeader, hasValidAdminRoleOnHeader } =
-        await validateAdminTokenOnHeader(context)
+      const {
+        hasAdminTokenOnHeader,
+        hasValidAdminTokenOnHeader,
+        hasValidAdminRoleOnHeader,
+      } = await validateAdminTokenOnHeader(context, requiredRole)
 
       // add admin header token metrics
       metricFields = {
@@ -99,7 +112,8 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
         return resolve(root, args, context, info)
       }
 
-      const { hasApiToken, hasValidApiToken, hasValidApiRole } = await validateApiToken(context)
+      const { hasApiToken, hasValidApiToken, hasValidApiRole } =
+        await validateApiToken(context, requiredRole)
 
       // add API token metrics
       metricFields = {
@@ -135,10 +149,14 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
 
       // deny access if no valid tokens were provided or no valid role
       logger.warn({
-        message: 'ValidateAdminUserAccess: Invalid token or insufficient role permissions',
+        message:
+          'ValidateAdminUserAccess: Invalid token or insufficient role permissions',
+        requiredRole,
         ...metricFields,
       })
-      throw new ForbiddenError('Unauthorized Access - License Manager role required')
+      throw new ForbiddenError(
+        `Unauthorized Access - License Manager ${roleArg} role required`
+      )
     }
   }
 }
