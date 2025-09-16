@@ -22,7 +22,6 @@ export const validateAdminToken = async (
   // this is used to check if the token is valid by current standards
   let hasCurrentValidAdminToken = false
   let hasValidAdminRole = false
-  
 
   if (hasAdminToken) {
     try {
@@ -46,7 +45,7 @@ export const validateAdminToken = async (
           B2B_LM_PRODUCT_CODE,
           requiredRole
         )
-        
+
         hasValidAdminRole = !!roleCheckResponse
       }
     } catch (err) {
@@ -58,7 +57,12 @@ export const validateAdminToken = async (
     }
   }
 
-  return { hasAdminToken, hasValidAdminToken, hasCurrentValidAdminToken, hasValidAdminRole }
+  return {
+    hasAdminToken,
+    hasValidAdminToken,
+    hasCurrentValidAdminToken,
+    hasValidAdminRole,
+  }
 }
 
 export const validateApiToken = async (
@@ -115,7 +119,7 @@ export const validateApiToken = async (
           B2B_LM_PRODUCT_CODE,
           requiredRole
         )
-        
+
         hasValidApiRole = !!roleCheckResponse
       }
     } catch (err) {
@@ -127,7 +131,12 @@ export const validateApiToken = async (
     }
   }
 
-  return { hasApiToken, hasValidApiToken, hasCurrentValidApiToken, hasValidApiRole }
+  return {
+    hasApiToken,
+    hasValidApiToken,
+    hasCurrentValidApiToken,
+    hasValidApiRole,
+  }
 }
 
 export const validateStoreToken = async (
@@ -215,8 +224,12 @@ export const validateAdminTokenOnHeader = async (
     }
   }
 
-  const { hasAdminToken, hasCurrentValidAdminToken, hasValidAdminToken, hasValidAdminRole } =
-    await validateAdminToken(context, adminUserAuthToken, requiredRole)
+  const {
+    hasAdminToken,
+    hasCurrentValidAdminToken,
+    hasValidAdminToken,
+    hasValidAdminRole,
+  } = await validateAdminToken(context, adminUserAuthToken, requiredRole)
 
   return {
     hasAdminTokenOnHeader: hasAdminToken,
