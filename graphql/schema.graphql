@@ -175,7 +175,7 @@ type Mutation {
   ): MasterDataResponse
     @withSession
     @withPermissions
-    @validateStoreUserAccess(role: "B2B_ORGANIZATIONS_EDIT")
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   createCostCenterWithId(
     organizationId: ID
@@ -202,7 +202,7 @@ type Mutation {
   updateCostCenter(id: ID!, input: CostCenterInput!): MutationResponse
     @withSession
     @withPermissions
-    @validateStoreUserAccess(role: "B2B_ORGANIZATIONS_EDIT")
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   createCostCenterAddress(
     costCenterId: ID
@@ -210,7 +210,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @validateStoreUserAccess(role: "B2B_ORGANIZATIONS_EDIT")
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   updateCostCenterAddress(
     costCenterId: ID
@@ -218,7 +218,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @validateStoreUserAccess(role: "B2B_ORGANIZATIONS_EDIT")
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   deleteOrganization(id: ID!): MutationResponse
     @validateAdminUserAccess(role: "B2B_ORGANIZATIONS_EDIT")
@@ -226,7 +226,7 @@ type Mutation {
   deleteCostCenter(id: ID!): MutationResponse
     @withSession
     @withPermissions
-    @validateStoreUserAccess(role: "B2B_ORGANIZATIONS_EDIT")
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   saveUser(
     id: ID
@@ -241,7 +241,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @validateStoreUserAccess(role: "B2B_ORGANIZATIONS_EDIT")
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   """
   addUser will create an user with the provided parameters.
@@ -263,7 +263,7 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @validateStoreUserAccess(role: "B2B_ORGANIZATIONS_EDIT")
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   """
   createUserWithEmail is a simplified version of addUser. Both
@@ -306,12 +306,12 @@ type Mutation {
   ): MutationResponse
     @withSession
     @withPermissions
-    @validateStoreUserAccess(role: "B2B_ORGANIZATIONS_EDIT")
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   removeUser(id: ID!, userId: ID, email: String!, clId: ID!): MutationResponse
     @withSession
     @withPermissions
-    @validateStoreUserAccess(role: "B2B_ORGANIZATIONS_EDIT")
+    @validateStoreUserAccess
     @cacheControl(scope: PRIVATE)
   impersonateUser(clId: ID, userId: ID): MutationResponse
     @deprecated(reason: "Use impersonateB2BUser instead")

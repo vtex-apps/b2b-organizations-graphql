@@ -5,7 +5,6 @@ import { defaultFieldResolver } from 'graphql'
 
 import type { AuthAuditMetric } from '../../utils/metrics/auth'
 import sendAuthMetric, { AuthMetric } from '../../utils/metrics/auth'
-import { LICENSE_MANAGER_ROLES } from '../../constants'
 import {
   validateAdminToken,
   validateAdminTokenOnHeader,
@@ -23,10 +22,6 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       context: Context,
       info: any
     ) => {
-      // Get the role argument from the directive, defaulting to VIEW role
-      const roleArg =
-        this.args?.role || LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
-
       const {
         vtex: { adminUserAuthToken, storeUserAuthToken, logger },
       } = context
@@ -48,7 +43,7 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       }
 
       const { hasAdminToken, hasValidAdminToken, hasValidAdminRole } =
-        await validateAdminToken(context, adminUserAuthToken as string, roleArg)
+        await validateAdminToken(context, adminUserAuthToken as string)
 
       // add admin token metrics
       metricFields = {
@@ -78,7 +73,7 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
         hasAdminTokenOnHeader,
         hasValidAdminTokenOnHeader,
         hasValidAdminRoleOnHeader,
-      } = await validateAdminTokenOnHeader(context, roleArg)
+      } = await validateAdminTokenOnHeader(context)
 
       // add admin header token metrics
       metricFields = {
@@ -111,7 +106,7 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       context.vtex.adminUserAuthToken = undefined
 
       const { hasApiToken, hasValidApiToken, hasValidApiRole } =
-        await validateApiToken(context, roleArg)
+        await validateApiToken(context)
 
       // add API token metrics
       metricFields = {
