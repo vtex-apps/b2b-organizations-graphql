@@ -26,10 +26,12 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
         vtex: { adminUserAuthToken, logger },
       } = context
 
-      // Get the role from directive arguments, defaulting to VIEW role
-      const roleArg = this.args?.role || 'B2B_ORGANIZATIONS_VIEW'
-      const requiredRole =
-        roleArg === 'B2B_ORGANIZATIONS_VIEW'
+      // Get the admin permission from directive arguments, defaulting to VIEW permission
+      const adminPermissionArg =
+        this.args?.adminPermission || 'B2B_ORGANIZATIONS_VIEW'
+
+      const requiredPermission =
+        adminPermissionArg === 'B2B_ORGANIZATIONS_VIEW'
           ? LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
           : LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_EDIT
 
@@ -53,7 +55,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
         await validateAdminToken(
           context,
           adminUserAuthToken as string,
-          requiredRole
+          requiredPermission
         )
 
       // add admin token metrics
@@ -84,7 +86,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
         hasAdminTokenOnHeader,
         hasValidAdminTokenOnHeader,
         hasValidAdminRoleOnHeader,
-      } = await validateAdminTokenOnHeader(context, requiredRole)
+      } = await validateAdminTokenOnHeader(context, requiredPermission)
 
       // add admin header token metrics
       metricFields = {
@@ -113,7 +115,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
       }
 
       const { hasApiToken, hasValidApiToken, hasValidApiRole } =
-        await validateApiToken(context, requiredRole)
+        await validateApiToken(context, requiredPermission)
 
       // add API token metrics
       metricFields = {
@@ -151,7 +153,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
       logger.warn({
         message:
           'ValidateAdminUserAccess: Invalid token or insufficient role permissions',
-        requiredRole,
+        requiredPermission,
         ...metricFields,
       })
       throw new ForbiddenError(`Unauthorized Access`)
