@@ -5,6 +5,7 @@ import { defaultFieldResolver } from 'graphql'
 
 import type { AuthAuditMetric } from '../../utils/metrics/auth'
 import sendAuthMetric, { AuthMetric } from '../../utils/metrics/auth'
+import { LICENSE_MANAGER_ROLES } from '../../constants'
 import {
   validateAdminToken,
   validateAdminTokenOnHeader,
@@ -26,6 +27,13 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
         vtex: { adminUserAuthToken, storeUserAuthToken, logger },
       } = context
 
+      // Get the role from directive arguments, defaulting to VIEW role
+      const roleArg = this.args?.role || 'B2B_ORGANIZATIONS_VIEW'
+      const requiredRole =
+        roleArg === 'B2B_ORGANIZATIONS_VIEW'
+          ? LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
+          : LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_EDIT
+
       // get metrics data
       const operation = field?.astNode?.name?.value ?? context?.request?.url
       const userAgent = context?.request?.headers['user-agent'] as string
@@ -43,7 +51,11 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       }
 
       const { hasAdminToken, hasValidAdminToken, hasValidAdminRole } =
-        await validateAdminToken(context, adminUserAuthToken as string)
+        await validateAdminToken(
+          context,
+          adminUserAuthToken as string,
+          requiredRole
+        )
 
       // add admin token metrics
       metricFields = {
@@ -73,7 +85,7 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
         hasAdminTokenOnHeader,
         hasValidAdminTokenOnHeader,
         hasValidAdminRoleOnHeader,
-      } = await validateAdminTokenOnHeader(context)
+      } = await validateAdminTokenOnHeader(context, requiredRole)
 
       // add admin header token metrics
       metricFields = {
@@ -106,7 +118,7 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       context.vtex.adminUserAuthToken = undefined
 
       const { hasApiToken, hasValidApiToken, hasValidApiRole } =
-        await validateApiToken(context)
+        await validateApiToken(context, requiredRole)
 
       // add API token metrics
       metricFields = {
@@ -143,7 +155,7 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
         hasValidStoreToken,
       }
 
-      // allow access if has valid store token
+      // allow access if has valid store token (store users don't need LM role validation)
       if (hasValidStoreToken) {
         sendAuthMetric(
           context,
