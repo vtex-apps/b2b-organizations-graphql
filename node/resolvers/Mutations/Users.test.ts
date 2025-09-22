@@ -4,6 +4,8 @@ import { GraphQLError } from 'graphql'
 import Users from './Users'
 import type { UserArgs } from '../../typings'
 
+jest.mock('@vtex/api')
+jest.mock('@vtex/diagnostics-nodejs', () => ({}))
 jest.mock('../config')
 jest.mock('../../utils/metrics/impersonate')
 

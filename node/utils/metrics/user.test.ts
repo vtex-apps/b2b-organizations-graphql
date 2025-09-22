@@ -1,6 +1,9 @@
 import { randEmail, randWord } from '@ngneat/falso'
 import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
+jest.mock('@vtex/api')
+jest.mock('@vtex/diagnostics-nodejs', () => ({}))
+
 import { B2B_METRIC_NAME } from '../../clients/analytics'
 import {
   sendAddUserMetric,

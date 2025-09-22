@@ -24,10 +24,13 @@ import type {
   OrganizationRequest,
 } from '../../typings'
 import { ORGANIZATION_REQUEST_STATUSES } from '../../utils/constants'
-import Organizations from './Organizations'
 
+jest.mock('@vtex/api')
+jest.mock('@vtex/diagnostics-nodejs', () => ({}))
 jest.mock('../config')
 jest.mock('../Queries/Settings')
+
+import Organizations from './Organizations'
 
 const mockGetDocument = jest.fn().mockResolvedValue({
   b2bCustomerAdmin: {
