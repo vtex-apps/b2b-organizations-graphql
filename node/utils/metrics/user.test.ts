@@ -5,12 +5,12 @@ jest.mock('@vtex/api')
 jest.mock('@vtex/diagnostics-nodejs', () => ({}))
 
 import { B2B_METRIC_NAME } from '../../clients/analytics'
+import type { UserArgs } from '../../typings'
 import {
   sendAddUserMetric,
   sendRemoveUserMetric,
   sendUpdateUserMetric,
 } from './user'
-import type { UserArgs } from '../../typings'
 
 const mockContext = () => {
   return {

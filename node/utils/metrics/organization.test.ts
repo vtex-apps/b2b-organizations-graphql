@@ -16,9 +16,15 @@ import type { Logger } from '@vtex/api/lib/service/logger/logger'
 jest.mock('@vtex/api')
 jest.mock('@vtex/diagnostics-nodejs', () => ({}))
 
-import type { Seller } from '../../clients/sellers'
-import { ORGANIZATION_REQUEST_STATUSES } from '../constants'
 import { B2B_METRIC_NAME } from '../../clients/analytics'
+import type { Seller } from '../../clients/sellers'
+import type {
+  Collection,
+  CustomField,
+  Organization,
+  PaymentTerm,
+} from '../../typings'
+import { ORGANIZATION_REQUEST_STATUSES } from '../constants'
 import type {
   OrganizationStatusParams,
   UpdateOrganizationParams,
@@ -27,12 +33,6 @@ import {
   sendOrganizationStatusMetric,
   sendUpdateOrganizationMetric,
 } from './organization'
-import type {
-  Collection,
-  CustomField,
-  Organization,
-  PaymentTerm,
-} from '../../typings'
 
 const mockContext = () => {
   return {

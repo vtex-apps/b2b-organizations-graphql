@@ -51,6 +51,9 @@ const mockContext = (
 ) => {
   return {
     clients: {
+      analytics: {
+        sendMetric: jest.fn(),
+      },
       masterdata: {
         createDocument: jest
           .fn()
@@ -71,9 +74,6 @@ const mockContext = (
         saveUser: jest
           .fn()
           .mockResolvedValue({ data: { saveUser: randUser() } }),
-      },
-      analytics: {
-        sendMetric: jest.fn(),
       },
     },
     vtex: {
@@ -259,16 +259,16 @@ describe('given an Organization Mutation', () => {
           dataEntity: ORGANIZATION_DATA_ENTITY,
           fields: {
             collections: [],
-            sellers: [],
             created: createDate,
             customFields: [],
             id: orgId,
             name: input.name,
-            status: 'active',
-            tradeName: input.tradeName,
             permissions: {
               createQuote: true,
             },
+            sellers: [],
+            status: 'active',
+            tradeName: input.tradeName,
           },
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
@@ -364,16 +364,16 @@ describe('given an Organization Mutation', () => {
           dataEntity: ORGANIZATION_DATA_ENTITY,
           fields: {
             collections: [],
-            sellers: [],
             created: createDate,
             customFields: [],
             id: orgId,
             name: input.name,
-            status: 'active',
-            tradeName: input.tradeName,
             permissions: {
               createQuote: true,
             },
+            sellers: [],
+            status: 'active',
+            tradeName: input.tradeName,
           },
           schema: ORGANIZATION_SCHEMA_VERSION,
         })
