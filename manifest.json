@@ -14,7 +14,7 @@
     "graphql": "1.x"
   },
   "dependencies": {
-    "vtex.storefront-permissions": "2.x"
+    "vtex.storefront-permissions": "3.x"
   },
   "policies": [
     {
