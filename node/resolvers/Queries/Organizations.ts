@@ -214,7 +214,7 @@ const Organizations = {
 
     if (sessionData?.namespaces) {
       const checkUserPermissionResult = await storefrontPermissions
-        .checkUserPermission('vtex.b2b-organizations@2.x')
+        .checkUserPermission('vtex.b2b-organizations@3.x')
         .catch((error: any) => {
           logger.error({
             error,
