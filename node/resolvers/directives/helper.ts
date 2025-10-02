@@ -1,12 +1,15 @@
 import { isUserPartOfBuyerOrg } from '../Queries/Users'
+import { LICENSE_MANAGER_ROLES, B2B_LM_PRODUCT_CODE } from '../../constants'
 
 export const validateAdminToken = async (
   context: Context,
-  adminUserAuthToken: string
+  adminUserAuthToken: string,
+  requiredRole: string = LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
 ): Promise<{
   hasAdminToken: boolean
   hasValidAdminToken: boolean
   hasCurrentValidAdminToken: boolean
+  hasValidAdminRole: boolean
 }> => {
   const {
     clients: { identity, lm },
@@ -18,6 +21,7 @@ export const validateAdminToken = async (
   let hasValidAdminToken = false
   // this is used to check if the token is valid by current standards
   let hasCurrentValidAdminToken = false
+  let hasValidAdminRole = false
 
   if (hasAdminToken) {
     try {
@@ -34,6 +38,15 @@ export const validateAdminToken = async (
           account,
           authUser.id
         )
+        // Check for specific role using the new endpoint
+        const roleCheckResponse = await lm.checkUserSpecificRole(
+          account,
+          authUser.id,
+          B2B_LM_PRODUCT_CODE,
+          requiredRole
+        )
+
+        hasValidAdminRole = !!roleCheckResponse
       }
     } catch (err) {
       // noop so we leave hasValidAdminToken as false
@@ -44,15 +57,22 @@ export const validateAdminToken = async (
     }
   }
 
-  return { hasAdminToken, hasValidAdminToken, hasCurrentValidAdminToken }
+  return {
+    hasAdminToken,
+    hasValidAdminToken,
+    hasCurrentValidAdminToken,
+    hasValidAdminRole,
+  }
 }
 
 export const validateApiToken = async (
-  context: Context
+  context: Context,
+  requiredRole: string = LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
 ): Promise<{
   hasApiToken: boolean
   hasValidApiToken: boolean
   hasCurrentValidApiToken: boolean
+  hasValidApiRole: boolean
 }> => {
   const {
     clients: { identity, lm },
@@ -67,6 +87,7 @@ export const validateApiToken = async (
 
   // this is used to check if the token is valid by current standards
   let hasCurrentValidApiToken = false
+  let hasValidApiRole = false
 
   if (hasApiToken) {
     try {
@@ -91,6 +112,15 @@ export const validateApiToken = async (
           account,
           authUser.id
         )
+        // Check for specific role using the new endpoint
+        const roleCheckResponse = await lm.checkUserSpecificRole(
+          account,
+          authUser.id,
+          B2B_LM_PRODUCT_CODE,
+          requiredRole
+        )
+
+        hasValidApiRole = !!roleCheckResponse
       }
     } catch (err) {
       // noop so we leave hasValidApiToken as false
@@ -101,7 +131,12 @@ export const validateApiToken = async (
     }
   }
 
-  return { hasApiToken, hasValidApiToken, hasCurrentValidApiToken }
+  return {
+    hasApiToken,
+    hasValidApiToken,
+    hasCurrentValidApiToken,
+    hasValidApiRole,
+  }
 }
 
 export const validateStoreToken = async (
@@ -169,11 +204,13 @@ export const validateStoreToken = async (
 }
 
 export const validateAdminTokenOnHeader = async (
-  context: Context
+  context: Context,
+  requiredRole: string = LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
 ): Promise<{
   hasAdminTokenOnHeader: boolean
   hasValidAdminTokenOnHeader: boolean
   hasCurrentValidAdminTokenOnHeader: boolean
+  hasValidAdminRoleOnHeader: boolean
 }> => {
   const adminUserAuthToken = context?.headers.vtexidclientautcookie as string
   const hasAdminTokenOnHeader = !!adminUserAuthToken?.length
@@ -183,15 +220,21 @@ export const validateAdminTokenOnHeader = async (
       hasAdminTokenOnHeader: false,
       hasValidAdminTokenOnHeader: false,
       hasCurrentValidAdminTokenOnHeader: false,
+      hasValidAdminRoleOnHeader: false,
     }
   }
 
-  const { hasAdminToken, hasCurrentValidAdminToken, hasValidAdminToken } =
-    await validateAdminToken(context, adminUserAuthToken)
+  const {
+    hasAdminToken,
+    hasCurrentValidAdminToken,
+    hasValidAdminToken,
+    hasValidAdminRole,
+  } = await validateAdminToken(context, adminUserAuthToken, requiredRole)
 
   return {
     hasAdminTokenOnHeader: hasAdminToken,
     hasValidAdminTokenOnHeader: hasValidAdminToken,
     hasCurrentValidAdminTokenOnHeader: hasCurrentValidAdminToken,
+    hasValidAdminRoleOnHeader: hasValidAdminRole,
   }
 }

@@ -31,3 +31,10 @@ export const enum MessageSFPUserAddError {
   DUPLICATED = 'already exists in another organization',
   DUPLICATED_ORGANIZATION = 'already exists in the organization',
 }
+
+export const LICENSE_MANAGER_ROLES = {
+  B2B_ORGANIZATIONS_VIEW: 'buyer_organization_view',
+  B2B_ORGANIZATIONS_EDIT: 'buyer_organization_edit',
+} as const
+
+export const B2B_LM_PRODUCT_CODE = 97

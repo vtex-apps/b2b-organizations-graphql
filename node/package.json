@@ -1,9 +1,9 @@
 {
   "name": "vtex.b2b-organizations",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "dependencies": {
     "@types/lodash": "4.14.74",
-    "@vtex/api": "6.48.0",
+    "@vtex/api": "6.50.1",
     "atob": "^2.1.2",
     "co-body": "^6.0.0",
     "graphql": "^14.5.0",
@@ -20,7 +20,7 @@
     "@types/jsonwebtoken": "^8.5.0",
     "@types/node": "^12.12.21",
     "@types/ramda": "types/npm-ramda#dist",
-    "@vtex/api": "6.48.0",
+    "@vtex/api": "6.50.1",
     "@vtex/prettier-config": "^0.3.1",
     "@vtex/tsconfig": "^0.6.0",
     "jest": "27.5.1",
