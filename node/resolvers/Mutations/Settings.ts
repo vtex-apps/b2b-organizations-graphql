@@ -7,16 +7,34 @@ export const B2B_SETTINGS_DOCUMENT_ID = 'b2bSettings'
 const Settings = {
   saveAppSettings: async (_: any, __: any, ctx: Context) => {
     const {
-      clients: { vbase },
+      clients: { vbase, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     const app: string = getAppId()
+
+
 
     const newSettings = {}
 
     try {
       await vbase.saveJSON('b2borg', app, newSettings)
+
+      await audit.sendEvent({
+        subjectId: 'save-app-settings-event',
+        operation: 'SAVE_APP_SETTINGS',
+        meta: {
+          entityName: 'SaveAppSettings',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({ app }),
+          entityAfterAction: JSON.stringify({ 
+            status: 'success',
+            message: '',
+            settings: newSettings , 
+          }),
+        },
+      }, {})
 
       return { status: 'success', message: '' }
     } catch (error) {
@@ -50,9 +68,12 @@ const Settings = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase },
+      clients: { vbase, audit },
       vtex: { logger },
+      ip
     } = ctx
+
+
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
@@ -114,9 +135,35 @@ const Settings = {
 
       await vbase.saveJSON(B2B_SETTINGS_DATA_ENTITY, 'settings', b2bSettings)
 
-      return {
+      const result = {
         status: 'success',
       }
+
+      await audit.sendEvent({
+        subjectId: 'save-b2b-settings-event',
+        operation: 'SAVE_B2B_SETTINGS',
+        meta: {
+          entityName: 'SaveB2BSettings',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            input: {
+              autoApprove,
+              businessReadOnly,
+              stateReadOnly,
+              defaultPaymentTerms,
+              defaultPriceTables,
+              uiSettings,
+              organizationCustomFields,
+              costCenterCustomFields,
+              transactionEmailSettings,
+            },
+            currentB2BSettings
+          }),
+          entityAfterAction: JSON.stringify(result),
+        },
+      }, {})
+
+      return result
     } catch (e) {
       logger.error({
         error: e,
@@ -138,12 +185,33 @@ const Settings = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase },
+      clients: { vbase, audit },
       vtex: { logger },
+      ip
     } = ctx
+
+
 
     try {
       await vbase.saveJSON('b2borg', 'salesChannels', channels)
+
+      await audit.sendEvent({
+        subjectId: 'save-sales-channels-event',
+        operation: 'SAVE_SALES_CHANNELS',
+        meta: {
+          entityName: 'SaveSalesChannels',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            channels
+          }),
+          entityAfterAction: JSON.stringify({
+            status: 'success',
+            message: ''
+          }),
+        },
+      }, {})
+
+      return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
         error,
@@ -152,8 +220,6 @@ const Settings = {
 
       return { status: 'error', message: error }
     }
-
-    return { status: 'success', message: '' }
   },
 }
 

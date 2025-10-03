@@ -7,8 +7,9 @@ const MarketingTags = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase },
+      clients: { vbase, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     if (!costId || !tags) {
@@ -20,7 +21,23 @@ const MarketingTags = {
         tags,
       })
 
-      return { status: 'success', message: '', id: costId }
+      const result = { status: 'success', message: '', id: costId }
+
+      await audit.sendEvent({
+        subjectId: 'set-marketing-tags-event',
+        operation: 'SET_MARKETING_TAGS',
+        meta: {
+          entityName: 'SetMarketingTags',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            costId,
+            tags
+          }),
+          entityAfterAction: JSON.stringify(result),
+        },
+      }, {})
+
+      return result
     } catch (error) {
       logger.error({
         error,

@@ -82,6 +82,13 @@
         "host": "rc.vtex.com",
         "path": "/api/analytics/schemaless-events"
       }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "analytics.vtex.com",
+        "path": "*"
+      }
     }
   ],
   "$schema": "https://raw.githubusercontent.com/vtex/node-vtex-api/master/gen/manifest.schema"
