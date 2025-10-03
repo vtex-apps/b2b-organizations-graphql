@@ -314,8 +314,11 @@ const Index = {
       throw new ForbiddenError('Access denied')
     }
 
+    const reason = `order canceled by user: ${authEmail}`
+
     const requestCancellationResponse = await checkout.requestCancellation(
-      orderId as string
+      orderId as string,
+      reason
     )
 
     ctx.set('Content-Type', 'application/json')
