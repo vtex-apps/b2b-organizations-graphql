@@ -163,15 +163,11 @@ const Users = {
       clients: { 
         storefrontPermissions: storefrontPermissionsClient,
         audit,
-        licenseManager,
       },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip
     } = ctx as Context | any
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const getB2BUserFromStorefrontPermissions = ({
       id: b2bId,
@@ -265,7 +261,6 @@ const Users = {
       await audit.sendEvent({
         subjectId: 'impersonate-b2b-user-event',
         operation: 'IMPERSONATE_B2B_USER',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'ImpersonateB2BUser',
           remoteIpAddress: ip,
@@ -297,19 +292,15 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: {
+      clients: { 
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
-        licenseManager,
       },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip
     } = ctx as Context | any
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     if (!adminUserAuthToken && clId) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
@@ -404,7 +395,6 @@ const Users = {
       await audit.sendEvent({
         subjectId: 'impersonate-user-event',
         operation: 'IMPERSONATE_USER',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'ImpersonateUser',
           remoteIpAddress: ip,
@@ -432,14 +422,10 @@ const Users = {
         events, 
         storefrontPermissions: storefrontPermissionsClient,
         audit,
-        licenseManager,
       },
-      vtex: { logger, adminUserAuthToken },
+      vtex: { logger },
       ip
     } = ctx as any
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     return storefrontPermissionsClient
       .getUsersByEmail(email, orgId, costId)
@@ -466,7 +452,6 @@ const Users = {
             await audit.sendEvent({
               subjectId: 'remove-user-with-email-event',
               operation: 'REMOVE_USER_WITH_EMAIL',
-              authorId: profile?.id || 'unknown',
               meta: {
                 entityName: 'RemoveUserWithEmail',
                 remoteIpAddress: ip,
@@ -527,7 +512,6 @@ const Users = {
         events, 
         storefrontPermissions: storefrontPermissionsClient,
         audit,
-        licenseManager,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip
@@ -556,7 +540,6 @@ const Users = {
       }
     }
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const fields = {
       email,
@@ -570,7 +553,6 @@ const Users = {
         await audit.sendEvent({
           subjectId: 'remove-user-event',
           operation: 'REMOVE_USER',
-          authorId: profile?.id || 'unknown',
           meta: {
             entityName: 'RemoveUser',
             remoteIpAddress: ip,
@@ -612,14 +594,12 @@ const Users = {
       clients: { 
         storefrontPermissions: storefrontPermissionsClient,
         audit,
-        licenseManager,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip
     } = ctx as any
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       await checkUserIsAllowed({
@@ -657,7 +637,6 @@ const Users = {
         await audit.sendEvent({
           subjectId: 'add-user-event',
           operation: 'ADD_USER',
-          authorId: profile?.id || 'unknown',
           meta: {
             entityName: 'AddUser',
             remoteIpAddress: ip,
@@ -711,14 +690,12 @@ const Users = {
       clients: { 
         storefrontPermissions: storefrontPermissionsClient,
         audit,
-        licenseManager,
       },
-      vtex: { logger, adminUserAuthToken },
+      vtex: { logger },
       ip
     } = ctx as any
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       const result = await storefrontPermissionsClient.addUser({
@@ -733,7 +710,6 @@ const Users = {
       await audit.sendEvent({
         subjectId: 'create-user-with-email-event',
         operation: 'CREATE_USER_WITH_EMAIL',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'CreateUserWithEmail',
           remoteIpAddress: ip,
@@ -782,14 +758,12 @@ const Users = {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
-        licenseManager,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip
     } = ctx as any
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       await checkUserIsAllowed({
@@ -837,7 +811,6 @@ const Users = {
         await audit.sendEvent({
           subjectId: 'update-user-event',
           operation: 'UPDATE_USER',
-          authorId: profile?.id || 'unknown',
           meta: {
             entityName: 'UpdateUser',
             remoteIpAddress: ip,
@@ -896,14 +869,12 @@ const Users = {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
-        licenseManager,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip
     } = ctx as any
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       await checkUserIsAllowed({
@@ -949,7 +920,6 @@ const Users = {
         await audit.sendEvent({
           subjectId: 'save-user-event',
           operation: 'SAVE_USER',
-          authorId: profile?.id || 'unknown',
           meta: {
             entityName: 'SaveUser',
             remoteIpAddress: ip,

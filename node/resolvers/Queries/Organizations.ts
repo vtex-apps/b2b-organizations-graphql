@@ -38,12 +38,10 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { session, audit, licenseManager },
+      clients: { session, audit },
       vtex: { logger, sessionToken, adminUserAuthToken },
       ip
     } = ctx
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const sessionData = await session
       .getSession(sessionToken as string, ['*'])
@@ -83,7 +81,6 @@ const Organizations = {
     await audit.sendEvent({
       subjectId: 'check-organization-is-active-event',
       operation: 'CHECK_ORGANIZATION_IS_ACTIVE',
-      authorId: profile.id || '',
       meta: {
         entityName: 'CheckOrganizationIsActive',
         remoteIpAddress: ip,
@@ -101,12 +98,10 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, audit },
+      vtex: { logger },
       ip
     } = ctx
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
@@ -121,7 +116,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'get-organization-by-id-event',
         operation: 'GET_ORGANIZATION_BY_ID',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetOrganizationById',
           remoteIpAddress: ip,
@@ -162,14 +156,10 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, audit },
+      vtex: { logger },
       ip
     } = ctx
-
-
-
-      const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
@@ -208,7 +198,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'get-organizations-event',
         operation: 'GET_ORGANIZATIONS',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetOrganizations',
           remoteIpAddress: ip,
@@ -236,13 +225,10 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, session, audit, licenseManager },
+      clients: { storefrontPermissions, session, audit },
       vtex: { logger, sessionToken, adminUserAuthToken },
       ip
     } = ctx
-
-  
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const organizationFilters: string[] = []
     let fromSession = false
@@ -322,7 +308,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'get-organizations-by-email-event',
         operation: 'GET_ORGANIZATIONS_BY_EMAIL',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetOrganizationsByEmail',
           remoteIpAddress: ip,
@@ -347,13 +332,10 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { audit },
+      vtex: { logger },
       ip
     } = ctx
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const organizations = await Organizations.getOrganizationsByEmail(
       _,
@@ -384,7 +366,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'get-active-organizations-by-email-event',
         operation: 'GET_ACTIVE_ORGANIZATIONS_BY_EMAIL',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetActiveOrganizationsByEmail',
           remoteIpAddress: ip,
@@ -409,16 +390,13 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { sessionData, logger, adminUserAuthToken },
+      clients: { masterdata, audit },
+      vtex: { sessionData, logger },
       ip
     } = ctx as any
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
 
     if (!sessionData?.namespaces['storefront-permissions']) {
@@ -461,7 +439,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'get-organization-by-id-storefront-event',
         operation: 'GET_ORGANIZATION_BY_ID_STOREFRONT',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetOrganizationByIdStorefront',
           remoteIpAddress: ip,
@@ -486,13 +463,10 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, audit },
+      vtex: { logger },
       ip
     } = ctx
-
-
-     const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
@@ -507,7 +481,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'get-organization-request-by-id-event',
         operation: 'GET_ORGANIZATION_REQUEST_BY_ID',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetOrganizationRequestById',
           remoteIpAddress: ip,
@@ -546,12 +519,10 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken},
+      clients: { masterdata, audit },
+      vtex: { logger},
       ip
     } = ctx
-
-     const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
@@ -580,7 +551,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'get-organization-requests-event',
         operation: 'GET_ORGANIZATION_REQUESTS',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetOrganizationRequests',
           remoteIpAddress: ip,

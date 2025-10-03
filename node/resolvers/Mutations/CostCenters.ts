@@ -35,17 +35,13 @@ const CostCenters = {
   ) => {
     const {
       vtex,
-      vtex: { logger, adminUserAuthToken },
-      clients: { audit, licenseManager },
+      vtex: { logger },
+      clients: { audit },
       ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-    const { profile } = await licenseManager.getTopbarData(
-      adminUserAuthToken ?? ''
-    )
 
     if (!organizationId) {
       // get user's organization from session
@@ -91,7 +87,6 @@ const CostCenters = {
         {
           subjectId: 'create-cost-center-event',
           operation: 'CREATE_COST_CENTER',
-          authorId: profile?.id || 'unknown',
           meta: {
             entityName: 'CreateCostCenter',
             remoteIpAddress: ip,
@@ -135,17 +130,13 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      vtex: { logger, adminUserAuthToken },
-      clients: { audit, licenseManager },
+      vtex: { logger },
+      clients: { audit },
       ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-    const { profile } = await licenseManager.getTopbarData(
-      adminUserAuthToken ?? ''
-    )
 
     try {
       // check if organization exists
@@ -199,7 +190,6 @@ const CostCenters = {
         {
           subjectId: 'create-cost-center-with-id-event',
           operation: 'CREATE_COST_CENTER_WITH_ID',
-          authorId: profile?.id || 'unknown',
           meta: {
             entityName: 'CreateCostCenterWithId',
             remoteIpAddress: ip,
@@ -242,17 +232,13 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, audit },
+      vtex: { logger },
       ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-    const { profile } = await licenseManager.getTopbarData(
-      adminUserAuthToken ?? ''
-    )
 
     try {
       const costCenter: CostCenterInput = await masterdata.getDocument({
@@ -277,7 +263,6 @@ const CostCenters = {
         {
           subjectId: 'create-cost-center-address-event',
           operation: 'CREATE_COST_CENTER_ADDRESS',
-          authorId: profile?.id || 'unknown',
           meta: {
             entityName: 'CreateCostCenterAddress',
             remoteIpAddress: ip,
@@ -306,14 +291,9 @@ const CostCenters = {
 
   deleteCostCenter: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { adminUserAuthToken },
+      clients: { masterdata, audit },
       ip,
     } = ctx
-
-    const { profile } = await licenseManager.getTopbarData(
-      adminUserAuthToken ?? ''
-    )
 
     try {
       await masterdata.deleteDocument({
@@ -325,7 +305,6 @@ const CostCenters = {
         {
           subjectId: 'delete-cost-center-event',
           operation: 'DELETE_COST_CENTER',
-          authorId: profile.id || '',
           meta: {
             entityName: 'DeleteCostCenter',
             remoteIpAddress: ip,
@@ -344,14 +323,9 @@ const CostCenters = {
 
   deleteOrganization: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { adminUserAuthToken },
+      clients: { masterdata, audit },
       ip,
     } = ctx
-
-    const { profile } = await licenseManager.getTopbarData(
-      adminUserAuthToken ?? ''
-    )
 
     try {
       await masterdata.deleteDocument({
@@ -363,7 +337,6 @@ const CostCenters = {
         {
           subjectId: 'delete-organization-event',
           operation: 'DELETE_ORGANIZATION',
-          authorId: profile.id || '',
           meta: {
             entityName: 'DeleteOrganization',
             remoteIpAddress: ip,
@@ -397,17 +370,13 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, audit },
+      vtex: { logger },
       ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-    const { profile } = await licenseManager.getTopbarData(
-      adminUserAuthToken ?? ''
-    )
 
     try {
       await masterdata.updatePartialDocument({
@@ -434,7 +403,6 @@ const CostCenters = {
         {
           subjectId: 'update-cost-center-event',
           operation: 'UPDATE_COST_CENTER',
-          authorId: profile?.id || 'unknown',
           meta: {
             entityName: 'UpdateCostCenter',
             remoteIpAddress: ip,
@@ -475,16 +443,13 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, audit },
+      vtex: { logger },
       ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-    const { profile } = await licenseManager.getTopbarData(
-      adminUserAuthToken ?? ''
-    )
 
     try {
       const costCenter: CostCenterInput = await masterdata.getDocument({
@@ -515,7 +480,6 @@ const CostCenters = {
         {
           subjectId: 'update-cost-center-address-event',
           operation: 'UPDATE_COST_CENTER_ADDRESS',
-          authorId: profile?.id || 'unknown',
           meta: {
             entityName: 'UpdateCostCenterAddress',
             remoteIpAddress: ip,

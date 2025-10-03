@@ -355,16 +355,13 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, mail, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { storefrontPermissions, mail, audit },
+      vtex: { logger },
       ip
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       const organization = {
@@ -389,7 +386,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'create-organization-event',
         operation: 'CREATE_ORGANIZATION',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'CreateOrganization',
           remoteIpAddress: ip,
@@ -495,8 +491,8 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, storefrontPermissions, mail, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, storefrontPermissions, mail, audit },
+      vtex: { logger },
       ip
     } = ctx
 
@@ -504,7 +500,6 @@ const Organizations = {
     await checkConfig(ctx)
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const now = new Date()
 
@@ -552,7 +547,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'create-organization-request-event',
         operation: 'CREATE_ORGANIZATION_REQUEST',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'CreateOrganizationRequest',
           remoteIpAddress: ip,
@@ -621,8 +615,8 @@ const Organizations = {
     id: string
   }> => {
     const {
-      vtex: { logger, adminUserAuthToken },
-      clients: { audit, licenseManager },
+      vtex: { logger },
+      clients: { audit },
       ip
     } = ctx
 
@@ -630,7 +624,6 @@ const Organizations = {
     await checkConfig(ctx)
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       // create organization
@@ -643,7 +636,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'create-organization-and-cost-centers-with-id-event',
         operation: 'CREATE_ORGANIZATION_AND_COST_CENTERS_WITH_ID',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'CreateOrganizationAndCostCentersWithId',
           remoteIpAddress: ip,
@@ -674,13 +666,11 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { adminUserAuthToken },
+      clients: { masterdata, audit },
       ip
     } = ctx
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       await masterdata.deleteDocument({
@@ -691,7 +681,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'delete-organization-request-event',
         operation: 'DELETE_ORGANIZATION_REQUEST',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'DeleteOrganizationRequest',
           remoteIpAddress: ip,
@@ -742,8 +731,8 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, mail, masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { storefrontPermissions, mail, masterdata, audit },
+      vtex: { logger },
       ip
     } = ctx
 
@@ -751,7 +740,6 @@ const Organizations = {
     await checkConfig(ctx)
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const settings = (await B2BSettings.getB2BSettings(
       undefined,
@@ -809,7 +797,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'update-organization-event',
         operation: 'UPDATE_ORGANIZATION',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'UpdateOrganization',
           remoteIpAddress: ip,
@@ -852,13 +839,12 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, mail, storefrontPermissions, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, mail, storefrontPermissions, audit },
+      vtex: { logger },
       ip
     } = ctx
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const settings = (await B2BSettings.getB2BSettings(
       undefined,
@@ -942,7 +928,6 @@ const Organizations = {
           await audit.sendEvent({
             subjectId: 'update-organization-request-approved-event',
             operation: 'UPDATE_ORGANIZATION_REQUEST_APPROVED',
-            authorId: profile?.id || 'unknown',
             meta: {
               entityName: 'UpdateOrganizationRequest',
               remoteIpAddress: ip,
@@ -993,7 +978,6 @@ const Organizations = {
       await audit.sendEvent({
         subjectId: 'update-organization-request-declined-event',
         operation: 'UPDATE_ORGANIZATION_REQUEST_DECLINED',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'UpdateOrganizationRequest',
           remoteIpAddress: ip,

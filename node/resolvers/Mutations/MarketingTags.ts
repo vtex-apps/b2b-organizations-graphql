@@ -7,13 +7,10 @@ const MarketingTags = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { vbase, audit },
+      vtex: { logger },
       ip
     } = ctx
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     if (!costId || !tags) {
       throw new Error('Invalid parameters')
@@ -29,7 +26,6 @@ const MarketingTags = {
       await audit.sendEvent({
         subjectId: 'set-marketing-tags-event',
         operation: 'SET_MARKETING_TAGS',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'SetMarketingTags',
           remoteIpAddress: ip,

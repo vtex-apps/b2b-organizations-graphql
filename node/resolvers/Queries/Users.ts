@@ -171,12 +171,10 @@ const sleep = (ms: number) => {
 const Users = {
   getAppSettings: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { masterdata, vbase, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, vbase, audit },
+      vtex: { logger },
       ip
     } = ctx
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const app: string = getAppId()
     try {
@@ -232,11 +230,9 @@ const Users = {
       await vbase.saveJSON('b2borg', app, settings)
     }
 
-      // Auditoría del acceso a getAppSettings
       await audit.sendEvent({
         subjectId: 'get-app-settings-event',
         operation: 'GET_APP_SETTINGS',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetAppSettings',
           remoteIpAddress: ip,
@@ -261,13 +257,10 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, session, masterdata, audit, licenseManager },
+      clients: { storefrontPermissions, session, masterdata, audit },
       vtex: { adminUserAuthToken, logger, sessionToken },
       ip
     } = ctx
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const sessionData = await session
       .getSession(sessionToken as string, ['*'])
@@ -355,7 +348,6 @@ const Users = {
       await audit.sendEvent({
         subjectId: 'get-organizations-without-sales-manager-event',
         operation: 'GET_ORGANIZATIONS_WITHOUT_SALES_MANAGER',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetOrganizationsWithoutSalesManager',
           remoteIpAddress: ip,
@@ -383,7 +375,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, audit, licenseManager },
+      clients: { storefrontPermissions, audit },
       vtex: { adminUserAuthToken, logger },
       vtex,
       ip
@@ -402,8 +394,6 @@ const Users = {
       organizationId = orgId
     }
 
-      const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
-
     const variables = {
       ...(organizationId && { organizationId }),
       ...(costCenterId && { costCenterId }),
@@ -417,7 +407,6 @@ const Users = {
         await audit.sendEvent({
           subjectId: 'get-users-event',
           operation: 'GET_USERS',
-          authorId: profile.id || '',
           meta: {
             entityName: 'GetUsers',
             remoteIpAddress: ip,
@@ -460,7 +449,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, audit, licenseManager },
+      clients: { storefrontPermissions, audit },
       vtex: { adminUserAuthToken, logger },
       ip,
       vtex,
@@ -478,8 +467,6 @@ const Users = {
 
       organizationId = orgId
     }
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const variables = {
       ...(organizationId && { organizationId }),
@@ -499,7 +486,6 @@ const Users = {
         await audit.sendEvent({
           subjectId: 'get-users-paginated-event',
           operation: 'GET_USERS_PAGINATED',
-          authorId: profile.id || '',
           meta: {
             entityName: 'GetUsersPaginated',
             remoteIpAddress: ip,
@@ -521,13 +507,10 @@ const Users = {
 
   getSalesChannels: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { audit },
+      vtex: { logger },
       ip
     } = ctx
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       const result = await getChannels(ctx)
@@ -535,7 +518,6 @@ const Users = {
       await audit.sendEvent({
         subjectId: 'get-sales-channels-event',
         operation: 'GET_SALES_CHANNELS',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetSalesChannels',
           remoteIpAddress: ip,
@@ -556,13 +538,10 @@ const Users = {
 
   getBinding: async (_: void, { email }: { email: string }, ctx: Context) => {
     const {
-      clients: { catalog, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { catalog, audit },
+      vtex: { logger },
       ip
     } = ctx
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     let access = false
     let availableSalesChannels: any = {}
@@ -613,7 +592,6 @@ const Users = {
     await audit.sendEvent({
       subjectId: 'get-binding-event',
       operation: 'GET_BINDING',
-      authorId: profile.id || '',
       meta: {
         entityName: 'GetBinding',
         remoteIpAddress: ip,

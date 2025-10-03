@@ -7,13 +7,10 @@ const MarketingTags = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { vbase, audit },
+      vtex: { logger },
       ip
     } = ctx
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       const result = await vbase.getJSON(MARKETING_TAGS.VBASE_BUCKET, costId)
@@ -21,7 +18,6 @@ const MarketingTags = {
       await audit.sendEvent({
         subjectId: 'get-marketing-tags-event',
         operation: 'GET_MARKETING_TAGS',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetMarketingTags',
           remoteIpAddress: ip,

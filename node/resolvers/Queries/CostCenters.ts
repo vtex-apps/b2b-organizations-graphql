@@ -82,16 +82,13 @@ const addMissingAddressIds = async (costCenter: CostCenter, ctx: Context) => {
 const costCenters = {
   getCostCenterById: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, audit },
+      vtex: { logger },
       ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       const result: CostCenter = await masterdata.getDocument({
@@ -108,7 +105,6 @@ const costCenters = {
       await audit.sendEvent({
         subjectId: 'get-cost-center-by-id-event',
         operation: 'GET_COST_CENTER_BY_ID',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetCostCenterById',
           remoteIpAddress: ip,
@@ -130,17 +126,14 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, audit },
+      vtex: { logger },
       ip,
       vtex,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
       throw new Error('This organization is not active')
@@ -189,7 +182,6 @@ const costCenters = {
       await audit.sendEvent({
         subjectId: 'get-cost-center-by-id-storefront-event',
         operation: 'GET_COST_CENTER_BY_ID_STOREFRONT',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetCostCenterByIdStorefront',
           remoteIpAddress: ip,
@@ -207,13 +199,10 @@ const costCenters = {
 
   getPaymentTerms: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { payments, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { payments, audit },
+      vtex: { logger },
       ip,
     } = ctx
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       const result = await payments.getPaymentTerms()
@@ -221,7 +210,6 @@ const costCenters = {
       await audit.sendEvent({
         subjectId: 'get-payment-terms-event',
         operation: 'GET_PAYMENT_TERMS',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetPaymentTerms',
           remoteIpAddress: ip,
@@ -255,16 +243,13 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, audit },
+      vtex: { logger },
       ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     let where = ''
 
@@ -285,7 +270,6 @@ const costCenters = {
     await audit.sendEvent({
       subjectId: 'get-cost-centers-event',
       operation: 'GET_COST_CENTERS',
-      authorId: profile.id || '',
       meta: {
         entityName: 'GetCostCenters',
         remoteIpAddress: ip,
@@ -324,16 +308,13 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { masterdata, audit },
+      vtex: { logger },
       ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       const result = await getCostCenters({
@@ -349,7 +330,6 @@ const costCenters = {
       await audit.sendEvent({
         subjectId: 'get-cost-centers-by-organization-id-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetCostCentersByOrganizationId',
           remoteIpAddress: ip,
@@ -388,16 +368,13 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, storefrontPermissions, audit, licenseManager },
-      vtex: { logger, sessionData, adminUserAuthToken },
+      clients: { masterdata, storefrontPermissions, audit },
+      vtex: { logger, sessionData },
       ip,
     } = ctx as any
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
       throw new Error('This organization is not active')
@@ -463,7 +440,6 @@ const costCenters = {
       await audit.sendEvent({
         subjectId: 'get-cost-centers-by-organization-id-storefront-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID_STOREFRONT',
-        authorId: profile.id || '',
         meta: {
           entityName: 'GetCostCentersByOrganizationIdStorefront',
           remoteIpAddress: ip,

@@ -7,15 +7,14 @@ export const B2B_SETTINGS_DOCUMENT_ID = 'b2bSettings'
 const Settings = {
   saveAppSettings: async (_: any, __: any, ctx: Context) => {
     const {
-      clients: { vbase, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { vbase, audit },
+      vtex: { logger },
       ip
     } = ctx
 
     const app: string = getAppId()
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     const newSettings = {}
 
@@ -25,7 +24,6 @@ const Settings = {
       await audit.sendEvent({
         subjectId: 'save-app-settings-event',
         operation: 'SAVE_APP_SETTINGS',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'SaveAppSettings',
           remoteIpAddress: ip,
@@ -70,13 +68,12 @@ const Settings = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { vbase, audit },
+      vtex: { logger },
       ip
     } = ctx
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
@@ -145,7 +142,6 @@ const Settings = {
       await audit.sendEvent({
         subjectId: 'save-b2b-settings-event',
         operation: 'SAVE_B2B_SETTINGS',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'SaveB2BSettings',
           remoteIpAddress: ip,
@@ -189,13 +185,12 @@ const Settings = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase, audit, licenseManager },
-      vtex: { logger, adminUserAuthToken },
+      clients: { vbase, audit },
+      vtex: { logger },
       ip
     } = ctx
 
 
-    const { profile } = await licenseManager.getTopbarData(adminUserAuthToken ?? '')
 
     try {
       await vbase.saveJSON('b2borg', 'salesChannels', channels)
@@ -203,7 +198,6 @@ const Settings = {
       await audit.sendEvent({
         subjectId: 'save-sales-channels-event',
         operation: 'SAVE_SALES_CHANNELS',
-        authorId: profile?.id || 'unknown',
         meta: {
           entityName: 'SaveSalesChannels',
           remoteIpAddress: ip,

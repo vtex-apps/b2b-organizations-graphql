@@ -1,7 +1,9 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
-import { ExternalClient } from '@vtex/api'
+import { ExternalClient, Session } from '@vtex/api'
+
 
 export class AuditClient extends ExternalClient {
+  private session: Session
   constructor(ctx: IOContext, options?: InstanceOptions) {
     super('http://analytics.vtex.com', ctx, {
       ...options,
@@ -12,24 +14,46 @@ export class AuditClient extends ExternalClient {
         'X-Vtex-Use-Https': 'true',
       },
     })
+    this.session = new Session(ctx, options)
   }
+
+  private async getUserIdFromSession(sessionToken: string): Promise<string> {
+    try {
+      const { sessionData } = await this.session.getSession(sessionToken, ['*'])
+      
+      const userId = 
+        sessionData?.namespaces?.authentication?.adminUserId?.value ||
+        sessionData?.namespaces?.authentication?.storeUserId?.value ||
+        sessionData?.namespaces?.profile?.id?.value ||
+        'anonymous'
+      
+      return userId
+    } catch (error) {
+      console.error('Error getting session:', error)
+      return 'anonymous'
+    }
+  }
+  
 
   public async sendEvent(
     auditEntry: AuditEntry,
     sessionMeta: any
   ): Promise<void> {
-    console.log('sendEvent', auditEntry)
-    const { meta, subjectId, operation, authorId } = auditEntry
-    const { account, operationId, requestId, userAgent, logger } = this.context
+    const { meta, subjectId, operation } = auditEntry
+    const { account, operationId, requestId, userAgent, logger, sessionToken } = this.context
 
-    console.log('sendEvent account', account)
+    let authorId = 'anonymous'
+    
+    if (sessionToken) {
+      authorId = await this.getUserIdFromSession(sessionToken)
+    }
 
     const auditEvent = {
       mainAccountName: account,
       accountName: account,
       id: requestId,
       subjectId,
-      authorId,
+      authorId: authorId,
       application: 'vtex.b2b-organizations-graphql',
       operation,
       operationId,
@@ -39,8 +63,6 @@ export class AuditClient extends ExternalClient {
       },
       date: new Date().toJSON(),
     }
-
-    console.log('auditEvent', auditEvent)
 
     try {
       await this.http.post(
