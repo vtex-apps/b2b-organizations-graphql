@@ -157,13 +157,13 @@ const message = ({
     let users: any[] = []
 
     try {
-        users = [
-          ...new Map(
-            (await getUsers(storefrontPermissions, 'customer-admin', id)).map(
-              (user: any) => [user.email, user]
-            )
-          ).values(),
-        ]
+      users = [
+        ...new Map(
+          (await getUsers(storefrontPermissions, 'customer-admin', id)).map(
+            (user: any) => [user.email, user]
+          )
+        ).values(),
+      ]
     } catch (err) {
       logger.error(err)
     }
