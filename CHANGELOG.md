@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- Deduplicate emails in organization status change notification
+
 ## [2.0.1] - 2025-10-06
 
 ### Added
