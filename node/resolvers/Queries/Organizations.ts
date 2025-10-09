@@ -330,20 +330,18 @@ const Organizations = {
       page: number
       pageSize: number
     },
-    {
-      clients: { storefrontPermissions },
-      vtex: { logger },
-    }: any
+    { clients: { storefrontPermissions }, vtex: { logger } }: any
   ) => {
     try {
-      const { data: { getOrganizationsPaginatedByEmail } } =
-        await storefrontPermissions.getOrganizationsPaginatedByEmail(
-          email,
-          page,
-          pageSize
-        )
+      const {
+        data: { getOrganizationsPaginatedByEmail },
+      } = await storefrontPermissions.getOrganizationsPaginatedByEmail(
+        email,
+        page,
+        pageSize
+      )
 
-      return getOrganizationsPaginatedByEmail;
+      return getOrganizationsPaginatedByEmail
     } catch (error) {
       logger.error({
         error,
