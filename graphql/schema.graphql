@@ -106,7 +106,9 @@ type Query {
     email: String
     page: Int = 1
     pageSize: Int = 25
-  ): B2BOrganizationPaginated @checkUserAccess @cacheControl(scope: PRIVATE)
+  ): B2BOrganizationPaginated
+    @validateStoreUserAccess
+    @cacheControl(scope: PRIVATE)
 
   checkOrganizationIsActive(id: String): Boolean
     @cacheControl(scope: PRIVATE)
