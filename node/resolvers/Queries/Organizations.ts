@@ -319,6 +319,38 @@ const Organizations = {
     }
   },
 
+  getOrganizationsPaginatedByEmail: async (
+    _: void,
+    {
+      email,
+      page = 1,
+      pageSize = 25,
+    }: {
+      email?: string
+      page: number
+      pageSize: number
+    },
+    { clients: { storefrontPermissions }, vtex: { logger } }: any
+  ) => {
+    try {
+      const {
+        data: { getOrganizationsPaginatedByEmail },
+      } = await storefrontPermissions.getOrganizationsPaginatedByEmail(
+        email,
+        page,
+        pageSize
+      )
+
+      return getOrganizationsPaginatedByEmail
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getOrganizationsPaginatedByEmail-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
+    }
+  },
+
   getOrganizationByIdStorefront: async (
     _: void,
     { id }: { id: string },

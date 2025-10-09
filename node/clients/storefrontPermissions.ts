@@ -8,6 +8,7 @@ import saveUser from '../mutations/saveUser'
 import updateUser from '../mutations/updateUser'
 import getB2BUser from '../queries/getB2BUser'
 import getOrganizationsByEmail from '../queries/getOrganizationsByEmail'
+import getOrganizationsPaginatedByEmail from '../queries/getOrganizationsPaginatedByEmail'
 import getPermission from '../queries/getPermission'
 import getRole from '../queries/getRole'
 import getUser from '../queries/getUser'
@@ -36,6 +37,22 @@ export default class StorefrontPermissions extends AppGraphQLClient {
       query: getOrganizationsByEmail,
       variables: {
         email,
+      },
+    })
+  }
+
+  public getOrganizationsPaginatedByEmail = async (
+    email: string,
+    page: number,
+    pageSize: number
+  ): Promise<any> => {
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: getOrganizationsPaginatedByEmail,
+      variables: {
+        email,
+        page,
+        pageSize,
       },
     })
   }
