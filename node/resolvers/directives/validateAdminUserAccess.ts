@@ -10,6 +10,7 @@ import {
   validateAdminTokenOnHeader,
   validateApiToken,
 } from './helper'
+import audit from '../../utils/audit'
 
 export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -123,6 +124,16 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
 
       // deny access if no tokens were provided
       if (!hasAdminToken && !hasAdminTokenOnHeader && !hasApiToken) {
+        sendAuthMetric(
+          context,
+          logger,
+          new AuthMetric(
+            context?.vtex?.account,
+            metricFields,
+            'ValidateAdminUserAccessAudit'
+          ),
+        )
+        audit(context, operation, 401)
         logger.warn({
           message: 'ValidateAdminUserAccess: No token provided',
           ...metricFields,
@@ -131,6 +142,17 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
       }
 
       // deny access if no valid tokens were provided
+
+      sendAuthMetric(
+        context,
+        logger,
+        new AuthMetric(
+          context?.vtex?.account,
+          metricFields,
+          'ValidateAdminUserAccessAudit'
+        ),
+      )
+      audit(context, operation, 403)
       logger.warn({
         message: 'ValidateAdminUserAccess: Invalid token',
         ...metricFields,

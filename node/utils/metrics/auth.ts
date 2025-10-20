@@ -39,7 +39,7 @@ export class AuthMetric implements Metric {
 const sendAuthMetric = async (
   ctx: Context,
   logger: Logger,
-  authMetric: AuthMetric
+  authMetric: AuthMetric,
 ) => {
   const {
     clients: { analytics },
