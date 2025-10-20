@@ -111,7 +111,7 @@ const costCenters = {
           entityBeforeAction: JSON.stringify({ id }),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
       return result
     } catch (error) {
@@ -188,7 +188,7 @@ const costCenters = {
           entityBeforeAction: JSON.stringify({ id }),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
       return costCenter
     } catch (error) {
@@ -216,7 +216,7 @@ const costCenters = {
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
       return result
     } catch (error) {
@@ -276,7 +276,7 @@ const costCenters = {
         entityBeforeAction: JSON.stringify({ search, page, pageSize, sortOrder, sortedBy }),
         entityAfterAction: JSON.stringify({}),
       },
-    }, { })
+    })
 
     return result
     } catch (error) {
@@ -336,7 +336,7 @@ const costCenters = {
           entityBeforeAction: JSON.stringify({ id, search, page, pageSize, sortOrder, sortedBy }),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
       return result
     } catch (error) {
@@ -446,7 +446,7 @@ const costCenters = {
           entityBeforeAction: JSON.stringify({ id, search, page, pageSize, sortOrder, sortedBy }),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
       return result
     } catch (error) {

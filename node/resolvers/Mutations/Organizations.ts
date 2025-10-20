@@ -402,7 +402,7 @@ const Organizations = {
           }),
           entityAfterAction: JSON.stringify(createOrganizationResult),
         },
-      }, {})
+      })
 
       let costCenterResult: any[] = []
 
@@ -499,8 +499,6 @@ const Organizations = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-
-
     const now = new Date()
 
     const settings = (await B2BSettings.getB2BSettings(
@@ -564,7 +562,7 @@ const Organizations = {
           }),
           entityAfterAction: JSON.stringify(result),
         },
-      }, {})
+      })
 
       if (settings?.autoApprove) {
         await Organizations.updateOrganizationRequest(
@@ -623,8 +621,6 @@ const Organizations = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-
-
     try {
       // create organization
       const { href, id } = await createOrganizationAndCostCenterWithAdminUser(
@@ -645,7 +641,7 @@ const Organizations = {
             id
           }),
         },
-      }, {})
+      })
 
       return {
         href,
@@ -670,8 +666,6 @@ const Organizations = {
       ip
     } = ctx
 
-
-
     try {
       await masterdata.deleteDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
@@ -692,7 +686,7 @@ const Organizations = {
             deleted: true
           }),
         },
-      }, {})
+      })
 
       return { status: 'success', message: '' }
     } catch (e) {
@@ -738,8 +732,6 @@ const Organizations = {
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
-
 
     const settings = (await B2BSettings.getB2BSettings(
       undefined,
@@ -810,7 +802,7 @@ const Organizations = {
             status: 'success'
           }),
         },
-      }, {})
+      })
 
       sendUpdateOrganizationMetric(ctx, logger, {
         account: ctx.vtex.account,
@@ -843,8 +835,6 @@ const Organizations = {
       vtex: { logger },
       ip
     } = ctx
-
-
 
     const settings = (await B2BSettings.getB2BSettings(
       undefined,
@@ -924,7 +914,6 @@ const Organizations = {
             id,
           })
 
-          // (APPROVED)
           await audit.sendEvent({
             subjectId: 'update-organization-request-approved-event',
             operation: 'UPDATE_ORGANIZATION_REQUEST_APPROVED',
@@ -944,7 +933,7 @@ const Organizations = {
                 organizationId
               }),
             },
-          }, {})
+          })
 
           sendOrganizationStatusMetric(ctx, logger, {
             account: ctx.vtex.account,
@@ -974,7 +963,6 @@ const Organizations = {
         id,
       })
 
-      // (DECLINED)
       await audit.sendEvent({
         subjectId: 'update-organization-request-declined-event',
         operation: 'UPDATE_ORGANIZATION_REQUEST_DECLINED',
@@ -993,7 +981,7 @@ const Organizations = {
             notes
           }),
         },
-      }, {})
+      })
 
       if (
         notifyUsers &&

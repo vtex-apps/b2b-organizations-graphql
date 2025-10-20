@@ -270,7 +270,7 @@ const Users = {
           }),
           entityAfterAction: JSON.stringify(result),
         },
-      }, {})
+      })
 
       return result
     } catch (error) {
@@ -404,7 +404,7 @@ const Users = {
           }),
           entityAfterAction: JSON.stringify(result),
         },
-      }, {})
+      })
 
       return result
     } catch (error) {
@@ -463,7 +463,7 @@ const Users = {
                 }),
                 entityAfterAction: JSON.stringify(response.data.deleteUser),
               },
-            }, {})
+            })
 
             events.sendEvent('', 'b2b-organizations-graphql.removeUser', {
               id,
@@ -564,7 +564,7 @@ const Users = {
             }),
             entityAfterAction: JSON.stringify(result.data.deleteUser),
           },
-        }, {})
+        })
 
         events.sendEvent('', 'b2b-organizations-graphql.removeUser', {
           id,
@@ -652,7 +652,7 @@ const Users = {
             }),
             entityAfterAction: JSON.stringify(result.data.addUser),
           },
-        }, {})
+        })
 
         sendAddUserMetric(ctx, logger, ctx.vtex.account, fields)
 
@@ -723,7 +723,7 @@ const Users = {
           }),
           entityAfterAction: JSON.stringify(result.data.addUser),
         },
-      }, {})
+      })
 
       return result.data.addUser
     } catch (error) {
@@ -826,7 +826,7 @@ const Users = {
             }),
             entityAfterAction: JSON.stringify(result.data.updateUser),
           },
-        }, {})
+        })
 
         sendUpdateUserMetric(ctx, logger, ctx.vtex.account, fields)
 
@@ -935,7 +935,7 @@ const Users = {
             }),
             entityAfterAction: JSON.stringify(result.data.saveUser),
           },
-        }, {})
+        })
 
         return result.data.saveUser
       })

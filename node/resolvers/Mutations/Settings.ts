@@ -14,8 +14,6 @@ const Settings = {
 
     const app: string = getAppId()
 
-
-
     const newSettings = {}
 
     try {
@@ -34,7 +32,7 @@ const Settings = {
             settings: newSettings , 
           }),
         },
-      }, {})
+      })
 
       return { status: 'success', message: '' }
     } catch (error) {
@@ -72,8 +70,6 @@ const Settings = {
       vtex: { logger },
       ip
     } = ctx
-
-
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
@@ -135,10 +131,6 @@ const Settings = {
 
       await vbase.saveJSON(B2B_SETTINGS_DATA_ENTITY, 'settings', b2bSettings)
 
-      const result = {
-        status: 'success',
-      }
-
       await audit.sendEvent({
         subjectId: 'save-b2b-settings-event',
         operation: 'SAVE_B2B_SETTINGS',
@@ -159,11 +151,13 @@ const Settings = {
             },
             currentB2BSettings
           }),
-          entityAfterAction: JSON.stringify(result),
+          entityAfterAction: JSON.stringify({status: 'success'}),
         },
-      }, {})
+      })
 
-      return result
+      return {
+        status: 'success',
+      }
     } catch (e) {
       logger.error({
         error: e,
@@ -190,8 +184,6 @@ const Settings = {
       ip
     } = ctx
 
-
-
     try {
       await vbase.saveJSON('b2borg', 'salesChannels', channels)
 
@@ -209,7 +201,7 @@ const Settings = {
             message: ''
           }),
         },
-      }, {})
+      })
 
       return { status: 'success', message: '' }
     } catch (error) {

@@ -96,9 +96,7 @@ const CostCenters = {
             }),
             entityAfterAction: JSON.stringify(result),
           },
-        },
-        {}
-      )
+        })
 
       return result
     } catch (error) {
@@ -130,7 +128,6 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      vtex: { logger },
       clients: { audit },
       ip,
     } = ctx
@@ -138,7 +135,6 @@ const CostCenters = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    try {
       // check if organization exists
       const organization = (await Organizations.getOrganizationById(
         _,
@@ -212,18 +208,9 @@ const CostCenters = {
               id: costCenterId,
             }),
           },
-        },
-        {}
-      )
+        })
 
       return { id: costCenterId }
-    } catch (error) {
-      logger.error({
-        error,
-        message: 'createCostCenterWithId-error',
-      })
-      throw new GraphQLError(getErrorMessage(error))
-    }
   },
 
   createCostCenterAddress: async (
@@ -275,9 +262,7 @@ const CostCenters = {
               status: 'success',
             }),
           },
-        },
-        {}
-      )
+        })
 
       return { status: 'success', message: '' }
     } catch (error) {
@@ -311,9 +296,7 @@ const CostCenters = {
             entityBeforeAction: JSON.stringify({ id }),
             entityAfterAction: JSON.stringify({ deleted: true, id }),
           },
-        },
-        {}
-      )
+        })
 
       return { status: 'success', message: '' }
     } catch (e) {
@@ -343,9 +326,7 @@ const CostCenters = {
             entityBeforeAction: JSON.stringify({ id }),
             entityAfterAction: JSON.stringify({ deleted: true, id }),
           },
-        },
-        {}
-      )
+        })
 
       return { status: 'success', message: '' }
     } catch (e) {
@@ -423,9 +404,7 @@ const CostCenters = {
               status: 'success',
             }),
           },
-        },
-        {}
-      )
+        })
 
       return { status: 'success', message: '' }
     } catch (error) {
@@ -493,9 +472,7 @@ const CostCenters = {
               status: 'success',
             }),
           },
-        },
-        {}
-      )
+        })
 
       return { status: 'success', message: '' }
     } catch (error) {

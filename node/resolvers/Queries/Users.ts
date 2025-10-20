@@ -177,7 +177,6 @@ const Users = {
     } = ctx
 
     const app: string = getAppId()
-    try {
       const settings: any = await vbase.getJSON('b2borg', app).catch((error) => {
         logger.error({
           error,
@@ -239,16 +238,9 @@ const Users = {
           entityBeforeAction: JSON.stringify(settings.adminSetup),
           entityAfterAction: JSON.stringify({}),
         },
-      }, {})
+      })
 
       return settings
-    } catch (error) {
-      logger.error({
-        error,
-        message: 'b2borg.getAppSettings-Error',
-      })
-      throw error
-    }
   },
 
   getOrganizationsWithoutSalesManager: async (
@@ -354,7 +346,7 @@ const Users = {
           entityBeforeAction: JSON.stringify({ scrollSize: SCROLL_SIZE }),
           entityAfterAction: JSON.stringify({}),
         },
-      }, {})
+      })
 
       return filteredOrganizations
     } catch (error) {
@@ -413,7 +405,7 @@ const Users = {
             entityBeforeAction: JSON.stringify({ organizationId, costCenterId }),
             entityAfterAction: JSON.stringify({}),
           },
-        }, {})
+        })
 
       return returnValue
       })
@@ -492,7 +484,7 @@ const Users = {
             entityBeforeAction: JSON.stringify({ organizationId, costCenterId, search, page, pageSize, sortOrder, sortedBy }),
             entityAfterAction: JSON.stringify({}),
           },
-        }, {})
+        })
 
       return returnValue
       })
@@ -524,7 +516,7 @@ const Users = {
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
-      }, {})
+      })
 
       return result
     } catch (error) {
@@ -598,7 +590,7 @@ const Users = {
         entityBeforeAction: JSON.stringify({ email }),
         entityAfterAction: JSON.stringify({}),
       },
-    }, {})
+    })
 
     return access
   },

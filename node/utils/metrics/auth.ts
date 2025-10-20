@@ -2,7 +2,6 @@ import type { Logger } from '@vtex/api/lib/service/logger/logger'
 
 import type { Metric } from '../../clients/analytics'
 import { B2B_METRIC_NAME } from '../../clients/analytics'
-import { transformOperation } from './transformOperation'
 
 export interface AuthAuditMetric {
   operation: string
@@ -41,47 +40,13 @@ const sendAuthMetric = async (
   ctx: Context,
   logger: Logger,
   authMetric: AuthMetric,
-  statusCode?: number,
-  shouldSendMetrics: boolean = true
 ) => {
   const {
-    clients: { analytics, audit },
-    ip,
+    clients: { analytics },
   } = ctx
 
-  const { subjectId, operation, entityNameFirstLetter } = transformOperation(authMetric.fields.operation, statusCode);
-
-
   try {
-    if (statusCode === 403) {
-      await audit.sendEvent({
-        subjectId: subjectId,
-        operation: operation,
-        authorId: "unknown",
-        meta: {
-          entityName: entityNameFirstLetter,
-          remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({}),
-          entityAfterAction: JSON.stringify({}),
-        },
-      }, { logger })
-    } else if (statusCode === 401) {
-      await audit.sendEvent({
-        subjectId: subjectId,
-        operation: operation,
-        authorId: "unknown",
-        meta: {
-          entityName: entityNameFirstLetter,
-          remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({}),
-          entityAfterAction: JSON.stringify({}),
-        },
-      }, {})
-    }
-    
-    if (shouldSendMetrics) {
-      await analytics.sendMetric(authMetric)
-    }
+    await analytics.sendMetric(authMetric)
   } catch (error) {
     logger.error({
       error,

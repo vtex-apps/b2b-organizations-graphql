@@ -11,6 +11,7 @@ import {
   validateApiToken,
   validateStoreToken,
 } from './helper'
+import audit from '../../utils/audit'
 
 export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -162,9 +163,8 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
             metricFields,
             'ValidateStoreUserAccessAudit'
           ),
-          401,
-          false
         )
+        audit(context, operation, 401)
         logger.warn({
           message: 'ValidateStoreUserAccess: No token provided',
           ...metricFields,
@@ -181,9 +181,8 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
           metricFields,
           'ValidateStoreUserAccessAudit'
         ),
-        403,
-        false
       )
+      audit(context, operation, 403)
       logger.warn({
         message: `ValidateStoreUserAccess: Invalid token`,
         ...metricFields,

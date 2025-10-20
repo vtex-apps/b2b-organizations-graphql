@@ -47,7 +47,7 @@ const B2BSettings = {
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
-      }, {})
+      })
 
     } catch (e) {
       if (e.message) {
@@ -80,7 +80,7 @@ const B2BSettings = {
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
       return result?.items
     } catch (error) {
@@ -113,7 +113,7 @@ const B2BSettings = {
           entityBeforeAction: JSON.stringify(options),
           entityAfterAction: JSON.stringify({}),
         },
-      }, {})
+      })
 
       return result
     } catch (e) {
@@ -144,7 +144,7 @@ const B2BSettings = {
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
-      }, {})
+      })
 
       return result
     } catch (e) {

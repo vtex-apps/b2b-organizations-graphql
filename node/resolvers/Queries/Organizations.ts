@@ -87,7 +87,7 @@ const Organizations = {
         entityBeforeAction: JSON.stringify({ orgId }),
         entityAfterAction: JSON.stringify({}),
       },
-    }, { })
+    })
 
     return organization?.status === 'active'
   },
@@ -122,7 +122,7 @@ const Organizations = {
           entityBeforeAction: JSON.stringify({ id }),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
       return {
         ...org,
@@ -204,7 +204,7 @@ const Organizations = {
           entityBeforeAction: JSON.stringify({ status, search, page, pageSize, sortOrder, sortedBy}),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
       return {
         data: mappedOrganizations,
@@ -303,7 +303,6 @@ const Organizations = {
     })
 
     try {
-      const result = organizations
 
       await audit.sendEvent({
         subjectId: 'get-organizations-by-email-event',
@@ -314,9 +313,9 @@ const Organizations = {
           entityBeforeAction: JSON.stringify({ email }),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
-      return result
+      return organizations
     } catch (error) {
       logger.error({
         error,
@@ -361,7 +360,6 @@ const Organizations = {
     )
 
     try {
-      const result = activeOrganizations
 
       await audit.sendEvent({
         subjectId: 'get-active-organizations-by-email-event',
@@ -372,9 +370,9 @@ const Organizations = {
           entityBeforeAction: JSON.stringify({ email }),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
-      return result
+      return activeOrganizations
     } catch (error) {
       logger.error({
         error,
@@ -397,7 +395,6 @@ const Organizations = {
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
-
 
     if (!sessionData?.namespaces['storefront-permissions']) {
       throw new GraphQLError('organization-data-not-found')
@@ -431,10 +428,6 @@ const Organizations = {
     }
 
     try {
-      const result = {
-        ...organization,
-        permissions: organization.permissions ?? { createQuote: true },
-      }
 
       await audit.sendEvent({
         subjectId: 'get-organization-by-id-storefront-event',
@@ -445,9 +438,12 @@ const Organizations = {
           entityBeforeAction: JSON.stringify({ id }),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
-      return result
+      return {
+        ...organization,
+        permissions: organization.permissions ?? { createQuote: true },
+      }
     } catch (error) {
       logger.error({
         error,
@@ -487,7 +483,7 @@ const Organizations = {
           entityBeforeAction: JSON.stringify({id}),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
       return result
     } catch (error) {
@@ -564,7 +560,7 @@ const Organizations = {
           }),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
       return result
     } catch (error) {

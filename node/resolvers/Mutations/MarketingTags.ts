@@ -21,8 +21,6 @@ const MarketingTags = {
         tags,
       })
 
-      const result = { status: 'success', message: '', id: costId }
-
       await audit.sendEvent({
         subjectId: 'set-marketing-tags-event',
         operation: 'SET_MARKETING_TAGS',
@@ -33,11 +31,14 @@ const MarketingTags = {
             costId,
             tags
           }),
-          entityAfterAction: JSON.stringify(result),
+          entityAfterAction: JSON.stringify({
+            costId,
+            tags
+          }),
         },
-      }, {})
+      })
 
-      return result
+      return { status: 'success', message: '', id: costId }
     } catch (error) {
       logger.error({
         error,

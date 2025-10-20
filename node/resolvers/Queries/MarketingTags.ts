@@ -24,7 +24,7 @@ const MarketingTags = {
           entityBeforeAction: JSON.stringify({ costId }),
           entityAfterAction: JSON.stringify({}),
         },
-      }, { })
+      })
 
       return result
     } catch (error) {
