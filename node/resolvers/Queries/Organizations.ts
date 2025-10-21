@@ -84,7 +84,7 @@ const Organizations = {
       meta: {
         entityName: 'CheckOrganizationIsActive',
         remoteIpAddress: ip,
-        entityBeforeAction: JSON.stringify({ orgId }),
+        entityBeforeAction: JSON.stringify({}),
         entityAfterAction: JSON.stringify({}),
       },
     })
@@ -119,7 +119,7 @@ const Organizations = {
         meta: {
           entityName: 'GetOrganizationById',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({ id }),
+          entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
       })
@@ -201,7 +201,7 @@ const Organizations = {
         meta: {
           entityName: 'GetOrganizations',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({ status, search, page, pageSize, sortOrder, sortedBy}),
+          entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
       })
@@ -310,7 +310,7 @@ const Organizations = {
         meta: {
           entityName: 'GetOrganizationsByEmail',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({ email }),
+          entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
       })
@@ -367,7 +367,7 @@ const Organizations = {
         meta: {
           entityName: 'GetActiveOrganizationsByEmail',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({ email }),
+          entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
       })
@@ -435,7 +435,7 @@ const Organizations = {
         meta: {
           entityName: 'GetOrganizationByIdStorefront',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({ id }),
+          entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
       })
@@ -468,11 +468,6 @@ const Organizations = {
     await checkConfig(ctx)
 
     try {
-      const result = await masterdata.getDocument({
-        dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
-        fields: ORGANIZATION_REQUEST_FIELDS,
-        id,
-      })
 
       await audit.sendEvent({
         subjectId: 'get-organization-request-by-id-event',
@@ -480,12 +475,16 @@ const Organizations = {
         meta: {
           entityName: 'GetOrganizationRequestById',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({id}),
+          entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
       })
 
-      return result
+      return await masterdata.getDocument({
+        dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
+        fields: ORGANIZATION_REQUEST_FIELDS,
+        id,
+      })
     } catch (error) {
       logger.error({
         error,
@@ -550,14 +549,7 @@ const Organizations = {
         meta: {
           entityName: 'GetOrganizationRequests',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
-            status,
-            search,
-            page,
-            pageSize,
-            sortOrder,
-            sortedBy,
-          }),
+          entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
       })

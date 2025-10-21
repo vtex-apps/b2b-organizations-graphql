@@ -211,7 +211,6 @@ const Users = {
       }
     }
 
-    try {
     const impersonation = await storefrontPermissionsClient
       .impersonateUser({ userId: id })
       .catch((error: any) => {
@@ -254,28 +253,20 @@ const Users = {
 
     sendImpersonateB2BUserMetric(ctx, metricParams)
 
-    const result = impersonation?.data?.impersonateUser ?? {
-        status: 'error',
-      }
+    const result = impersonation?.data?.impersonateUser ?? { status: 'error' }
 
-      await audit.sendEvent({
-        subjectId: 'impersonate-b2b-user-event',
-        operation: 'IMPERSONATE_B2B_USER',
-        meta: {
-          entityName: 'ImpersonateB2BUser',
-          remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
-            id,
-            user
-          }),
-          entityAfterAction: JSON.stringify(result),
-        },
-      })
+    await audit.sendEvent({
+      subjectId: 'impersonate-b2b-user-event',
+      operation: 'IMPERSONATE_B2B_USER',
+      meta: {
+        entityName: 'ImpersonateB2BUser',
+        remoteIpAddress: ip,
+        entityBeforeAction: JSON.stringify({ id, user }),
+        entityAfterAction: JSON.stringify(result),
+      },
+    })
 
-      return result
-    } catch (error) {
-      throw error
-    }
+    return result
   },
   /**
    *
@@ -382,34 +373,27 @@ const Users = {
       }
     }
 
-    try {
-      const result = await impersonateUser(
-        ctx,
-        storefrontPermissionsClient,
-        userId,
-        logger,
-        sessionData?.namespaces?.account?.accountName,
-        sessionData?.namespaces['storefront-permissions']
-      )
+    const result = await impersonateUser(
+      ctx,
+      storefrontPermissionsClient,
+      userId,
+      logger,
+      sessionData?.namespaces?.account?.accountName,
+      sessionData?.namespaces['storefront-permissions']
+    )
 
-      await audit.sendEvent({
-        subjectId: 'impersonate-user-event',
-        operation: 'IMPERSONATE_USER',
-        meta: {
-          entityName: 'ImpersonateUser',
-          remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
-            clId,
-            userId
-          }),
-          entityAfterAction: JSON.stringify(result),
-        },
-      })
+    await audit.sendEvent({
+      subjectId: 'impersonate-user-event',
+      operation: 'IMPERSONATE_USER',
+      meta: {
+        entityName: 'ImpersonateUser',
+        remoteIpAddress: ip,
+        entityBeforeAction: JSON.stringify({ clId, userId }),
+        entityAfterAction: JSON.stringify(result),
+      },
+    })
 
-      return result
-    } catch (error) {
-      throw error
-    }
+    return result
   },
 
   removeUserWithEmail: async (
@@ -448,8 +432,8 @@ const Users = {
 
         return storefrontPermissionsClient
           .deleteUser(fields)
-          .then(async (response: any) => {
-            await audit.sendEvent({
+          .then((response: any) => {
+            audit.sendEvent({
               subjectId: 'remove-user-with-email-event',
               operation: 'REMOVE_USER_WITH_EMAIL',
               meta: {
@@ -599,8 +583,6 @@ const Users = {
       ip
     } = ctx as any
 
-
-
     try {
       await checkUserIsAllowed({
         adminUserAuthToken,
@@ -633,8 +615,9 @@ const Users = {
 
     return storefrontPermissionsClient
       .addUser(fields)
-      .then(async (result: any) => {
-        await audit.sendEvent({
+      .then((result: any) => {
+        
+         audit.sendEvent({
           subjectId: 'add-user-event',
           operation: 'ADD_USER',
           meta: {

@@ -64,32 +64,21 @@ const B2BSettings = {
   getSellers: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { sellers, audit },
-      vtex: { logger },
       ip
     } = ctx
 
-    try {
-      const result = await sellers.getSellers()
+    await audit.sendEvent({
+      subjectId: 'get-sellers-event',
+      operation: 'GET_SELLERS',
+      meta: {
+        entityName: 'GetSellers',
+        remoteIpAddress: ip,
+        entityBeforeAction: JSON.stringify({}),
+        entityAfterAction: JSON.stringify({}),
+      },
+    })
 
-      await audit.sendEvent({
-        subjectId: 'get-sellers-event',
-        operation: 'GET_SELLERS',
-        meta: {
-          entityName: 'GetSellers',
-          remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({}),
-          entityAfterAction: JSON.stringify({}),
-        },
-      })
-
-      return result?.items
-    } catch (error) {
-      logger.error({
-        error,
-        message: 'getSellers-error',
-      })
-      return []
-    }
+    return (await sellers.getSellers())?.items
   },
   getSellersPaginated: async (
     _: void,
@@ -102,7 +91,6 @@ const B2BSettings = {
     } = ctx
 
     try {
-      const result = await sellers.getSellersPaginated(options)
 
       await audit.sendEvent({
         subjectId: 'get-sellers-paginated-event',
@@ -110,12 +98,12 @@ const B2BSettings = {
         meta: {
           entityName: 'GetSellersPaginated',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify(options),
+          entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
       })
 
-      return result
+      return await sellers.getSellersPaginated(options)
     } catch (e) {
       if (e.message) {
         throw new GraphQLError(e.message)
@@ -133,8 +121,7 @@ const B2BSettings = {
     } = ctx
 
     try {
-      const result = await lm.getAccount()
-
+      
       await audit.sendEvent({
         subjectId: 'get-account-event',
         operation: 'GET_ACCOUNT',
@@ -146,9 +133,8 @@ const B2BSettings = {
         },
       })
 
-      return result
+      return await lm.getAccount()
     } catch (e) {
-
       if (e.message) {
         throw new GraphQLError(e.message)
       } else if (e.response?.data?.message) {

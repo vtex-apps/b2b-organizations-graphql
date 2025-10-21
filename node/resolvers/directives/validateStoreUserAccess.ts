@@ -164,7 +164,7 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
             'ValidateStoreUserAccessAudit'
           ),
         )
-        audit(context, operation, 401)
+        await audit(context, operation, 401)
         logger.warn({
           message: 'ValidateStoreUserAccess: No token provided',
           ...metricFields,
@@ -182,7 +182,7 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
           'ValidateStoreUserAccessAudit'
         ),
       )
-      audit(context, operation, 403)
+      await audit(context, operation, 403)
       logger.warn({
         message: `ValidateStoreUserAccess: Invalid token`,
         ...metricFields,

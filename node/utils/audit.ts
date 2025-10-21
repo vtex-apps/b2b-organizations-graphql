@@ -12,22 +12,10 @@ const audit = async (
 
   const { subjectId, operation, entityNameFirstLetter } = transformOperation(operationName, statusCode);
 
-  if (statusCode === 403) {
+  if (statusCode === 401 || statusCode === 403) {
     await audit.sendEvent({
-      subjectId: subjectId,
-      operation: operation,
-      authorId: "unknown",
-      meta: {
-        entityName: entityNameFirstLetter,
-        remoteIpAddress: ip,
-        entityBeforeAction: JSON.stringify({}),
-        entityAfterAction: JSON.stringify({}),
-      },
-    })
-  } else if (statusCode === 401) {
-    await audit.sendEvent({
-      subjectId: subjectId,
-      operation: operation,
+      subjectId,
+      operation,
       authorId: "unknown",
       meta: {
         entityName: entityNameFirstLetter,

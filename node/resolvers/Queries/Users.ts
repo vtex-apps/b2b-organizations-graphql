@@ -177,19 +177,19 @@ const Users = {
     } = ctx
 
     const app: string = getAppId()
-      const settings: any = await vbase.getJSON('b2borg', app).catch((error) => {
-        logger.error({
-          error,
-          message: 'b2borg.getAppSettings-Error',
-        })
-        return {}
+    const settings: any = await vbase.getJSON('b2borg', app).catch((error) => {
+      logger.error({
+        error,
+        message: 'b2borg.getAppSettings-Error',
       })
+      return {}
+    })
 
-      if (!settings.adminSetup) {
-        settings.adminSetup = {}
-      }
+    if (!settings.adminSetup) {
+      settings.adminSetup = {}
+    }
 
-      const currHash = toHash(schemas)
+    const currHash = toHash(schemas)
 
     if (
       !settings.adminSetup?.schemaHash ||
@@ -229,18 +229,18 @@ const Users = {
       await vbase.saveJSON('b2borg', app, settings)
     }
 
-      await audit.sendEvent({
-        subjectId: 'get-app-settings-event',
-        operation: 'GET_APP_SETTINGS',
-        meta: {
-          entityName: 'GetAppSettings',
-          remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify(settings.adminSetup),
-          entityAfterAction: JSON.stringify({}),
-        },
-      })
+    await audit.sendEvent({
+      subjectId: 'get-app-settings-event',
+      operation: 'GET_APP_SETTINGS',
+      meta: {
+        entityName: 'GetAppSettings',
+        remoteIpAddress: ip,
+        entityBeforeAction: JSON.stringify({}),
+        entityAfterAction: JSON.stringify({}),
+      },
+    })
 
-      return settings
+    return settings
   },
 
   getOrganizationsWithoutSalesManager: async (
@@ -343,7 +343,7 @@ const Users = {
         meta: {
           entityName: 'GetOrganizationsWithoutSalesManager',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({ scrollSize: SCROLL_SIZE }),
+          entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
         },
       })
@@ -393,23 +393,22 @@ const Users = {
 
     return storefrontPermissions
       .listUsers(variables)
-      .then(async (result: any) => {
-      const returnValue = result.data.listUsers
+      .then((result: any) => {
 
-        await audit.sendEvent({
+        audit.sendEvent({
           subjectId: 'get-users-event',
           operation: 'GET_USERS',
           meta: {
             entityName: 'GetUsers',
             remoteIpAddress: ip,
-            entityBeforeAction: JSON.stringify({ organizationId, costCenterId }),
+            entityBeforeAction: JSON.stringify({}),
             entityAfterAction: JSON.stringify({}),
           },
         })
 
-      return returnValue
+      return result.data.listUsers
       })
-      .catch(async (error) => {
+      .catch((error) => {
         logger.error({
           error,
           message: 'getUsers-getUsers-error',
@@ -472,21 +471,20 @@ const Users = {
 
     return storefrontPermissions
       .listUsersPaginated(variables)
-      .then(async (result: any) => {
-        const returnValue = result.data.listUsersPaginated
+      .then((result: any) => {
 
-        await audit.sendEvent({
+        audit.sendEvent({
           subjectId: 'get-users-paginated-event',
           operation: 'GET_USERS_PAGINATED',
           meta: {
             entityName: 'GetUsersPaginated',
             remoteIpAddress: ip,
-            entityBeforeAction: JSON.stringify({ organizationId, costCenterId, search, page, pageSize, sortOrder, sortedBy }),
+            entityBeforeAction: JSON.stringify({}),
             entityAfterAction: JSON.stringify({}),
           },
         })
 
-      return returnValue
+      return result.data.listUsersPaginated
       })
       .catch(async (error) => {
         logger.error({
@@ -500,32 +498,21 @@ const Users = {
   getSalesChannels: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { audit },
-      vtex: { logger },
       ip
     } = ctx
 
-    try {
-      const result = await getChannels(ctx)
+    await audit.sendEvent({
+      subjectId: 'get-sales-channels-event',
+      operation: 'GET_SALES_CHANNELS',
+      meta: {
+        entityName: 'GetSalesChannels',
+        remoteIpAddress: ip,
+        entityBeforeAction: JSON.stringify({}),
+        entityAfterAction: JSON.stringify({}),
+      },
+    })
 
-      await audit.sendEvent({
-        subjectId: 'get-sales-channels-event',
-        operation: 'GET_SALES_CHANNELS',
-        meta: {
-          entityName: 'GetSalesChannels',
-          remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({}),
-          entityAfterAction: JSON.stringify({}),
-        },
-      })
-
-      return result
-    } catch (error) {
-      logger.error({
-        error,
-        message: 'getSalesChannels-error',
-      })
-      throw new GraphQLError(getErrorMessage(error))
-    }
+    return getChannels(ctx)
   },
 
   getBinding: async (_: void, { email }: { email: string }, ctx: Context) => {
@@ -587,7 +574,7 @@ const Users = {
       meta: {
         entityName: 'GetBinding',
         remoteIpAddress: ip,
-        entityBeforeAction: JSON.stringify({ email }),
+        entityBeforeAction: JSON.stringify({}),
         entityAfterAction: JSON.stringify({}),
       },
     })

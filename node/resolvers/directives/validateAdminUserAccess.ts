@@ -133,7 +133,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
             'ValidateAdminUserAccessAudit'
           ),
         )
-        audit(context, operation, 401)
+        await audit(context, operation, 401)
         logger.warn({
           message: 'ValidateAdminUserAccess: No token provided',
           ...metricFields,
@@ -152,7 +152,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
           'ValidateAdminUserAccessAudit'
         ),
       )
-      audit(context, operation, 403)
+      await audit(context, operation, 403)
       logger.warn({
         message: 'ValidateAdminUserAccess: Invalid token',
         ...metricFields,

@@ -135,82 +135,82 @@ const CostCenters = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-      // check if organization exists
-      const organization = (await Organizations.getOrganizationById(
-        _,
-        { id: organizationId },
-        ctx
-      )) as {
-        status: string
-      }
+    // check if organization exists
+    const organization = (await Organizations.getOrganizationById(
+      _,
+      { id: organizationId },
+      ctx
+    )) as {
+      status: string
+    }
 
-      if (!organization) {
-        throw new Error('Organization not found')
-      }
+    if (!organization) {
+      throw new Error('Organization not found')
+    }
 
-      // check if cost center id already exists
-      let costCenter = null
+    // check if cost center id already exists
+    let costCenter = null
 
-      try {
-        costCenter = await costCenters.getCostCenterById(_, { id }, ctx)
-      } catch (error) {
-        costCenter = null // cost center does not exist so we don't need to do anything
-      }
+    try {
+      costCenter = await costCenters.getCostCenterById(_, { id }, ctx)
+    } catch (error) {
+      costCenter = null // cost center does not exist so we don't need to do anything
+    }
 
-      if (costCenter) {
-        throw new Error('Cost Center already exists')
-      }
+    if (costCenter) {
+      throw new Error('Cost Center already exists')
+    }
 
-      // create cost center
-      const newCostCenter: CostCenterInput = {
-        addresses,
-        businessDocument,
-        customFields,
-        marketingTags,
-        id,
-        name,
-        phoneNumber,
-        sellers,
-        stateRegistration,
-        paymentTerms,
-      }
+    // create cost center
+    const newCostCenter: CostCenterInput = {
+      addresses,
+      businessDocument,
+      customFields,
+      marketingTags,
+      id,
+      name,
+      phoneNumber,
+      sellers,
+      stateRegistration,
+      paymentTerms,
+    }
 
-      const { id: costCenterId } = await CostCenterRepository.createCostCenter(
-        _,
-        organizationId,
-        newCostCenter,
-        ctx
-      )
+    const { id: costCenterId } = await CostCenterRepository.createCostCenter(
+      _,
+      organizationId,
+      newCostCenter,
+      ctx
+    )
 
-      await audit.sendEvent(
-        {
-          subjectId: 'create-cost-center-with-id-event',
-          operation: 'CREATE_COST_CENTER_WITH_ID',
-          meta: {
-            entityName: 'CreateCostCenterWithId',
-            remoteIpAddress: ip,
-            entityBeforeAction: JSON.stringify({
-              organizationId,
-              input: {
-                id,
-                name,
-                addresses,
-                phoneNumber,
-                businessDocument,
-                stateRegistration,
-                customFields,
-                marketingTags,
-                sellers,
-                paymentTerms,
-              },
-            }),
-            entityAfterAction: JSON.stringify({
-              id: costCenterId,
-            }),
-          },
-        })
+    await audit.sendEvent(
+      {
+        subjectId: 'create-cost-center-with-id-event',
+        operation: 'CREATE_COST_CENTER_WITH_ID',
+        meta: {
+          entityName: 'CreateCostCenterWithId',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            organizationId,
+            input: {
+              id,
+              name,
+              addresses,
+              phoneNumber,
+              businessDocument,
+              stateRegistration,
+              customFields,
+              marketingTags,
+              sellers,
+              paymentTerms,
+            },
+          }),
+          entityAfterAction: JSON.stringify({
+            id: costCenterId,
+          }),
+        },
+      })
 
-      return { id: costCenterId }
+    return { id: costCenterId }
   },
 
   createCostCenterAddress: async (
