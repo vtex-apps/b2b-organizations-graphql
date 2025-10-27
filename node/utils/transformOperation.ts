@@ -1,15 +1,18 @@
 export function transformOperation(operation: string, statusCode?: number) {
-  const snakeCase = operation
+  // Eliminar prefijos comunes de operaciones HTTP (case-sensitive)
+  const withoutPrefix = operation.replace(/^(get|post|put|patch|delete|create|update|list|fetch|Get|Post|Put|Patch|Delete|Create|Update|List|Fetch)/i, '');
+  
+  const snakeCase = withoutPrefix
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toUpperCase();
 
-  const baseName = operation
+  const baseName = withoutPrefix
     .replace(/([A-Z])/g, '-$1')
     .toLowerCase()
     .replace(/^-/, '');
 
   const entityNameFirstLetter =
-    operation.charAt(0).toUpperCase() + operation.slice(1);
+    withoutPrefix.charAt(0).toUpperCase() + withoutPrefix.slice(1);
 
   let subjectId = `${baseName}-unknown-error-event`;
   let operationName = `${snakeCase}-UNKNOWN_ERROR`;

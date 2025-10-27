@@ -23,7 +23,7 @@ const Settings = {
         subjectId: 'save-app-settings-event',
         operation: 'SAVE_APP_SETTINGS',
         meta: {
-          entityName: 'SaveAppSettings',
+          entityName: 'AppSettings',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({ app }),
           entityAfterAction: JSON.stringify({ 
@@ -135,7 +135,7 @@ const Settings = {
         subjectId: 'save-b2b-settings-event',
         operation: 'SAVE_B2B_SETTINGS',
         meta: {
-          entityName: 'SaveB2BSettings',
+          entityName: 'B2BSettings',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({
             input: {
@@ -191,7 +191,7 @@ const Settings = {
         subjectId: 'save-sales-channels-event',
         operation: 'SAVE_SALES_CHANNELS',
         meta: {
-          entityName: 'SaveSalesChannels',
+          entityName: 'SalesChannels',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({
             channels

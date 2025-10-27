@@ -18,7 +18,7 @@ const MarketingTags = {
         subjectId: 'get-marketing-tags-event',
         operation: 'GET_MARKETING_TAGS',
         meta: {
-          entityName: 'GetMarketingTags',
+          entityName: 'MarketingTags',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),

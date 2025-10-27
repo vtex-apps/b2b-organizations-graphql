@@ -233,7 +233,7 @@ const Users = {
       subjectId: 'get-app-settings-event',
       operation: 'GET_APP_SETTINGS',
       meta: {
-        entityName: 'GetAppSettings',
+        entityName: 'AppSettings',
         remoteIpAddress: ip,
         entityBeforeAction: JSON.stringify({}),
         entityAfterAction: JSON.stringify({}),
@@ -341,7 +341,7 @@ const Users = {
         subjectId: 'get-organizations-without-sales-manager-event',
         operation: 'GET_ORGANIZATIONS_WITHOUT_SALES_MANAGER',
         meta: {
-          entityName: 'GetOrganizationsWithoutSalesManager',
+          entityName: 'OrganizationsWithoutSalesManager',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -505,7 +505,7 @@ const Users = {
       subjectId: 'get-sales-channels-event',
       operation: 'GET_SALES_CHANNELS',
       meta: {
-        entityName: 'GetSalesChannels',
+        entityName: 'SalesChannels',
         remoteIpAddress: ip,
         entityBeforeAction: JSON.stringify({}),
         entityAfterAction: JSON.stringify({}),
@@ -572,7 +572,7 @@ const Users = {
       subjectId: 'get-binding-event',
       operation: 'GET_BINDING',
       meta: {
-        entityName: 'GetBinding',
+        entityName: 'Binding',
         remoteIpAddress: ip,
         entityBeforeAction: JSON.stringify({}),
         entityAfterAction: JSON.stringify({}),

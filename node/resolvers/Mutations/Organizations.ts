@@ -387,7 +387,7 @@ const Organizations = {
         subjectId: 'create-organization-event',
         operation: 'CREATE_ORGANIZATION',
         meta: {
-          entityName: 'CreateOrganization',
+          entityName: 'Organization',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({
             name,
@@ -546,7 +546,7 @@ const Organizations = {
         subjectId: 'create-organization-request-event',
         operation: 'CREATE_ORGANIZATION_REQUEST',
         meta: {
-          entityName: 'CreateOrganizationRequest',
+          entityName: 'OrganizationRequest',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({
             b2bCustomerAdmin,
@@ -633,7 +633,7 @@ const Organizations = {
         subjectId: 'create-organization-and-cost-centers-with-id-event',
         operation: 'CREATE_ORGANIZATION_AND_COST_CENTERS_WITH_ID',
         meta: {
-          entityName: 'CreateOrganizationAndCostCentersWithId',
+          entityName: 'OrganizationAndCostCentersWithId',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify(input),
           entityAfterAction: JSON.stringify({
@@ -676,7 +676,7 @@ const Organizations = {
         subjectId: 'delete-organization-request-event',
         operation: 'DELETE_ORGANIZATION_REQUEST',
         meta: {
-          entityName: 'DeleteOrganizationRequest',
+          entityName: 'OrganizationRequest',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({
             id
@@ -790,7 +790,7 @@ const Organizations = {
         subjectId: 'update-organization-event',
         operation: 'UPDATE_ORGANIZATION',
         meta: {
-          entityName: 'UpdateOrganization',
+          entityName: 'Organization',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({
             id,
@@ -918,7 +918,7 @@ const Organizations = {
             subjectId: 'update-organization-request-approved-event',
             operation: 'UPDATE_ORGANIZATION_REQUEST_APPROVED',
             meta: {
-              entityName: 'UpdateOrganizationRequest',
+              entityName: 'OrganizationRequest',
               remoteIpAddress: ip,
               entityBeforeAction: JSON.stringify({
                 id,
@@ -967,7 +967,7 @@ const Organizations = {
         subjectId: 'update-organization-request-declined-event',
         operation: 'UPDATE_ORGANIZATION_REQUEST_DECLINED',
         meta: {
-          entityName: 'UpdateOrganizationRequest',
+          entityName: 'OrganizationRequest',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({
             id,

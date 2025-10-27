@@ -259,7 +259,7 @@ const Users = {
       subjectId: 'impersonate-b2b-user-event',
       operation: 'IMPERSONATE_B2B_USER',
       meta: {
-        entityName: 'ImpersonateB2BUser',
+        entityName: 'B2BUser',
         remoteIpAddress: ip,
         entityBeforeAction: JSON.stringify({ id, user }),
         entityAfterAction: JSON.stringify(result),
@@ -386,7 +386,7 @@ const Users = {
       subjectId: 'impersonate-user-event',
       operation: 'IMPERSONATE_USER',
       meta: {
-        entityName: 'ImpersonateUser',
+        entityName: 'User',
         remoteIpAddress: ip,
         entityBeforeAction: JSON.stringify({ clId, userId }),
         entityAfterAction: JSON.stringify(result),
@@ -539,7 +539,7 @@ const Users = {
           subjectId: 'remove-user-event',
           operation: 'REMOVE_USER',
           meta: {
-            entityName: 'RemoveUser',
+            entityName: 'User',
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({
               id,
@@ -695,7 +695,7 @@ const Users = {
         subjectId: 'create-user-with-email-event',
         operation: 'CREATE_USER_WITH_EMAIL',
         meta: {
-          entityName: 'CreateUserWithEmail',
+          entityName: 'Email',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({
             orgId,
@@ -796,7 +796,7 @@ const Users = {
           subjectId: 'update-user-event',
           operation: 'UPDATE_USER',
           meta: {
-            entityName: 'UpdateUser',
+            entityName: 'User',
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({
               id,
@@ -905,7 +905,7 @@ const Users = {
           subjectId: 'save-user-event',
           operation: 'SAVE_USER',
           meta: {
-            entityName: 'SaveUser',
+            entityName: 'User',
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({
               id,

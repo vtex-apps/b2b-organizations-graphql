@@ -88,7 +88,7 @@ const CostCenters = {
           subjectId: 'create-cost-center-event',
           operation: 'CREATE_COST_CENTER',
           meta: {
-            entityName: 'CreateCostCenter',
+            entityName: 'CostCenter',
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({
               organizationId,
@@ -187,7 +187,7 @@ const CostCenters = {
         subjectId: 'create-cost-center-with-id-event',
         operation: 'CREATE_COST_CENTER_WITH_ID',
         meta: {
-          entityName: 'CreateCostCenterWithId',
+          entityName: 'CostCenterWithId',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({
             organizationId,
@@ -251,7 +251,7 @@ const CostCenters = {
           subjectId: 'create-cost-center-address-event',
           operation: 'CREATE_COST_CENTER_ADDRESS',
           meta: {
-            entityName: 'CreateCostCenterAddress',
+            entityName: 'CostCenterAddress',
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({
               costCenterId,
@@ -291,7 +291,7 @@ const CostCenters = {
           subjectId: 'delete-cost-center-event',
           operation: 'DELETE_COST_CENTER',
           meta: {
-            entityName: 'DeleteCostCenter',
+            entityName: 'CostCenter',
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({ id }),
             entityAfterAction: JSON.stringify({ deleted: true, id }),
@@ -321,7 +321,7 @@ const CostCenters = {
           subjectId: 'delete-organization-event',
           operation: 'DELETE_ORGANIZATION',
           meta: {
-            entityName: 'DeleteOrganization',
+            entityName: 'Organization',
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({ id }),
             entityAfterAction: JSON.stringify({ deleted: true, id }),
@@ -385,7 +385,7 @@ const CostCenters = {
           subjectId: 'update-cost-center-event',
           operation: 'UPDATE_COST_CENTER',
           meta: {
-            entityName: 'UpdateCostCenter',
+            entityName: 'CostCenter',
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({
               id,
@@ -460,7 +460,7 @@ const CostCenters = {
           subjectId: 'update-cost-center-address-event',
           operation: 'UPDATE_COST_CENTER_ADDRESS',
           meta: {
-            entityName: 'UpdateCostCenterAddress',
+            entityName: 'CostCenterAddress',
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({
               costCenterId,

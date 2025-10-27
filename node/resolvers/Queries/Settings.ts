@@ -42,7 +42,7 @@ const B2BSettings = {
         subjectId: 'get-b2b-settings-event',
         operation: 'GET_B2B_SETTINGS',
         meta: {
-          entityName: 'GetB2BSettings',
+          entityName: 'B2BSettings',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -71,7 +71,7 @@ const B2BSettings = {
       subjectId: 'get-sellers-event',
       operation: 'GET_SELLERS',
       meta: {
-        entityName: 'GetSellers',
+        entityName: 'Sellers',
         remoteIpAddress: ip,
         entityBeforeAction: JSON.stringify({}),
         entityAfterAction: JSON.stringify({}),
@@ -96,7 +96,7 @@ const B2BSettings = {
         subjectId: 'get-sellers-paginated-event',
         operation: 'GET_SELLERS_PAGINATED',
         meta: {
-          entityName: 'GetSellersPaginated',
+          entityName: 'SellersPaginated',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -126,7 +126,7 @@ const B2BSettings = {
         subjectId: 'get-account-event',
         operation: 'GET_ACCOUNT',
         meta: {
-          entityName: 'GetAccount',
+          entityName: 'Account',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),

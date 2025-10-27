@@ -106,7 +106,7 @@ const costCenters = {
         subjectId: 'get-cost-center-by-id-event',
         operation: 'GET_COST_CENTER_BY_ID',
         meta: {
-          entityName: 'GetCostCenterById',
+          entityName: 'CostCenterById',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -183,7 +183,7 @@ const costCenters = {
         subjectId: 'get-cost-center-by-id-storefront-event',
         operation: 'GET_COST_CENTER_BY_ID_STOREFRONT',
         meta: {
-          entityName: 'GetCostCenterByIdStorefront',
+          entityName: 'CostCenterByIdStorefront',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -210,7 +210,7 @@ const costCenters = {
         subjectId: 'get-payment-terms-event',
         operation: 'GET_PAYMENT_TERMS',
         meta: {
-          entityName: 'GetPaymentTerms',
+          entityName: 'PaymentTerms',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -270,7 +270,7 @@ const costCenters = {
         subjectId: 'get-cost-centers-event',
         operation: 'GET_COST_CENTERS',
         meta: {
-          entityName: 'GetCostCenters',
+          entityName: 'CostCenters',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -322,7 +322,7 @@ const costCenters = {
         subjectId: 'get-cost-centers-by-organization-id-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID',
         meta: {
-          entityName: 'GetCostCentersByOrganizationId',
+          entityName: 'CostCentersByOrganizationId',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -431,7 +431,7 @@ const costCenters = {
         subjectId: 'get-cost-centers-by-organization-id-storefront-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID_STOREFRONT',
         meta: {
-          entityName: 'GetCostCentersByOrganizationIdStorefront',
+          entityName: 'CostCentersByOrganizationIdStorefront',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
