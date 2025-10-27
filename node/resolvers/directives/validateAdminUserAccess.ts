@@ -11,6 +11,7 @@ import {
   validateApiToken,
 } from './helper'
 import audit from '../../utils/audit'
+import { LICENSE_MANAGER_ROLES } from '../../constants'
 
 export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -25,6 +26,15 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
       const {
         vtex: { adminUserAuthToken, logger },
       } = context
+
+      // Get the admin permission from directive arguments, defaulting to VIEW permission
+      const adminPermissionArg =
+        this.args?.adminPermission || 'B2B_ORGANIZATIONS_VIEW'
+
+      const requiredPermission =
+        adminPermissionArg === 'B2B_ORGANIZATIONS_VIEW'
+          ? LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_VIEW
+          : LICENSE_MANAGER_ROLES.B2B_ORGANIZATIONS_EDIT
 
       // get metrics data
       const operation = field?.astNode?.name?.value ?? context?.request?.url
@@ -42,20 +52,23 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
         userAgent,
       }
 
-      const { hasAdminToken, hasValidAdminToken } = await validateAdminToken(
-        context,
-        adminUserAuthToken as string
-      )
+      const { hasAdminToken, hasValidAdminToken, hasValidAdminRole } =
+        await validateAdminToken(
+          context,
+          adminUserAuthToken as string,
+          requiredPermission
+        )
 
       // add admin token metrics
       metricFields = {
         ...metricFields,
         hasAdminToken,
         hasValidAdminToken,
+        hasValidAdminRole,
       }
 
-      // allow access if has valid admin token
-      if (hasValidAdminToken) {
+      // allow access if has valid admin token and valid admin role
+      if (hasValidAdminToken && hasValidAdminRole) {
         sendAuthMetric(
           context,
           logger,
@@ -70,18 +83,22 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
       }
 
       // If there's no valid admin token on context, search for it on header
-      const { hasAdminTokenOnHeader, hasValidAdminTokenOnHeader } =
-        await validateAdminTokenOnHeader(context)
+      const {
+        hasAdminTokenOnHeader,
+        hasValidAdminTokenOnHeader,
+        hasValidAdminRoleOnHeader,
+      } = await validateAdminTokenOnHeader(context, requiredPermission)
 
       // add admin header token metrics
       metricFields = {
         ...metricFields,
         hasAdminTokenOnHeader,
         hasValidAdminTokenOnHeader,
+        hasValidAdminRoleOnHeader,
       }
 
-      // allow access if has valid admin token
-      if (hasValidAdminTokenOnHeader) {
+      // allow access if has valid admin token and valid admin role
+      if (hasValidAdminTokenOnHeader && hasValidAdminRoleOnHeader) {
         // set adminUserAuthToken on context so it can be used later
         context.vtex.adminUserAuthToken = context?.headers
           .vtexidclientautcookie as string
@@ -98,17 +115,19 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
         return resolve(root, args, context, info)
       }
 
-      const { hasApiToken, hasValidApiToken } = await validateApiToken(context)
+      const { hasApiToken, hasValidApiToken, hasValidApiRole } =
+        await validateApiToken(context, requiredPermission)
 
       // add API token metrics
       metricFields = {
         ...metricFields,
         hasApiToken,
         hasValidApiToken,
+        hasValidApiRole,
       }
 
-      // allow access if has valid API token
-      if (hasValidApiToken) {
+      // allow access if has valid API token and valid API role
+      if (hasValidApiToken && hasValidApiRole) {
         sendAuthMetric(
           context,
           logger,
@@ -142,22 +161,15 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
       }
 
       // deny access if no valid tokens were provided
-
-      sendAuthMetric(
-        context,
-        logger,
-        new AuthMetric(
-          context?.vtex?.account,
-          metricFields,
-          'ValidateAdminUserAccessAudit'
-        ),
-      )
       await audit(context, operation, 403)
+
       logger.warn({
-        message: 'ValidateAdminUserAccess: Invalid token',
+        message:
+          'ValidateAdminUserAccess: Invalid token or insufficient role permissions',
+        requiredPermission,
         ...metricFields,
       })
-      throw new ForbiddenError('Unauthorized Access')
+      throw new ForbiddenError(`Unauthorized Access`)
     }
   }
 }

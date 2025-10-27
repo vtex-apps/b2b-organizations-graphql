@@ -418,6 +418,7 @@ const Users = {
 
         if (!user) {
           logger.error({ message: 'User not found' })
+
           return { status: 'error', message: 'User not found' }
         }
 

@@ -251,7 +251,7 @@ const Organizations = {
 
     if (sessionData?.namespaces) {
       const checkUserPermissionResult = await storefrontPermissions
-        .checkUserPermission('vtex.b2b-organizations@2.x')
+        .checkUserPermission('vtex.b2b-organizations@3.x')
         .catch((error: any) => {
           logger.error({
             error,
@@ -377,6 +377,38 @@ const Organizations = {
       logger.error({
         error,
         message: 'getActiveOrganizationsByEmail-error',
+      })
+      throw new GraphQLError(getErrorMessage(error))
+    }
+  },
+
+  getOrganizationsPaginatedByEmail: async (
+    _: void,
+    {
+      email,
+      page = 1,
+      pageSize = 25,
+    }: {
+      email?: string
+      page: number
+      pageSize: number
+    },
+    { clients: { storefrontPermissions }, vtex: { logger } }: any
+  ) => {
+    try {
+      const {
+        data: { getOrganizationsPaginatedByEmail },
+      } = await storefrontPermissions.getOrganizationsPaginatedByEmail(
+        email,
+        page,
+        pageSize
+      )
+
+      return getOrganizationsPaginatedByEmail
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getOrganizationsPaginatedByEmail-error',
       })
       throw new GraphQLError(getErrorMessage(error))
     }

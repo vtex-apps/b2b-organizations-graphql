@@ -1,9 +1,11 @@
 import { randAlphaNumeric, randEmail, randUser, randUuid } from '@ngneat/falso'
 import { GraphQLError } from 'graphql'
 
-import Users from './Users'
 import type { UserArgs } from '../../typings'
+import Users from './Users'
 
+jest.mock('@vtex/api')
+jest.mock('@vtex/diagnostics-nodejs', () => ({}))
 jest.mock('../config')
 jest.mock('../../utils/metrics/impersonate')
 

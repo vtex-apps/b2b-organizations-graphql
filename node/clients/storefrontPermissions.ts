@@ -8,6 +8,7 @@ import saveUser from '../mutations/saveUser'
 import updateUser from '../mutations/updateUser'
 import getB2BUser from '../queries/getB2BUser'
 import getOrganizationsByEmail from '../queries/getOrganizationsByEmail'
+import getOrganizationsPaginatedByEmail from '../queries/getOrganizationsPaginatedByEmail'
 import getPermission from '../queries/getPermission'
 import getRole from '../queries/getRole'
 import getUser from '../queries/getUser'
@@ -19,7 +20,7 @@ import listUsersPaginated from '../queries/listUsersPaginated'
 
 export default class StorefrontPermissions extends AppGraphQLClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
-    super('vtex.storefront-permissions@2.x', ctx, options)
+    super('vtex.storefront-permissions@3.x', ctx, options)
   }
 
   public checkUserPermission = async (app?: string): Promise<any> => {
@@ -36,6 +37,22 @@ export default class StorefrontPermissions extends AppGraphQLClient {
       query: getOrganizationsByEmail,
       variables: {
         email,
+      },
+    })
+  }
+
+  public getOrganizationsPaginatedByEmail = async (
+    email: string,
+    page: number,
+    pageSize: number
+  ): Promise<any> => {
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: getOrganizationsPaginatedByEmail,
+      variables: {
+        email,
+        page,
+        pageSize,
       },
     })
   }
@@ -337,11 +354,11 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }
 
   private getPersistedQuery = (
-    sender = 'vtex.b2b-organizations-graphql@1.x'
+    sender = 'vtex.b2b-organizations-graphql@2.x'
   ) => {
     return {
       persistedQuery: {
-        provider: 'vtex.storefront-permissions@2.x',
+        provider: 'vtex.storefront-permissions@3.x',
         sender,
       },
     }

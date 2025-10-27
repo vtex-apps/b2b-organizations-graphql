@@ -24,6 +24,23 @@ export default class LMClient extends ExternalClient {
     })
   }
 
+  public checkUserSpecificRole = async (
+    account: string,
+    userEmail: string,
+    productCode: number,
+    resourceCode: string
+  ) => {
+    return this.get(
+      `/api/license-manager/pvt/accounts/${encodeURI(
+        account
+      )}/products/${productCode}/logins/${encodeURI(
+        userEmail
+      )}/resources/${encodeURI(resourceCode)}/granted`
+    ).then((res: any) => {
+      return res
+    })
+  }
+
   public getAccount = async () => {
     return this.get<GetAccountResponse>(`/api/license-manager/account`).then(
       (res) => {
