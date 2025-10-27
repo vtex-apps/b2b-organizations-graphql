@@ -355,8 +355,9 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, mail },
+      clients: { storefrontPermissions, mail, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
@@ -381,6 +382,27 @@ const Organizations = {
       )
 
       const organizationId = createOrganizationResult.DocumentId
+
+      await audit.sendEvent({
+        subjectId: 'create-organization-event',
+        operation: 'CREATE_ORGANIZATION',
+        meta: {
+          entityName: 'Organization',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            name,
+            tradeName,
+            defaultCostCenter,
+            costCenters,
+            customFields,
+            paymentTerms,
+            priceTables,
+            salesChannel,
+            sellers,
+          }),
+          entityAfterAction: JSON.stringify(createOrganizationResult),
+        },
+      })
 
       let costCenterResult: any[] = []
 
@@ -469,8 +491,9 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, storefrontPermissions, mail },
+      clients: { masterdata, storefrontPermissions, mail, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
@@ -518,6 +541,28 @@ const Organizations = {
         fields: organizationRequest,
         schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
       })) as any
+
+      await audit.sendEvent({
+        subjectId: 'create-organization-request-event',
+        operation: 'CREATE_ORGANIZATION_REQUEST',
+        meta: {
+          entityName: 'OrganizationRequest',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            b2bCustomerAdmin,
+            costCenters,
+            defaultCostCenter,
+            customFields,
+            name,
+            tradeName,
+            priceTables,
+            salesChannel,
+            paymentTerms,
+            sellers,
+          }),
+          entityAfterAction: JSON.stringify(result),
+        },
+      })
 
       if (settings?.autoApprove) {
         await Organizations.updateOrganizationRequest(
@@ -569,6 +614,8 @@ const Organizations = {
   }> => {
     const {
       vtex: { logger },
+      clients: { audit },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
@@ -581,6 +628,20 @@ const Organizations = {
         input,
         ctx
       )
+
+      await audit.sendEvent({
+        subjectId: 'create-organization-and-cost-centers-with-id-event',
+        operation: 'CREATE_ORGANIZATION_AND_COST_CENTERS_WITH_ID',
+        meta: {
+          entityName: 'OrganizationAndCostCentersWithId',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify(input),
+          entityAfterAction: JSON.stringify({
+            href,
+            id
+          }),
+        },
+      })
 
       return {
         href,
@@ -601,13 +662,30 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
+      ip
     } = ctx
 
     try {
       await masterdata.deleteDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         id,
+      })
+
+      await audit.sendEvent({
+        subjectId: 'delete-organization-request-event',
+        operation: 'DELETE_ORGANIZATION_REQUEST',
+        meta: {
+          entityName: 'OrganizationRequest',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            id
+          }),
+          entityAfterAction: JSON.stringify({
+            id,
+            deleted: true
+          }),
+        },
       })
 
       return { status: 'success', message: '' }
@@ -647,8 +725,9 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, mail, masterdata },
+      clients: { storefrontPermissions, mail, masterdata, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
@@ -707,6 +786,24 @@ const Organizations = {
         id,
       })
 
+      await audit.sendEvent({
+        subjectId: 'update-organization-event',
+        operation: 'UPDATE_ORGANIZATION',
+        meta: {
+          entityName: 'Organization',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            id,
+            currentOrganizationData
+          }),
+          entityAfterAction: JSON.stringify({
+            id,
+            fields,
+            status: 'success'
+          }),
+        },
+      })
+
       sendUpdateOrganizationMetric(ctx, logger, {
         account: ctx.vtex.account,
         currentOrganizationData,
@@ -734,8 +831,9 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, mail, storefrontPermissions },
+      clients: { masterdata, mail, storefrontPermissions, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     const settings = (await B2BSettings.getB2BSettings(
@@ -816,6 +914,27 @@ const Organizations = {
             id,
           })
 
+          await audit.sendEvent({
+            subjectId: 'update-organization-request-approved-event',
+            operation: 'UPDATE_ORGANIZATION_REQUEST_APPROVED',
+            meta: {
+              entityName: 'OrganizationRequest',
+              remoteIpAddress: ip,
+              entityBeforeAction: JSON.stringify({
+                id,
+                status: organizationRequest.status,
+                notes: '',
+                organizationRequest: organizationRequest
+              }),
+              entityAfterAction: JSON.stringify({
+                id,
+                status,
+                notes,
+                organizationId
+              }),
+            },
+          })
+
           sendOrganizationStatusMetric(ctx, logger, {
             account: ctx.vtex.account,
             status: ORGANIZATION_REQUEST_STATUSES.APPROVED,
@@ -842,6 +961,26 @@ const Organizations = {
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         fields: { status, notes },
         id,
+      })
+
+      await audit.sendEvent({
+        subjectId: 'update-organization-request-declined-event',
+        operation: 'UPDATE_ORGANIZATION_REQUEST_DECLINED',
+        meta: {
+          entityName: 'OrganizationRequest',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({
+            id,
+            status: organizationRequest.status,
+            notes: '',
+            organizationRequest: organizationRequest
+          }),
+          entityAfterAction: JSON.stringify({
+            id,
+            status,
+            notes
+          }),
+        },
       })
 
       if (

@@ -38,8 +38,9 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { session },
+      clients: { session, audit },
       vtex: { logger, sessionToken, adminUserAuthToken },
+      ip
     } = ctx
 
     const sessionData = await session
@@ -77,6 +78,17 @@ const Organizations = {
       throw new Error('Organization not found')
     }
 
+    await audit.sendEvent({
+      subjectId: 'check-organization-is-active-event',
+      operation: 'CHECK_ORGANIZATION_IS_ACTIVE',
+      meta: {
+        entityName: 'OrganizationIsActive',
+        remoteIpAddress: ip,
+        entityBeforeAction: JSON.stringify({}),
+        entityAfterAction: JSON.stringify({}),
+      },
+    })
+
     return organization?.status === 'active'
   },
 
@@ -86,8 +98,9 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
@@ -98,6 +111,17 @@ const Organizations = {
         dataEntity: ORGANIZATION_DATA_ENTITY,
         fields: ORGANIZATION_FIELDS,
         id,
+      })
+
+      await audit.sendEvent({
+        subjectId: 'get-organization-by-id-event',
+        operation: 'GET_ORGANIZATION_BY_ID',
+        meta: {
+          entityName: 'OrganizationById',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
       })
 
       return {
@@ -132,8 +156,9 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
@@ -170,6 +195,17 @@ const Organizations = {
         }
       })
 
+      await audit.sendEvent({
+        subjectId: 'get-organizations-event',
+        operation: 'GET_ORGANIZATIONS',
+        meta: {
+          entityName: 'Organizations',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
       return {
         data: mappedOrganizations,
         pagination: organizationsDB.pagination,
@@ -189,8 +225,9 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, session },
+      clients: { storefrontPermissions, session, audit },
       vtex: { logger, sessionToken, adminUserAuthToken },
+      ip
     } = ctx
 
     const organizationFilters: string[] = []
@@ -266,6 +303,18 @@ const Organizations = {
     })
 
     try {
+
+      await audit.sendEvent({
+        subjectId: 'get-organizations-by-email-event',
+        operation: 'GET_ORGANIZATIONS_BY_EMAIL',
+        meta: {
+          entityName: 'OrganizationsByEmail',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
       return organizations
     } catch (error) {
       logger.error({
@@ -282,7 +331,9 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
+      clients: { audit },
       vtex: { logger },
+      ip
     } = ctx
 
     const organizations = await Organizations.getOrganizationsByEmail(
@@ -309,6 +360,18 @@ const Organizations = {
     )
 
     try {
+
+      await audit.sendEvent({
+        subjectId: 'get-active-organizations-by-email-event',
+        operation: 'GET_ACTIVE_ORGANIZATIONS_BY_EMAIL',
+        meta: {
+          entityName: 'ActiveOrganizationsByEmail',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
       return activeOrganizations
     } catch (error) {
       logger.error({
@@ -357,8 +420,9 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
       vtex: { sessionData, logger },
+      ip
     } = ctx as any
 
     // create schema if it doesn't exist
@@ -396,6 +460,18 @@ const Organizations = {
     }
 
     try {
+
+      await audit.sendEvent({
+        subjectId: 'get-organization-by-id-storefront-event',
+        operation: 'GET_ORGANIZATION_BY_ID_STOREFRONT',
+        meta: {
+          entityName: 'OrganizationByIdStorefront',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
       return {
         ...organization,
         permissions: organization.permissions ?? { createQuote: true },
@@ -415,14 +491,27 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
     try {
+
+      await audit.sendEvent({
+        subjectId: 'get-organization-request-by-id-event',
+        operation: 'GET_ORGANIZATION_REQUEST_BY_ID',
+        meta: {
+          entityName: 'OrganizationRequestById',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
       return await masterdata.getDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         fields: ORGANIZATION_REQUEST_FIELDS,
@@ -457,8 +546,9 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
-      vtex: { logger },
+      clients: { masterdata, audit },
+      vtex: { logger},
+      ip
     } = ctx
 
     // create schema if it doesn't exist
@@ -476,7 +566,7 @@ const Organizations = {
     const where = whereArray.join(' AND ')
 
     try {
-      return await masterdata.searchDocumentsWithPaginationInfo({
+      const result = await masterdata.searchDocumentsWithPaginationInfo({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         fields: ORGANIZATION_REQUEST_FIELDS,
         pagination: { page, pageSize },
@@ -484,6 +574,19 @@ const Organizations = {
         sort: `${sortedBy} ${sortOrder}`,
         ...(where && { where }),
       })
+
+      await audit.sendEvent({
+        subjectId: 'get-organization-requests-event',
+        operation: 'GET_ORGANIZATION_REQUESTS',
+        meta: {
+          entityName: 'OrganizationRequests',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
+      return result
     } catch (error) {
       logger.error({
         error,

@@ -12,11 +12,16 @@ import StorefrontPermissions from './storefrontPermissions'
 import IdentityClient from './IdentityClient'
 import Catalog from './catalog'
 import SellersClient from './sellers'
+import { AuditClient } from './audit'
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
   public get lm() {
     return this.getOrSet('lm', LMClient)
+  }
+
+  public get audit() {
+    return this.getOrSet('audit', AuditClient)
   }
 
   public get analytics() {
