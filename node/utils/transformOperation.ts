@@ -1,5 +1,4 @@
 export function transformOperation(operation: string, statusCode?: number) {
-  // Eliminar prefijos comunes de operaciones HTTP (case-sensitive)
   const withoutPrefix = operation.replace(/^(get|post|put|patch|delete|create|update|list|fetch|Get|Post|Put|Patch|Delete|Create|Update|List|Fetch)/i, '');
   
   const snakeCase = withoutPrefix
