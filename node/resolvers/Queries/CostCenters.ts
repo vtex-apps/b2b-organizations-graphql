@@ -322,7 +322,7 @@ const costCenters = {
         subjectId: 'get-cost-centers-by-organization-id-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID',
         meta: {
-          entityName: 'CostCentersByOrganizationId',
+          entityName: 'CostCenters',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),

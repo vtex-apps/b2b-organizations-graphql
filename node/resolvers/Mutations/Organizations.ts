@@ -792,7 +792,6 @@ const Organizations = {
         meta: {
           entityName: 'Organization',
           remoteIpAddress: ip,
-          // Solo el estado previo real; el id ya va en after
           entityBeforeAction: JSON.stringify(currentOrganizationData ?? null),
           entityAfterAction: JSON.stringify({
             id,
