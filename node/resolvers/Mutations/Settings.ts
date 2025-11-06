@@ -17,6 +17,12 @@ const Settings = {
     const newSettings = {}
 
     try {
+      let currentSettings = null
+      try {
+        currentSettings = await vbase.getJSON('b2borg', app)
+      } catch {
+        currentSettings = null
+      }
       await vbase.saveJSON('b2borg', app, newSettings)
 
       await audit.sendEvent({
@@ -25,12 +31,8 @@ const Settings = {
         meta: {
           entityName: 'AppSettings',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({ app }),
-          entityAfterAction: JSON.stringify({ 
-            status: 'success',
-            message: '',
-            settings: newSettings , 
-          }),
+          entityBeforeAction: JSON.stringify(currentSettings),
+          entityAfterAction: JSON.stringify(newSettings),
         },
       })
 
@@ -137,21 +139,8 @@ const Settings = {
         meta: {
           entityName: 'B2BSettings',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
-            input: {
-              autoApprove,
-              businessReadOnly,
-              stateReadOnly,
-              defaultPaymentTerms,
-              defaultPriceTables,
-              uiSettings,
-              organizationCustomFields,
-              costCenterCustomFields,
-              transactionEmailSettings,
-            },
-            currentB2BSettings
-          }),
-          entityAfterAction: JSON.stringify({status: 'success'}),
+          entityBeforeAction: JSON.stringify(currentB2BSettings ?? null),
+          entityAfterAction: JSON.stringify(b2bSettings),
         },
       })
 
@@ -184,6 +173,8 @@ const Settings = {
       ip
     } = ctx
 
+    const currentChannels = await vbase.getJSON('b2borg', 'salesChannels').catch(() => null)
+
     try {
       await vbase.saveJSON('b2borg', 'salesChannels', channels)
 
@@ -193,13 +184,8 @@ const Settings = {
         meta: {
           entityName: 'SalesChannels',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
-            channels
-          }),
-          entityAfterAction: JSON.stringify({
-            status: 'success',
-            message: ''
-          }),
+          entityBeforeAction: JSON.stringify(currentChannels),
+          entityAfterAction: JSON.stringify(channels),
         },
       })
 

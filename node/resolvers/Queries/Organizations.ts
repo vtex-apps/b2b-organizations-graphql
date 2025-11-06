@@ -82,7 +82,7 @@ const Organizations = {
       subjectId: 'check-organization-is-active-event',
       operation: 'CHECK_ORGANIZATION_IS_ACTIVE',
       meta: {
-        entityName: 'OrganizationIsActive',
+        entityName: 'Organization',
         remoteIpAddress: ip,
         entityBeforeAction: JSON.stringify({}),
         entityAfterAction: JSON.stringify({}),
@@ -117,7 +117,7 @@ const Organizations = {
         subjectId: 'get-organization-by-id-event',
         operation: 'GET_ORGANIZATION_BY_ID',
         meta: {
-          entityName: 'OrganizationById',
+          entityName: 'Organization',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -303,12 +303,11 @@ const Organizations = {
     })
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-organizations-by-email-event',
         operation: 'GET_ORGANIZATIONS_BY_EMAIL',
         meta: {
-          entityName: 'OrganizationsByEmail',
+          entityName: 'Organizations',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -365,7 +364,7 @@ const Organizations = {
         subjectId: 'get-active-organizations-by-email-event',
         operation: 'GET_ACTIVE_ORGANIZATIONS_BY_EMAIL',
         meta: {
-          entityName: 'ActiveOrganizationsByEmail',
+          entityName: 'Organizations',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -465,7 +464,7 @@ const Organizations = {
         subjectId: 'get-organization-by-id-storefront-event',
         operation: 'GET_ORGANIZATION_BY_ID_STOREFRONT',
         meta: {
-          entityName: 'OrganizationByIdStorefront',
+          entityName: 'Organization',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -505,7 +504,7 @@ const Organizations = {
         subjectId: 'get-organization-request-by-id-event',
         operation: 'GET_ORGANIZATION_REQUEST_BY_ID',
         meta: {
-          entityName: 'OrganizationRequestById',
+          entityName: 'Organization',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -547,7 +546,7 @@ const Organizations = {
   ) => {
     const {
       clients: { masterdata, audit },
-      vtex: { logger},
+      vtex: { logger },
       ip
     } = ctx
 

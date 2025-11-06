@@ -17,6 +17,13 @@ const MarketingTags = {
     }
 
     try {
+      let previousData: { tags?: string[] } | null = null
+      try {
+        previousData = await vbase.getJSON(MARKETING_TAGS.VBASE_BUCKET, costId)
+      } catch {
+        previousData = null
+      }
+
       await vbase.saveJSON(MARKETING_TAGS.VBASE_BUCKET, costId, {
         tags,
       })
@@ -29,7 +36,7 @@ const MarketingTags = {
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({
             costId,
-            tags
+            tags: previousData?.tags ?? [],
           }),
           entityAfterAction: JSON.stringify({
             costId,

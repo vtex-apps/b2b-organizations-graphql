@@ -106,7 +106,7 @@ const costCenters = {
         subjectId: 'get-cost-center-by-id-event',
         operation: 'GET_COST_CENTER_BY_ID',
         meta: {
-          entityName: 'CostCenterById',
+          entityName: 'CostCenter',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -183,7 +183,7 @@ const costCenters = {
         subjectId: 'get-cost-center-by-id-storefront-event',
         operation: 'GET_COST_CENTER_BY_ID_STOREFRONT',
         meta: {
-          entityName: 'CostCenterByIdStorefront',
+          entityName: 'CostCenter',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -431,7 +431,7 @@ const costCenters = {
         subjectId: 'get-cost-centers-by-organization-id-storefront-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID_STOREFRONT',
         meta: {
-          entityName: 'CostCentersByOrganizationIdStorefront',
+          entityName: 'CostCenters',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),

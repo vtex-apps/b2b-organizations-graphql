@@ -389,7 +389,8 @@ const Organizations = {
         meta: {
           entityName: 'Organization',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
+          entityBeforeAction: JSON.stringify(null),
+          entityAfterAction: JSON.stringify({
             name,
             tradeName,
             defaultCostCenter,
@@ -399,8 +400,8 @@ const Organizations = {
             priceTables,
             salesChannel,
             sellers,
+            ...createOrganizationResult,
           }),
-          entityAfterAction: JSON.stringify(createOrganizationResult),
         },
       })
 
@@ -548,19 +549,21 @@ const Organizations = {
         meta: {
           entityName: 'OrganizationRequest',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
+          entityBeforeAction: JSON.stringify(null),
+          entityAfterAction: JSON.stringify({
             b2bCustomerAdmin,
             costCenters,
             defaultCostCenter,
-            customFields,
+            customFields: customFields ?? [],
             name,
             tradeName,
             priceTables,
             salesChannel,
             paymentTerms,
             sellers,
+            created: now,
+            status,
           }),
-          entityAfterAction: JSON.stringify(result),
         },
       })
 
@@ -633,13 +636,10 @@ const Organizations = {
         subjectId: 'create-organization-and-cost-centers-with-id-event',
         operation: 'CREATE_ORGANIZATION_AND_COST_CENTERS_WITH_ID',
         meta: {
-          entityName: 'OrganizationAndCostCentersWithId',
+          entityName: 'OrganizationAndCostCenters',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify(input),
-          entityAfterAction: JSON.stringify({
-            href,
-            id
-          }),
+          entityBeforeAction: JSON.stringify(null),
+          entityAfterAction: "redacted",
         },
       })
 
@@ -667,6 +667,11 @@ const Organizations = {
     } = ctx
 
     try {
+      const organizationRequest = await masterdata.getDocument({
+        dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
+        id,
+        fields: ['_all'],
+      })
       await masterdata.deleteDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         id,
@@ -678,13 +683,8 @@ const Organizations = {
         meta: {
           entityName: 'OrganizationRequest',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
-            id
-          }),
-          entityAfterAction: JSON.stringify({
-            id,
-            deleted: true
-          }),
+          entityBeforeAction: JSON.stringify(organizationRequest),
+          entityAfterAction: JSON.stringify(null),
         },
       })
 
@@ -792,14 +792,11 @@ const Organizations = {
         meta: {
           entityName: 'Organization',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
-            id,
-            currentOrganizationData
-          }),
+          // Solo el estado previo real; el id ya va en after
+          entityBeforeAction: JSON.stringify(currentOrganizationData ?? null),
           entityAfterAction: JSON.stringify({
             id,
             fields,
-            status: 'success'
           }),
         },
       })
@@ -920,17 +917,11 @@ const Organizations = {
             meta: {
               entityName: 'OrganizationRequest',
               remoteIpAddress: ip,
-              entityBeforeAction: JSON.stringify({
-                id,
-                status: organizationRequest.status,
-                notes: '',
-                organizationRequest: organizationRequest
-              }),
+              entityBeforeAction: JSON.stringify(organizationRequest),
               entityAfterAction: JSON.stringify({
-                id,
+                ...organizationRequest,
                 status,
                 notes,
-                organizationId
               }),
             },
           })
@@ -969,16 +960,11 @@ const Organizations = {
         meta: {
           entityName: 'OrganizationRequest',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
-            id,
-            status: organizationRequest.status,
-            notes: '',
-            organizationRequest: organizationRequest
-          }),
+          entityBeforeAction: JSON.stringify(organizationRequest),
           entityAfterAction: JSON.stringify({
-            id,
+            ...organizationRequest,
             status,
-            notes
+            notes,
           }),
         },
       })

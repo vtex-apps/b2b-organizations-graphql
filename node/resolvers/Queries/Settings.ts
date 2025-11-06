@@ -96,7 +96,7 @@ const B2BSettings = {
         subjectId: 'get-sellers-paginated-event',
         operation: 'GET_SELLERS_PAGINATED',
         meta: {
-          entityName: 'SellersPaginated',
+          entityName: 'Sellers',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -121,7 +121,7 @@ const B2BSettings = {
     } = ctx
 
     try {
-      
+      const result = await lm.getAccount()
       await audit.sendEvent({
         subjectId: 'get-account-event',
         operation: 'GET_ACCOUNT',
@@ -133,7 +133,7 @@ const B2BSettings = {
         },
       })
 
-      return await lm.getAccount()
+      return result
     } catch (e) {
       if (e.message) {
         throw new GraphQLError(e.message)

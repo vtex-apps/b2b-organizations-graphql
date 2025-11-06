@@ -83,17 +83,13 @@ const CostCenters = {
         ctx
       )
 
-      await audit.sendEvent(
-        {
+      await audit.sendEvent({
           subjectId: 'create-cost-center-event',
           operation: 'CREATE_COST_CENTER',
           meta: {
             entityName: 'CostCenter',
             remoteIpAddress: ip,
-            entityBeforeAction: JSON.stringify({
-              organizationId,
-              costCenter,
-            }),
+            entityBeforeAction: JSON.stringify(null),
             entityAfterAction: JSON.stringify(result),
           },
         })
@@ -182,30 +178,25 @@ const CostCenters = {
       ctx
     )
 
-    await audit.sendEvent(
-      {
+    await audit.sendEvent({
         subjectId: 'create-cost-center-with-id-event',
         operation: 'CREATE_COST_CENTER_WITH_ID',
         meta: {
-          entityName: 'CostCenterWithId',
+          entityName: 'CostCenter',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
-            organizationId,
-            input: {
-              id,
-              name,
-              addresses,
-              phoneNumber,
-              businessDocument,
-              stateRegistration,
-              customFields,
-              marketingTags,
-              sellers,
-              paymentTerms,
-            },
-          }),
+          entityBeforeAction: JSON.stringify(null),
           entityAfterAction: JSON.stringify({
             id: costCenterId,
+            organizationId,
+            name,
+            addresses,
+            phoneNumber,
+            businessDocument,
+            stateRegistration,
+            customFields,
+            marketingTags,
+            sellers,
+            paymentTerms,
           }),
         },
       })
@@ -246,20 +237,16 @@ const CostCenters = {
         id: costCenterId,
       })
 
-      await audit.sendEvent(
-        {
+      await audit.sendEvent({
           subjectId: 'create-cost-center-address-event',
           operation: 'CREATE_COST_CENTER_ADDRESS',
           meta: {
             entityName: 'CostCenterAddress',
             remoteIpAddress: ip,
-            entityBeforeAction: JSON.stringify({
-              costCenterId,
-              address,
-            }),
+            entityBeforeAction: JSON.stringify(null),
             entityAfterAction: JSON.stringify({
               costCenterId,
-              status: 'success',
+              address,
             }),
           },
         })
@@ -281,20 +268,25 @@ const CostCenters = {
     } = ctx
 
     try {
+      const costCenter = await masterdata.getDocument({
+        dataEntity: COST_CENTER_DATA_ENTITY,
+        id,
+        fields: ['_all'],
+      })
+      
       await masterdata.deleteDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
         id,
       })
 
-      await audit.sendEvent(
-        {
+      await audit.sendEvent({
           subjectId: 'delete-cost-center-event',
           operation: 'DELETE_COST_CENTER',
           meta: {
             entityName: 'CostCenter',
             remoteIpAddress: ip,
-            entityBeforeAction: JSON.stringify({ id }),
-            entityAfterAction: JSON.stringify({ deleted: true, id }),
+            entityBeforeAction: JSON.stringify(costCenter),
+            entityAfterAction: JSON.stringify(null),
           },
         })
 
@@ -311,20 +303,25 @@ const CostCenters = {
     } = ctx
 
     try {
+      const organization = await masterdata.getDocument({
+        dataEntity: ORGANIZATION_DATA_ENTITY,
+        id,
+        fields: ['_all'],
+      })
+
       await masterdata.deleteDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
         id,
       })
 
-      await audit.sendEvent(
-        {
+      await audit.sendEvent({
           subjectId: 'delete-organization-event',
           operation: 'DELETE_ORGANIZATION',
           meta: {
             entityName: 'Organization',
             remoteIpAddress: ip,
-            entityBeforeAction: JSON.stringify({ id }),
-            entityAfterAction: JSON.stringify({ deleted: true, id }),
+            entityBeforeAction: JSON.stringify(organization),
+            entityAfterAction: JSON.stringify(null),
           },
         })
 
@@ -360,6 +357,19 @@ const CostCenters = {
     await checkConfig(ctx)
 
     try {
+      const currentCostCenter = await masterdata.getDocument({
+        dataEntity: COST_CENTER_DATA_ENTITY,
+        id,
+        fields: [
+          'name',
+          'addresses',
+          'paymentTerms',
+          'phoneNumber',
+          'businessDocument',
+          'stateRegistration',
+          'customFields',
+        ],
+      })
       await masterdata.updatePartialDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
         fields: {
@@ -380,28 +390,22 @@ const CostCenters = {
         id,
       })
 
-      await audit.sendEvent(
-        {
+      await audit.sendEvent({
           subjectId: 'update-cost-center-event',
           operation: 'UPDATE_COST_CENTER',
           meta: {
             entityName: 'CostCenter',
             remoteIpAddress: ip,
-            entityBeforeAction: JSON.stringify({
-              id,
-              input: {
-                name,
-                addresses,
-                paymentTerms,
-                phoneNumber,
-                businessDocument,
-                stateRegistration,
-                customFields,
-              },
-            }),
+            entityBeforeAction: JSON.stringify(currentCostCenter),
             entityAfterAction: JSON.stringify({
               id,
-              status: 'success',
+              name,
+              addresses,
+              paymentTerms,
+              phoneNumber,
+              businessDocument,
+              stateRegistration,
+              customFields,
             }),
           },
         })
@@ -455,8 +459,7 @@ const CostCenters = {
         id: costCenterId,
       })
 
-      await audit.sendEvent(
-        {
+      await audit.sendEvent({
           subjectId: 'update-cost-center-address-event',
           operation: 'UPDATE_COST_CENTER_ADDRESS',
           meta: {
@@ -464,12 +467,11 @@ const CostCenters = {
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({
               costCenterId,
-              address,
+              addresses: costCenter.addresses ?? [],
             }),
             entityAfterAction: JSON.stringify({
               costCenterId,
               addresses,
-              status: 'success',
             }),
           },
         })

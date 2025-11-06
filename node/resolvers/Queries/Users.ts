@@ -341,7 +341,7 @@ const Users = {
         subjectId: 'get-organizations-without-sales-manager-event',
         operation: 'GET_ORGANIZATIONS_WITHOUT_SALES_MANAGER',
         meta: {
-          entityName: 'OrganizationsWithoutSalesManager',
+          entityName: 'Organizations',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify({}),
           entityAfterAction: JSON.stringify({}),
@@ -393,20 +393,19 @@ const Users = {
 
     return storefrontPermissions
       .listUsers(variables)
-      .then((result: any) => {
-
-        audit.sendEvent({
+      .then(async (result: any) => {
+        await audit.sendEvent({
           subjectId: 'get-users-event',
           operation: 'GET_USERS',
           meta: {
-            entityName: 'GetUsers',
+            entityName: 'Users',
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({}),
             entityAfterAction: JSON.stringify({}),
           },
         })
 
-      return result.data.listUsers
+        return result.data.listUsers
       })
       .catch((error) => {
         logger.error({
@@ -471,20 +470,19 @@ const Users = {
 
     return storefrontPermissions
       .listUsersPaginated(variables)
-      .then((result: any) => {
-
-        audit.sendEvent({
+      .then(async (result: any) => {
+        await audit.sendEvent({
           subjectId: 'get-users-paginated-event',
           operation: 'GET_USERS_PAGINATED',
           meta: {
-            entityName: 'GetUsersPaginated',
+            entityName: 'Users',
             remoteIpAddress: ip,
             entityBeforeAction: JSON.stringify({}),
             entityAfterAction: JSON.stringify({}),
           },
         })
 
-      return result.data.listUsersPaginated
+        return result.data.listUsersPaginated
       })
       .catch(async (error) => {
         logger.error({

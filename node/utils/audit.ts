@@ -8,7 +8,7 @@ const audit = async (
   const {
     clients: { audit },
     ip,
-  } = ctx
+  } = ctx;
 
   const { subjectId, operation, entityNameFirstLetter } = transformOperation(operationName, statusCode);
 

@@ -174,15 +174,6 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
 
       // deny access if no tokens were provided
       if (!hasAdminToken && !hasApiToken && !hasStoreToken) {
-        sendAuthMetric(
-          context,
-          logger,
-          new AuthMetric(
-            context?.vtex?.account,
-            metricFields,
-            'ValidateStoreUserAccessAudit'
-          ),
-        )
         await audit(context, operation, 401)
         logger.warn({
           message: 'ValidateStoreUserAccess: No token provided',

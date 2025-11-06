@@ -143,15 +143,6 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
 
       // deny access if no tokens were provided
       if (!hasAdminToken && !hasAdminTokenOnHeader && !hasApiToken) {
-        sendAuthMetric(
-          context,
-          logger,
-          new AuthMetric(
-            context?.vtex?.account,
-            metricFields,
-            'ValidateAdminUserAccessAudit'
-          ),
-        )
         await audit(context, operation, 401)
         logger.warn({
           message: 'ValidateAdminUserAccess: No token provided',

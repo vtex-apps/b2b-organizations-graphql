@@ -259,10 +259,10 @@ const Users = {
       subjectId: 'impersonate-b2b-user-event',
       operation: 'IMPERSONATE_B2B_USER',
       meta: {
-        entityName: 'B2BUser',
+        entityName: 'User',
         remoteIpAddress: ip,
-        entityBeforeAction: JSON.stringify({ id, user }),
-        entityAfterAction: JSON.stringify(result),
+        entityBeforeAction: JSON.stringify(null),
+        entityAfterAction: JSON.stringify(user),
       },
     })
 
@@ -388,7 +388,7 @@ const Users = {
       meta: {
         entityName: 'User',
         remoteIpAddress: ip,
-        entityBeforeAction: JSON.stringify({ clId, userId }),
+        entityBeforeAction: JSON.stringify(null),
         entityAfterAction: JSON.stringify(result),
       },
     })
@@ -413,7 +413,7 @@ const Users = {
 
     return storefrontPermissionsClient
       .getUsersByEmail(email, orgId, costId)
-      .then(async (result: any) => {
+      .then((result: any) => {
         const user = result.data.getUsersByEmail[0]
 
         if (!user) {
@@ -433,12 +433,12 @@ const Users = {
 
         return storefrontPermissionsClient
           .deleteUser(fields)
-          .then((response: any) => {
-            audit.sendEvent({
+          .then(async (response: any) => {
+            await audit.sendEvent({
               subjectId: 'remove-user-with-email-event',
               operation: 'REMOVE_USER_WITH_EMAIL',
               meta: {
-                entityName: 'RemoveUserWithEmail',
+                entityName: 'User',
                 remoteIpAddress: ip,
                 entityBeforeAction: JSON.stringify({
                   orgId,
@@ -446,7 +446,7 @@ const Users = {
                   email,
                   user
                 }),
-                entityAfterAction: JSON.stringify(response.data.deleteUser),
+                entityAfterAction: JSON.stringify(null),
               },
             })
 
@@ -458,7 +458,7 @@ const Users = {
 
             return response.data.deleteUser
           })
-          .catch(async (error: any) => {
+          .catch((error: any) => {
             logger.error({
               error,
               message: 'removeUser-deleteUserError',
@@ -467,7 +467,7 @@ const Users = {
             return { status: 'error', message: error }
           })
       })
-      .catch(async (error: any) => {
+      .catch((error: any) => {
         logger.error({
           error,
           message: 'getUsers-error',
@@ -525,7 +525,6 @@ const Users = {
       }
     }
 
-
     const fields = {
       email,
       id,
@@ -547,7 +546,7 @@ const Users = {
               email,
               clId
             }),
-            entityAfterAction: JSON.stringify(result.data.deleteUser),
+            entityAfterAction: JSON.stringify(null),
           },
         })
 
@@ -560,7 +559,7 @@ const Users = {
 
         return result.data.deleteUser
       })
-      .catch(async (error: any) => {
+      .catch((error: any) => {
         logger.error({
           error,
           message: 'removeUser-deleteUserError',
@@ -616,25 +615,24 @@ const Users = {
 
     return storefrontPermissionsClient
       .addUser(fields)
-      .then((result: any) => {
-        
-         audit.sendEvent({
+      .then(async (result: any) => {
+        await audit.sendEvent({
           subjectId: 'add-user-event',
           operation: 'ADD_USER',
           meta: {
-            entityName: 'AddUser',
+            entityName: 'User',
             remoteIpAddress: ip,
-            entityBeforeAction: JSON.stringify({
-              id,
-              roleId,
-              userId,
+            entityBeforeAction: JSON.stringify(null),
+            entityAfterAction: JSON.stringify({
+              id: result.data.addUser.id,
+              userId: result.data.addUser.userId,
               orgId,
               costId,
               clId,
               name,
-              email
+              email,
+              roleId
             }),
-            entityAfterAction: JSON.stringify(result.data.addUser),
           },
         })
 
@@ -642,7 +640,7 @@ const Users = {
 
         return result.data.addUser
       })
-      .catch(async (error: any) => {
+      .catch((error: any) => {
         logger.error({
           error,
           message: 'addUser-error',
@@ -679,8 +677,6 @@ const Users = {
       ip
     } = ctx as any
 
-
-
     try {
       const result = await storefrontPermissionsClient.addUser({
         orgId,
@@ -695,9 +691,12 @@ const Users = {
         subjectId: 'create-user-with-email-event',
         operation: 'CREATE_USER_WITH_EMAIL',
         meta: {
-          entityName: 'Email',
+          entityName: 'User',
           remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({
+          entityBeforeAction: JSON.stringify(null),
+          entityAfterAction: JSON.stringify({
+            id: result.data.addUser.id,
+            userId: result.data.addUser.userId,
             orgId,
             costId,
             roleId,
@@ -705,7 +704,6 @@ const Users = {
             email,
             canImpersonate
           }),
-          entityAfterAction: JSON.stringify(result.data.addUser),
         },
       })
 
@@ -746,8 +744,6 @@ const Users = {
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip
     } = ctx as any
-
-
 
     try {
       await checkUserIsAllowed({
@@ -792,22 +788,20 @@ const Users = {
     return storefrontPermissionsClient
       .updateUser(fields)
       .then(async (result: any) => {
+        let currentUserData = null;
+        try {
+          currentUserData = await storefrontPermissionsClient.getUser({ userId });
+        } catch (error) {
+          currentUserData = null;
+        }
+
         await audit.sendEvent({
           subjectId: 'update-user-event',
           operation: 'UPDATE_USER',
           meta: {
             entityName: 'User',
             remoteIpAddress: ip,
-            entityBeforeAction: JSON.stringify({
-              id,
-              roleId,
-              userId,
-              orgId,
-              costId,
-              clId,
-              name,
-              email
-            }),
+            entityBeforeAction: JSON.stringify(currentUserData),
             entityAfterAction: JSON.stringify(result.data.updateUser),
           },
         })
@@ -816,7 +810,7 @@ const Users = {
 
         return result.data.updateUser
       })
-      .catch(async (error: any) => {
+      .catch((error: any) => {
         logger.error({
           error,
           message: 'updateUser-error',
@@ -857,8 +851,6 @@ const Users = {
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip
     } = ctx as any
-
-
 
     try {
       await checkUserIsAllowed({
@@ -907,23 +899,14 @@ const Users = {
           meta: {
             entityName: 'User',
             remoteIpAddress: ip,
-            entityBeforeAction: JSON.stringify({
-              id,
-              roleId,
-              userId,
-              orgId,
-              costId,
-              clId,
-              name,
-              email
-            }),
+            entityBeforeAction: JSON.stringify(null),
             entityAfterAction: JSON.stringify(result.data.saveUser),
           },
         })
 
         return result.data.saveUser
       })
-      .catch(async (error: any) => {
+      .catch((error: any) => {
         logger.error({
           error,
           message: 'addUser-error',
