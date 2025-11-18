@@ -56,7 +56,7 @@ export class AuditClient extends ExternalClient {
       id: requestId,
       subjectId,
       authorId,
-      application: 'vtex.b2b-organizations-graphql',
+      application: 'b2bOrganizations',
       operation,
       operationId,
       meta: {
