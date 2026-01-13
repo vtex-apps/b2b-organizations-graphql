@@ -391,10 +391,6 @@ const Organizations = {
       id,
     })
 
-    if (organization?.status !== 'active') {
-      throw new Error('This organization is not active')
-    }
-
     try {
       return {
         ...organization,
