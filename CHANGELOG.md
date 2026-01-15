@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- Remove status validation in `getOrganizationByIdStorefront` to allow retrieval of organizations with "on-hold" or "inactive" status, enabling users to view and switch to active organizations
+
 ## [2.3.0] - 2025-10-09
 
 ## [2.2.0] - 2025-10-09
