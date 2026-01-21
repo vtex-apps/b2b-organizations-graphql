@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+- Fixed `canImpersonate` parameter not being properly propagated in `updateUser` mutation, which was preventing the field from being updated
+
 ## [2.3.1] - 2026-01-15
 
 ### Fixed

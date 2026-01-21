@@ -211,6 +211,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     clId,
     name,
     email,
+    canImpersonate,
   }: {
     id?: string
     roleId: string
@@ -220,12 +221,13 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     clId?: string
     name: string
     email: string
+    canImpersonate?: boolean
   }): Promise<any> => {
     return this.graphql.mutate(
       {
         mutate: updateUser,
         variables: {
-          canImpersonate: false,
+          canImpersonate,
           clId,
           costId,
           email,
