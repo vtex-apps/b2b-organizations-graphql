@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- Changing gitHub Actions version
+- Updated GitHub Actions quality-engineering workflow to v3.1.0
 
 ## [2.3.1] - 2026-01-15
 
