@@ -7,8 +7,9 @@ export const B2B_SETTINGS_DOCUMENT_ID = 'b2bSettings'
 const Settings = {
   saveAppSettings: async (_: any, __: any, ctx: Context) => {
     const {
-      clients: { vbase },
+      clients: { vbase, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     const app: string = getAppId()
@@ -16,7 +17,24 @@ const Settings = {
     const newSettings = {}
 
     try {
+      let currentSettings = null
+      try {
+        currentSettings = await vbase.getJSON('b2borg', app)
+      } catch {
+        currentSettings = null
+      }
       await vbase.saveJSON('b2borg', app, newSettings)
+
+      await audit.sendEvent({
+        subjectId: 'save-app-settings-event',
+        operation: 'SAVE_APP_SETTINGS',
+        meta: {
+          entityName: 'AppSettings',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify(currentSettings),
+          entityAfterAction: JSON.stringify(newSettings),
+        },
+      })
 
       return { status: 'success', message: '' }
     } catch (error) {
@@ -50,8 +68,9 @@ const Settings = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase },
+      clients: { vbase, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     // create schema if it doesn't exist
@@ -114,6 +133,17 @@ const Settings = {
 
       await vbase.saveJSON(B2B_SETTINGS_DATA_ENTITY, 'settings', b2bSettings)
 
+      await audit.sendEvent({
+        subjectId: 'save-b2b-settings-event',
+        operation: 'SAVE_B2B_SETTINGS',
+        meta: {
+          entityName: 'B2BSettings',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify(currentB2BSettings ?? null),
+          entityAfterAction: JSON.stringify(b2bSettings),
+        },
+      })
+
       return {
         status: 'success',
       }
@@ -138,12 +168,28 @@ const Settings = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase },
+      clients: { vbase, audit },
       vtex: { logger },
+      ip
     } = ctx
+
+    const currentChannels = await vbase.getJSON('b2borg', 'salesChannels').catch(() => null)
 
     try {
       await vbase.saveJSON('b2borg', 'salesChannels', channels)
+
+      await audit.sendEvent({
+        subjectId: 'save-sales-channels-event',
+        operation: 'SAVE_SALES_CHANNELS',
+        meta: {
+          entityName: 'SalesChannels',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify(currentChannels),
+          entityAfterAction: JSON.stringify(channels),
+        },
+      })
+
+      return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
         error,
@@ -152,8 +198,6 @@ const Settings = {
 
       return { status: 'error', message: error }
     }
-
-    return { status: 'success', message: '' }
   },
 }
 

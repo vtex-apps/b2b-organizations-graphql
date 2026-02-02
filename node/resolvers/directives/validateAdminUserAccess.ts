@@ -10,6 +10,7 @@ import {
   validateAdminTokenOnHeader,
   validateApiToken,
 } from './helper'
+import audit from '../../utils/audit'
 import { LICENSE_MANAGER_ROLES } from '../../constants'
 
 export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
@@ -142,6 +143,7 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
 
       // deny access if no tokens were provided
       if (!hasAdminToken && !hasAdminTokenOnHeader && !hasApiToken) {
+        await audit(context, operation, 401)
         logger.warn({
           message: 'ValidateAdminUserAccess: No token provided',
           ...metricFields,
@@ -149,7 +151,9 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
         throw new AuthenticationError('No token was provided')
       }
 
-      // deny access if no valid tokens were provided or no valid role
+      // deny access if no valid tokens were provided
+      await audit(context, operation, 403)
+
       logger.warn({
         message:
           'ValidateAdminUserAccess: Invalid token or insufficient role permissions',

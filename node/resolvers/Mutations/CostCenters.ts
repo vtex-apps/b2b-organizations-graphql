@@ -36,6 +36,8 @@ const CostCenters = {
     const {
       vtex,
       vtex: { logger },
+      clients: { audit },
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -74,12 +76,25 @@ const CostCenters = {
         paymentTerms,
       }
 
-      return await CostCenterRepository.createCostCenter(
+      const result = await CostCenterRepository.createCostCenter(
         _,
         organizationId,
         costCenter,
         ctx
       )
+
+      await audit.sendEvent({
+          subjectId: 'create-cost-center-event',
+          operation: 'CREATE_COST_CENTER',
+          meta: {
+            entityName: 'CostCenter',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify(null),
+            entityAfterAction: JSON.stringify(result),
+          },
+        })
+
+      return result
     } catch (error) {
       logger.error({
         error,
@@ -108,6 +123,11 @@ const CostCenters = {
     }: { organizationId: string; input: CostCenterInputWithId },
     ctx: Context
   ) => {
+    const {
+      clients: { audit },
+      ip,
+    } = ctx
+
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
@@ -158,6 +178,29 @@ const CostCenters = {
       ctx
     )
 
+    await audit.sendEvent({
+        subjectId: 'create-cost-center-with-id-event',
+        operation: 'CREATE_COST_CENTER_WITH_ID',
+        meta: {
+          entityName: 'CostCenter',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify(null),
+          entityAfterAction: JSON.stringify({
+            id: costCenterId,
+            organizationId,
+            name,
+            addresses,
+            phoneNumber,
+            businessDocument,
+            stateRegistration,
+            customFields,
+            marketingTags,
+            sellers,
+            paymentTerms,
+          }),
+        },
+      })
+
     return { id: costCenterId }
   },
 
@@ -167,8 +210,9 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
       vtex: { logger },
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -193,6 +237,20 @@ const CostCenters = {
         id: costCenterId,
       })
 
+      await audit.sendEvent({
+          subjectId: 'create-cost-center-address-event',
+          operation: 'CREATE_COST_CENTER_ADDRESS',
+          meta: {
+            entityName: 'CostCenterAddress',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify(null),
+            entityAfterAction: JSON.stringify({
+              costCenterId,
+              address,
+            }),
+          },
+        })
+
       return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
@@ -205,14 +263,32 @@ const CostCenters = {
 
   deleteCostCenter: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
+      ip,
     } = ctx
 
     try {
+      const costCenter = await masterdata.getDocument({
+        dataEntity: COST_CENTER_DATA_ENTITY,
+        id,
+        fields: ['_all'],
+      })
+      
       await masterdata.deleteDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
         id,
       })
+
+      await audit.sendEvent({
+          subjectId: 'delete-cost-center-event',
+          operation: 'DELETE_COST_CENTER',
+          meta: {
+            entityName: 'CostCenter',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify(costCenter),
+            entityAfterAction: JSON.stringify(null),
+          },
+        })
 
       return { status: 'success', message: '' }
     } catch (e) {
@@ -222,14 +298,32 @@ const CostCenters = {
 
   deleteOrganization: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
+      ip,
     } = ctx
 
     try {
+      const organization = await masterdata.getDocument({
+        dataEntity: ORGANIZATION_DATA_ENTITY,
+        id,
+        fields: ['_all'],
+      })
+
       await masterdata.deleteDocument({
         dataEntity: ORGANIZATION_DATA_ENTITY,
         id,
       })
+
+      await audit.sendEvent({
+          subjectId: 'delete-organization-event',
+          operation: 'DELETE_ORGANIZATION',
+          meta: {
+            entityName: 'Organization',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify(organization),
+            entityAfterAction: JSON.stringify(null),
+          },
+        })
 
       return { status: 'success', message: '' }
     } catch (e) {
@@ -254,14 +348,28 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
       vtex: { logger },
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
     try {
+      const currentCostCenter = await masterdata.getDocument({
+        dataEntity: COST_CENTER_DATA_ENTITY,
+        id,
+        fields: [
+          'name',
+          'addresses',
+          'paymentTerms',
+          'phoneNumber',
+          'businessDocument',
+          'stateRegistration',
+          'customFields',
+        ],
+      })
       await masterdata.updatePartialDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
         fields: {
@@ -282,6 +390,26 @@ const CostCenters = {
         id,
       })
 
+      await audit.sendEvent({
+          subjectId: 'update-cost-center-event',
+          operation: 'UPDATE_COST_CENTER',
+          meta: {
+            entityName: 'CostCenter',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify(currentCostCenter),
+            entityAfterAction: JSON.stringify({
+              id,
+              name,
+              addresses,
+              paymentTerms,
+              phoneNumber,
+              businessDocument,
+              stateRegistration,
+              customFields,
+            }),
+          },
+        })
+
       return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
@@ -298,12 +426,14 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
       vtex: { logger },
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
+
     try {
       const costCenter: CostCenterInput = await masterdata.getDocument({
         dataEntity: COST_CENTER_DATA_ENTITY,
@@ -328,6 +458,23 @@ const CostCenters = {
         },
         id: costCenterId,
       })
+
+      await audit.sendEvent({
+          subjectId: 'update-cost-center-address-event',
+          operation: 'UPDATE_COST_CENTER_ADDRESS',
+          meta: {
+            entityName: 'CostCenterAddress',
+            remoteIpAddress: ip,
+            entityBeforeAction: JSON.stringify({
+              costCenterId,
+              addresses: costCenter.addresses ?? [],
+            }),
+            entityAfterAction: JSON.stringify({
+              costCenterId,
+              addresses,
+            }),
+          },
+        })
 
       return { status: 'success', message: '' }
     } catch (error) {
