@@ -227,7 +227,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
       {
         mutate: updateUser,
         variables: {
-          canImpersonate,
+          canImpersonate ?? false,
           clId,
           costId,
           email,
