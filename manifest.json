@@ -69,6 +69,9 @@
       "name": "buyer_organization_edit"
     },
     {
+      "name": "view-seller"
+    },
+    {
       "name": "outbound-access",
       "attrs": {
         "host": "portal.vtexcommercestable.com.br",
