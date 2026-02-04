@@ -1,7 +1,6 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
 import { ExternalClient, Session } from '@vtex/api'
 
-
 export class AuditClient extends ExternalClient {
   private session: Session
   constructor(ctx: IOContext, options?: InstanceOptions) {
@@ -18,34 +17,34 @@ export class AuditClient extends ExternalClient {
   }
 
   private async getUserIdFromSession(sessionToken: string): Promise<string> {
-    const {logger} = this.context
+    const { logger } = this.context
+
     try {
-      const { sessionData } = await this.session.getSession(sessionToken, ['*'])  
-      const userId = 
+      const { sessionData } = await this.session.getSession(sessionToken, ['*'])
+      const userId =
         sessionData?.namespaces?.authentication?.adminUserId?.value ||
         sessionData?.namespaces?.authentication?.storeUserId?.value ||
         sessionData?.namespaces?.profile?.id?.value ||
         'unknown'
-      
+
       return userId
     } catch (error) {
       logger.error({
         message: 'Error fetching user ID from session',
         error,
       })
+
       return 'unknown'
     }
   }
-  
 
-  public async sendEvent(
-    auditEntry: AuditEntry,
-  ): Promise<void> {
+  public async sendEvent(auditEntry: AuditEntry): Promise<void> {
     const { meta, subjectId, operation } = auditEntry
-    const { account, operationId, requestId, userAgent, logger, sessionToken } = this.context
+    const { account, operationId, requestId, userAgent, logger, sessionToken } =
+      this.context
 
     let authorId = 'unknown'
-    
+
     if (sessionToken) {
       authorId = await this.getUserIdFromSession(sessionToken)
     }
@@ -67,10 +66,7 @@ export class AuditClient extends ExternalClient {
     }
 
     try {
-      await this.http.post(
-        `/api/audit/events?an=${account}`,
-        auditEvent
-      )
+      await this.http.post(`/api/audit/events?an=${account}`, auditEvent)
     } catch (error) {
       logger.error({
         message: 'Error sending audit event',

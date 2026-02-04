@@ -1,4 +1,4 @@
- type AuditEntry = {
+type AuditEntry = {
   subjectId: string
   operation: string
   authorId?: string

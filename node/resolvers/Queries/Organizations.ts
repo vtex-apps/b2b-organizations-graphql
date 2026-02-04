@@ -40,7 +40,7 @@ const Organizations = {
     const {
       clients: { session, audit },
       vtex: { logger, sessionToken, adminUserAuthToken },
-      ip
+      ip,
     } = ctx
 
     const sessionData = await session
@@ -100,7 +100,7 @@ const Organizations = {
     const {
       clients: { masterdata, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -158,7 +158,7 @@ const Organizations = {
     const {
       clients: { masterdata, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -227,7 +227,7 @@ const Organizations = {
     const {
       clients: { storefrontPermissions, session, audit },
       vtex: { logger, sessionToken, adminUserAuthToken },
-      ip
+      ip,
     } = ctx
 
     const organizationFilters: string[] = []
@@ -332,7 +332,7 @@ const Organizations = {
     const {
       clients: { audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     const organizations = await Organizations.getOrganizationsByEmail(
@@ -359,7 +359,6 @@ const Organizations = {
     )
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-active-organizations-by-email-event',
         operation: 'GET_ACTIVE_ORGANIZATIONS_BY_EMAIL',
@@ -421,7 +420,7 @@ const Organizations = {
     const {
       clients: { masterdata, audit },
       vtex: { sessionData, logger },
-      ip
+      ip,
     } = ctx as any
 
     // create schema if it doesn't exist
@@ -455,7 +454,6 @@ const Organizations = {
     })
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-organization-by-id-storefront-event',
         operation: 'GET_ORGANIZATION_BY_ID_STOREFRONT',
@@ -488,14 +486,13 @@ const Organizations = {
     const {
       clients: { masterdata, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-organization-request-by-id-event',
         operation: 'GET_ORGANIZATION_REQUEST_BY_ID',
@@ -543,7 +540,7 @@ const Organizations = {
     const {
       clients: { masterdata, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist

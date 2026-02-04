@@ -41,10 +41,14 @@ const hashCode = function hash(arg: null | string | number | number[]) {
     return 0
   }
 
-  return str.split('').reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0)
+  return Number(
+    str
+      .split('')
+      .reduce((a, b) => Math.trunc((a << 5) - a + (b.codePointAt(0) ?? 0)), 0)
+  )
 }
 
-const setGUID = (address: Address) => {
+const setGUID = (address: Address): string => {
   return (
     hashCode(address.street) +
     hashCode(address.complement) +
@@ -205,7 +209,6 @@ const costCenters = {
     } = ctx
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-payment-terms-event',
         operation: 'GET_PAYMENT_TERMS',
@@ -317,7 +320,6 @@ const costCenters = {
     await checkConfig(ctx)
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-cost-centers-by-organization-id-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID',
@@ -426,7 +428,6 @@ const costCenters = {
     }
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-cost-centers-by-organization-id-storefront-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID_STOREFRONT',

@@ -9,11 +9,10 @@ const MarketingTags = {
     const {
       clients: { vbase, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-marketing-tags-event',
         operation: 'GET_MARKETING_TAGS',

@@ -155,7 +155,7 @@ const Index = {
     const token: any = storeUserAuthToken
     const response: any = {}
 
-    ctx.response.status = !token ? 403 : 200
+    ctx.response.status = token ? 200 : 403
 
     if (token) {
       const sd = await session

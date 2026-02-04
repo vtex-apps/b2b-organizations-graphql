@@ -9,7 +9,7 @@ const Settings = {
     const {
       clients: { vbase, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     const app: string = getAppId()
@@ -18,11 +18,13 @@ const Settings = {
 
     try {
       let currentSettings = null
+
       try {
         currentSettings = await vbase.getJSON('b2borg', app)
       } catch {
         currentSettings = null
       }
+
       await vbase.saveJSON('b2borg', app, newSettings)
 
       await audit.sendEvent({
@@ -70,7 +72,7 @@ const Settings = {
     const {
       clients: { vbase, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -170,10 +172,12 @@ const Settings = {
     const {
       clients: { vbase, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
-    const currentChannels = await vbase.getJSON('b2borg', 'salesChannels').catch(() => null)
+    const currentChannels = await vbase
+      .getJSON('b2borg', 'salesChannels')
+      .catch(() => null)
 
     try {
       await vbase.saveJSON('b2borg', 'salesChannels', channels)

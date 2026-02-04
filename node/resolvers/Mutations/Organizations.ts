@@ -357,7 +357,7 @@ const Organizations = {
     const {
       clients: { storefrontPermissions, mail, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -494,7 +494,7 @@ const Organizations = {
     const {
       clients: { masterdata, storefrontPermissions, mail, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -618,7 +618,7 @@ const Organizations = {
     const {
       vtex: { logger },
       clients: { audit },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -639,7 +639,7 @@ const Organizations = {
           entityName: 'OrganizationAndCostCenters',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify(null),
-          entityAfterAction: "redacted",
+          entityAfterAction: 'redacted',
         },
       })
 
@@ -663,7 +663,7 @@ const Organizations = {
   ) => {
     const {
       clients: { masterdata, audit },
-      ip
+      ip,
     } = ctx
 
     try {
@@ -672,6 +672,7 @@ const Organizations = {
         id,
         fields: ['_all'],
       })
+
       await masterdata.deleteDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         id,
@@ -727,7 +728,7 @@ const Organizations = {
     const {
       clients: { storefrontPermissions, mail, masterdata, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -829,7 +830,7 @@ const Organizations = {
     const {
       clients: { masterdata, mail, storefrontPermissions, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     const settings = (await B2BSettings.getB2BSettings(
