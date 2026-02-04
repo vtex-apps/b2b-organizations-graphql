@@ -82,8 +82,9 @@ const addMissingAddressIds = async (costCenter: CostCenter, ctx: Context) => {
 const costCenters = {
   getCostCenterById: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
       vtex: { logger },
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -101,6 +102,17 @@ const costCenters = {
         result.addresses = await addMissingAddressIds(result, ctx)
       }
 
+      await audit.sendEvent({
+        subjectId: 'get-cost-center-by-id-event',
+        operation: 'GET_COST_CENTER_BY_ID',
+        meta: {
+          entityName: 'CostCenter',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
       return result
     } catch (error) {
       logger.error({ error, message: 'getCostCenterById-error' })
@@ -114,8 +126,9 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
       vtex: { logger },
+      ip,
       vtex,
     } = ctx
 
@@ -166,6 +179,17 @@ const costCenters = {
 
       costCenter.addresses = await addMissingAddressIds(costCenter, ctx)
 
+      await audit.sendEvent({
+        subjectId: 'get-cost-center-by-id-storefront-event',
+        operation: 'GET_COST_CENTER_BY_ID_STOREFRONT',
+        meta: {
+          entityName: 'CostCenter',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
       return costCenter
     } catch (error) {
       logger.error({ error, message: 'getCostCenterByIdStorefront-error' })
@@ -175,11 +199,24 @@ const costCenters = {
 
   getPaymentTerms: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { payments },
+      clients: { payments, audit },
       vtex: { logger },
+      ip,
     } = ctx
 
     try {
+
+      await audit.sendEvent({
+        subjectId: 'get-payment-terms-event',
+        operation: 'GET_PAYMENT_TERMS',
+        meta: {
+          entityName: 'PaymentTerms',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
       return await payments.getPaymentTerms()
     } catch (error) {
       logger.error({ error, message: 'getPaymentTerms-error' })
@@ -205,8 +242,9 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
       vtex: { logger },
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -219,7 +257,7 @@ const costCenters = {
     }
 
     try {
-      return await masterdata.searchDocumentsWithPaginationInfo({
+      const result = await masterdata.searchDocumentsWithPaginationInfo({
         dataEntity: COST_CENTER_DATA_ENTITY,
         fields: COST_CENTER_FIELDS,
         pagination: { page, pageSize },
@@ -227,11 +265,25 @@ const costCenters = {
         sort: `${sortedBy} ${sortOrder}`,
         ...(where && { where }),
       })
+
+      await audit.sendEvent({
+        subjectId: 'get-cost-centers-event',
+        operation: 'GET_COST_CENTERS',
+        meta: {
+          entityName: 'CostCenters',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
+      return result
     } catch (error) {
       logger.error({
         error,
         message: 'getCostCenters-error',
       })
+
       throw new GraphQLError(getErrorMessage(error))
     }
   },
@@ -256,14 +308,27 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
+      clients: { masterdata, audit },
       vtex: { logger },
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
     try {
+
+      await audit.sendEvent({
+        subjectId: 'get-cost-centers-by-organization-id-event',
+        operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID',
+        meta: {
+          entityName: 'CostCenters',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
       return await getCostCenters({
         id,
         masterdata,
@@ -302,8 +367,9 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, storefrontPermissions },
+      clients: { masterdata, storefrontPermissions, audit },
       vtex: { logger, sessionData },
+      ip,
     } = ctx as any
 
     // create schema if it doesn't exist
@@ -360,6 +426,18 @@ const costCenters = {
     }
 
     try {
+
+      await audit.sendEvent({
+        subjectId: 'get-cost-centers-by-organization-id-storefront-event',
+        operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID_STOREFRONT',
+        meta: {
+          entityName: 'CostCenters',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
       return await getCostCenters({
         id,
         masterdata,

@@ -1,7 +1,7 @@
 {
   "name": "b2b-organizations-graphql",
   "vendor": "vtex",
-  "version": "2.3.2",
+  "version": "2.4.0",
   "title": "B2B Organizations",
   "description": "App to create and manage B2B Organizations and Cost Centers",
   "mustUpdateAt": "2022-08-28",
@@ -90,6 +90,13 @@
       "attrs": {
         "host": "rc.vtex.com",
         "path": "/api/analytics/schemaless-events"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "analytics.vtex.com",
+        "path": "*"
       }
     }
   ],

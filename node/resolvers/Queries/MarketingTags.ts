@@ -7,11 +7,24 @@ const MarketingTags = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase },
+      clients: { vbase, audit },
       vtex: { logger },
+      ip
     } = ctx
 
     try {
+
+      await audit.sendEvent({
+        subjectId: 'get-marketing-tags-event',
+        operation: 'GET_MARKETING_TAGS',
+        meta: {
+          entityName: 'MarketingTags',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
       return await vbase.getJSON(MARKETING_TAGS.VBASE_BUCKET, costId)
     } catch (error) {
       const { data } = error.response as any
