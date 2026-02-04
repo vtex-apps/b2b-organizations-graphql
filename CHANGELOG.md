@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-02-04
+
 ### Added
 
 - [B2BTEAM-3133] Add `view-seller` permission to access Seller Register API endpoints. This is required to comply with VTEX's new granular permissions security policy.
