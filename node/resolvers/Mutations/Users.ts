@@ -160,13 +160,10 @@ const getUserFromStorefrontPermissions = ({
 const Users = {
   impersonateB2BUser: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { 
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as Context | any
 
     const getB2BUserFromStorefrontPermissions = ({
@@ -283,14 +280,14 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
+      clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
       },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as Context | any
 
     if (!adminUserAuthToken && clId) {
@@ -402,13 +399,13 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        events, 
+      clients: {
+        events,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
       },
       vtex: { logger },
-      ip
+      ip,
     } = ctx as any
 
     return storefrontPermissionsClient
@@ -444,7 +441,7 @@ const Users = {
                   orgId,
                   costId,
                   email,
-                  user
+                  user,
                 }),
                 entityAfterAction: JSON.stringify(null),
               },
@@ -493,13 +490,13 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        events, 
+      clients: {
+        events,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as Context | any
 
     if (!id || !clId || !email) {
@@ -544,7 +541,7 @@ const Users = {
               id,
               userId,
               email,
-              clId
+              clId,
             }),
             entityAfterAction: JSON.stringify(null),
           },
@@ -575,12 +572,9 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as any
 
     try {
@@ -631,7 +625,7 @@ const Users = {
               clId,
               name,
               email,
-              roleId
+              roleId,
             }),
           },
         })
@@ -669,12 +663,9 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx as any
 
     try {
@@ -702,7 +693,7 @@ const Users = {
             roleId,
             name,
             email,
-            canImpersonate
+            canImpersonate,
           }),
         },
       })
@@ -742,7 +733,7 @@ const Users = {
         audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as any
 
     try {
@@ -788,11 +779,14 @@ const Users = {
     return storefrontPermissionsClient
       .updateUser(fields)
       .then(async (result: any) => {
-        let currentUserData = null;
+        let currentUserData = null
+
         try {
-          currentUserData = await storefrontPermissionsClient.getUser({ userId });
+          currentUserData = await storefrontPermissionsClient.getUser({
+            userId,
+          })
         } catch (error) {
-          currentUserData = null;
+          currentUserData = null
         }
 
         await audit.sendEvent({
@@ -849,7 +843,7 @@ const Users = {
         audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as any
 
     try {

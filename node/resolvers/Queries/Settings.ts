@@ -7,7 +7,7 @@ const B2BSettings = {
   getB2BSettings: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { vbase, audit },
-      ip
+      ip,
     } = ctx
 
     const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
@@ -48,7 +48,6 @@ const B2BSettings = {
           entityAfterAction: JSON.stringify({}),
         },
       })
-
     } catch (e) {
       if (e.message) {
         throw new GraphQLError(e.message)
@@ -64,7 +63,7 @@ const B2BSettings = {
   getSellers: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { sellers, audit },
-      ip
+      ip,
     } = ctx
 
     await audit.sendEvent({
@@ -87,11 +86,10 @@ const B2BSettings = {
   ) => {
     const {
       clients: { sellers, audit },
-      ip
+      ip,
     } = ctx
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-sellers-paginated-event',
         operation: 'GET_SELLERS_PAGINATED',
@@ -117,11 +115,12 @@ const B2BSettings = {
   getAccount: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { lm, audit },
-      ip
+      ip,
     } = ctx
 
     try {
       const result = await lm.getAccount()
+
       await audit.sendEvent({
         subjectId: 'get-account-event',
         operation: 'GET_ACCOUNT',
