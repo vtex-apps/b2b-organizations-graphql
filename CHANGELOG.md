@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fixed `canImpersonate` parameter not being properly propagated in `updateUser` mutation, which was preventing the field from being updated
 
+## [2.4.1] - 2026-02-04
+
+### Added
+
+- [B2BTEAM-3133] Add `view-seller` permission to access Seller Register API endpoints. This is required to comply with VTEX's new granular permissions security policy.
+
+## [2.4.0] - 2026-02-02
+
+## [2.3.2] - 2026-01-27
+
+### Changed
+
+- Updated GitHub Actions quality-engineering workflow to v3.1.0
+
 ## [2.3.1] - 2026-01-15
 
 ### Fixed
