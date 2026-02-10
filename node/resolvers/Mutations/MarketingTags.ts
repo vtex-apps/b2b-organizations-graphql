@@ -9,7 +9,7 @@ const MarketingTags = {
     const {
       clients: { vbase, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     if (!costId || !tags) {
@@ -18,6 +18,7 @@ const MarketingTags = {
 
     try {
       let previousData: { tags?: string[] } | null = null
+
       try {
         previousData = await vbase.getJSON(MARKETING_TAGS.VBASE_BUCKET, costId)
       } catch {
@@ -40,7 +41,7 @@ const MarketingTags = {
           }),
           entityAfterAction: JSON.stringify({
             costId,
-            tags
+            tags,
           }),
         },
       })

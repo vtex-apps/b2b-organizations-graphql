@@ -165,7 +165,7 @@ const checkUserPermissions = async ({
 const sleep = (ms: number) => {
   const time = ms + SLEEP_ADD_PERCENTAGE * ms
 
-  return new Promise((resolve) => setTimeout(resolve, time))
+  return new Promise((resolve) => setTimeout(() => resolve(undefined), time))
 }
 
 const Users = {
@@ -173,7 +173,7 @@ const Users = {
     const {
       clients: { masterdata, vbase, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     const app: string = getAppId()
@@ -182,6 +182,7 @@ const Users = {
         error,
         message: 'b2borg.getAppSettings-Error',
       })
+
       return {}
     })
 
@@ -251,7 +252,7 @@ const Users = {
     const {
       clients: { storefrontPermissions, session, masterdata, audit },
       vtex: { adminUserAuthToken, logger, sessionToken },
-      ip
+      ip,
     } = ctx
 
     const sessionData = await session
@@ -264,6 +265,7 @@ const Users = {
           error,
           message: 'getOrganizationsWithoutSalesManager-session-error',
         })
+
         return null
       })
 
@@ -370,7 +372,7 @@ const Users = {
       clients: { storefrontPermissions, audit },
       vtex: { adminUserAuthToken, logger },
       vtex,
-      ip
+      ip,
     } = ctx
 
     if (!adminUserAuthToken) {
@@ -496,7 +498,7 @@ const Users = {
   getSalesChannels: async (_: void, __: void, ctx: Context) => {
     const {
       clients: { audit },
-      ip
+      ip,
     } = ctx
 
     await audit.sendEvent({
@@ -517,7 +519,7 @@ const Users = {
     const {
       clients: { catalog, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     let access = false

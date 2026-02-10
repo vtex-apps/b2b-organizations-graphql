@@ -140,8 +140,9 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
             context?.vtex?.account,
             metricFields,
             'ValidateStoreUserAccessAudit'
-          ),
+          )
         )
+
         return resolve(root, args, context, info)
       }
 

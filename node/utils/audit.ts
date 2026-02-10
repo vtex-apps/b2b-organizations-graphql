@@ -1,22 +1,25 @@
-import { transformOperation } from "./transformOperation";
+import { transformOperation } from './transformOperation'
 
 const audit = async (
   ctx: Context,
   operationName: string,
-  statusCode?: number,
+  statusCode?: number
 ) => {
   const {
-    clients: { audit },
+    clients: { audit: auditClient },
     ip,
-  } = ctx;
+  } = ctx
 
-  const { subjectId, operation, entityNameFirstLetter } = transformOperation(operationName, statusCode);
+  const { subjectId, operation, entityNameFirstLetter } = transformOperation(
+    operationName,
+    statusCode
+  )
 
   if (statusCode === 401 || statusCode === 403) {
-    await audit.sendEvent({
+    await auditClient.sendEvent({
       subjectId,
       operation,
-      authorId: "unknown",
+      authorId: 'unknown',
       meta: {
         entityName: entityNameFirstLetter,
         remoteIpAddress: ip,

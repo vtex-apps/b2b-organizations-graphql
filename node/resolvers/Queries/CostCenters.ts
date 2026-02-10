@@ -46,10 +46,10 @@ const hashCode = function hash(arg: null | string | number | number[]) {
 
 const setGUID = (address: Address) => {
   return (
-    hashCode(address.street) +
-    hashCode(address.complement) +
-    hashCode(address.city) +
-    hashCode(address.state)
+    Number(hashCode(address.street)) +
+    Number(hashCode(address.complement)) +
+    Number(hashCode(address.city)) +
+    Number(hashCode(address.state))
   ).toString()
 }
 
@@ -205,7 +205,6 @@ const costCenters = {
     } = ctx
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-payment-terms-event',
         operation: 'GET_PAYMENT_TERMS',
@@ -317,7 +316,6 @@ const costCenters = {
     await checkConfig(ctx)
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-cost-centers-by-organization-id-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID',
@@ -426,7 +424,6 @@ const costCenters = {
     }
 
     try {
-
       await audit.sendEvent({
         subjectId: 'get-cost-centers-by-organization-id-storefront-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID_STOREFRONT',
