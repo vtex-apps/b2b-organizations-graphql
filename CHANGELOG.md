@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.4.3] - 2026-03-14
+
 ### Updated
 
 - Update Organizations schema to allow indexation of tradeName and search by it
