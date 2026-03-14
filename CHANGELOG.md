@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.4.4] - 2026-03-14
+
 ### Fixed
 
 - Change the way we assemble parameters on MasterData search
