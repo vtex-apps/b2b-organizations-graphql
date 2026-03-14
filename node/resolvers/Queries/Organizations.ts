@@ -167,7 +167,7 @@ const Organizations = {
     const whereArray = getWhereByStatus({ status })
 
     if (search) {
-      whereArray.push(`name="*${search}*" OR tradeName="*${search}*"`)
+      whereArray.push(`(name="*${search}*" OR tradeName="*${search}*")`)
     }
 
     const where = whereArray.join(' AND ')
