@@ -177,7 +177,7 @@ export const schemas = [
           },
         },
       },
-      'v-indexed': ['name', 'status', 'created'],
+      'v-indexed': ['name', 'status', 'tradeName', 'created'],
       'v-immediate-indexing': true,
       'v-cache': false,
     },
