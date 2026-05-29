@@ -85,13 +85,6 @@ export const ensureExportIsConverted = async (
   const metadata = await getExportMetadata(ctx, exportId)
   const fileExists = await vbaseExportFileExists(ctx, exportId)
 
-  console.log('[ensureExportIsConverted] start', {
-    exportId,
-    fileExists,
-    hasConvertedFile: hasConvertedFile(metadata),
-    hasExportType: Boolean(metadata?.exportType),
-  })
-
   if (hasConvertedFile(metadata) && fileExists) {
     return metadata as ExportMetadata
   }
@@ -101,12 +94,6 @@ export const ensureExportIsConverted = async (
   }
 
   const statusResponse = await ctx.clients.bulkExport.getExportStatus(exportId)
-
-  console.log('[ensureExportIsConverted] bulk-import status', {
-    exportId,
-    linkToFile: statusResponse.linkToFile,
-    status: statusResponse.status,
-  })
 
   if (
     statusResponse.status !== EXPORT_STATUS.COMPLETED ||
@@ -119,21 +106,10 @@ export const ensureExportIsConverted = async (
     statusResponse.linkToFile
   )
 
-  console.log('[ensureExportIsConverted] xlsx downloaded', {
-    exportId,
-    bytes: xlsxBuffer.length,
-  })
-
   const { buffer, filename } = await convertXlsxToCsv(
     xlsxBuffer,
     metadata.exportType
   )
-
-  console.log('[ensureExportIsConverted] csv converted', {
-    exportId,
-    bytes: buffer.length,
-    filename,
-  })
 
   return storeConvertedExport(
     ctx,

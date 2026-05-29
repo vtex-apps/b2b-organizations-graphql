@@ -98,8 +98,6 @@ const Export = {
       vtex: { logger },
     } = ctx
 
-    console.log('[exportStatus] start', { exportId })
-
     const metadata = await getExportMetadata(ctx, exportId)
     let statusResponse: BulkExportStatusResponse
 
@@ -141,8 +139,6 @@ const Export = {
     }
 
     if (statusResponse.status !== EXPORT_STATUS.COMPLETED) {
-      console.log('[exportStatus] result', { exportId, result })
-
       return result
     }
 
@@ -165,8 +161,6 @@ const Export = {
     }
 
     result.linkToFile = buildExportDownloadUrl(getRequestHost(ctx), exportId)
-
-    console.log('[exportStatus] result', { exportId, result })
 
     return result
   },

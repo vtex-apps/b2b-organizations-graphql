@@ -247,12 +247,6 @@ const Index = {
       metadata?.filename || `b2b-export-${exportId as string}.csv`
 
     try {
-      console.log('[exportDownload] fetching file', {
-        exportId,
-        filename,
-        path: getExportFilePath(exportId as string),
-      })
-
       const fileStream = await vbase.getFileStream(
         EXPORT_VBASE_BUCKET,
         getExportFilePath(exportId as string)
@@ -271,10 +265,6 @@ const Index = {
         error,
         exportId,
         message: 'exportDownload.file-error',
-      })
-      console.log('[exportDownload] file-error', {
-        error,
-        exportId,
       })
       throw new UserInputError('Export file not found or expired')
     }

@@ -117,13 +117,6 @@ export default class BulkExportClient extends ExternalClient {
     const path = `/api/b2b/export/${encodeURIComponent(exportId)}?an=${encodeURIComponent(
       this.context.account
     )}`
-    const url = `${BULK_EXPORT_BASE_URL}${path}`
-
-    console.log('[bulkExport.getExportStatus] start', {
-      account: this.context.account,
-      exportId,
-      url,
-    })
 
     let lastError: any
 
@@ -133,26 +126,9 @@ export default class BulkExportClient extends ExternalClient {
           metric: 'bulk-export-status',
         })
 
-        console.log('[bulkExport.getExportStatus] success', {
-          attempt,
-          exportId,
-          response,
-        })
-
         return response
       } catch (err) {
         lastError = err
-
-        console.log('[bulkExport.getExportStatus] error', {
-          attempt,
-          code: err?.code,
-          exportId,
-          message: err?.message,
-          responseData: err?.response?.data,
-          responseStatus: err?.response?.status,
-          retryable: isRetryableNetworkError(err),
-          url,
-        })
 
         if (attempt < 3 && isRetryableNetworkError(err)) {
           await sleep(1000 * attempt)
@@ -175,11 +151,6 @@ export default class BulkExportClient extends ExternalClient {
     const url = normalizeDownloadUrl(linkToFile)
     const isAbsoluteUrl = /^https?:\/\//i.test(url)
 
-    console.log('[bulkExport.downloadFile] start', {
-      isAbsoluteUrl,
-      url: url.slice(0, 120),
-    })
-
     try {
       const data = await this.http.get<ArrayBuffer>(url, {
         baseURL: isAbsoluteUrl ? '' : undefined,
@@ -187,19 +158,8 @@ export default class BulkExportClient extends ExternalClient {
         responseType: 'arraybuffer',
       })
 
-      console.log('[bulkExport.downloadFile] success', {
-        bytes: data.byteLength,
-      })
-
       return Buffer.from(data)
     } catch (error) {
-      console.log('[bulkExport.downloadFile] error', {
-        code: error?.code,
-        message: error?.message,
-        responseStatus: error?.response?.status,
-        url: url.slice(0, 120),
-      })
-
       throw new UserInputError(
         getReadableErrorMessage(
           error,
