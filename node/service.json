@@ -28,6 +28,10 @@
       "path": "/_v/private/b2b/checkout/pub/orders/:orderId/user-cancel-request",
       "public": true
     },
+    "exportDownload": {
+      "path": "/_v/private/b2b/export/:exportId",
+      "public": true
+    },
     "__graphql": {
       "path": "/_v/graphql",
       "policies": [

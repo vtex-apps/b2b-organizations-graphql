@@ -13,6 +13,7 @@ import IdentityClient from './IdentityClient'
 import Catalog from './catalog'
 import SellersClient from './sellers'
 import { AuditClient } from './audit'
+import BulkExportClient from './bulkExport'
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
@@ -66,5 +67,9 @@ export class Clients extends IOClients {
 
   public get sellers() {
     return this.getOrSet('sellers', SellersClient)
+  }
+
+  public get bulkExport() {
+    return this.getOrSet('bulkExport', BulkExportClient)
   }
 }

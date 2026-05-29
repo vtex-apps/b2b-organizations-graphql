@@ -4,6 +4,12 @@ import {
   COST_CENTER_DATA_ENTITY,
   ORGANIZATION_DATA_ENTITY,
 } from '../../mdSchema'
+import type { ExportMetadata } from '../../utils/export/constants'
+import {
+  EXPORT_VBASE_BUCKET,
+  getExportFilePath,
+} from '../../utils/export/constants'
+import { validateAdminToken } from '../directives/helper'
 
 const getUserAndPermissions = async (ctx: Context) => {
   const {
@@ -195,6 +201,74 @@ const Index = {
     ctx.set('Cache-Control', 'no-cache, no-store')
 
     ctx.response.body = response
+  },
+  exportDownload: async (ctx: Context) => {
+    const {
+      vtex: {
+        adminUserAuthToken,
+        authToken,
+        route: {
+          params: { exportId },
+        },
+        logger,
+      },
+      clients: { vbase },
+    } = ctx
+
+    const token = (adminUserAuthToken || authToken) as string
+    const { hasValidAdminToken, hasValidAdminRole } = await validateAdminToken(
+      ctx,
+      token
+    )
+
+    if (!hasValidAdminToken || !hasValidAdminRole) {
+      throw new ForbiddenError('Access denied')
+    }
+
+    if (!exportId) {
+      throw new UserInputError('Export ID is required')
+    }
+
+    let metadata: ExportMetadata | null = null
+
+    try {
+      metadata = await vbase.getJSON<ExportMetadata>(
+        EXPORT_VBASE_BUCKET,
+        exportId as string
+      )
+    } catch (error) {
+      logger.error({
+        error,
+        exportId,
+        message: 'exportDownload.metadata-error',
+      })
+    }
+
+    const filename =
+      metadata?.filename || `b2b-export-${exportId as string}.csv`
+
+    try {
+      const fileStream = await vbase.getFile(
+        EXPORT_VBASE_BUCKET,
+        getExportFilePath(exportId as string)
+      )
+
+      ctx.set('Content-Type', 'text/csv; charset=utf-8')
+      ctx.set(
+        'Content-Disposition',
+        `attachment; filename="${filename.replace(/"/g, '')}"`
+      )
+      ctx.set('Cache-Control', 'no-cache, no-store')
+      ctx.response.body = fileStream
+      ctx.response.status = 200
+    } catch (error) {
+      logger.error({
+        error,
+        exportId,
+        message: 'exportDownload.file-error',
+      })
+      throw new UserInputError('Export file not found or expired')
+    }
   },
   order: async (ctx: Context) => {
     const order = await getOrder(ctx)

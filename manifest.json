@@ -98,6 +98,13 @@
         "host": "analytics.vtex.com",
         "path": "*"
       }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "b2b-bulk-import.vtexcommercestable.com.br",
+        "path": "/api/b2b/*"
+      }
     }
   ],
   "$schema": "https://raw.githubusercontent.com/vtex/node-vtex-api/master/gen/manifest.schema"

@@ -131,6 +131,9 @@ type Query {
     @validateAdminUserAccess
     @cacheControl(scope: PRIVATE)
   getAccount: Account @validateAdminUserAccess @cacheControl(scope: PRIVATE)
+  exportStatus(exportId: String!): ExportStatusResult
+    @cacheControl(scope: PRIVATE)
+    @validateAdminUserAccess
 }
 
 type Account {
@@ -347,6 +350,9 @@ type Mutation {
     @withSession
     @withPermissions
     @validateAdminUserAccess(adminPermission: "B2B_ORGANIZATIONS_EDIT")
+  createExport(exportType: ExportType!): CreateExportResult
+    @cacheControl(scope: PRIVATE)
+    @validateAdminUserAccess
 }
 
 type SettingsResponse {
@@ -749,4 +755,31 @@ type DropdownValue {
 input DropdownValueInput {
   value: String
   label: String
+}
+
+enum ExportType {
+  organizations
+  cost_centers
+  members
+  addresses
+}
+
+enum ExportStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+type CreateExportResult {
+  exportId: String!
+}
+
+type ExportStatusResult {
+  exportId: String!
+  status: ExportStatus!
+  progressPercentage: Int
+  exportedRows: Int
+  linkToFile: String
+  lastUpdate: String
+  startDate: String
 }
