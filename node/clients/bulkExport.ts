@@ -7,11 +7,24 @@ import type { ExportType } from '../utils/export/constants'
 
 const BULK_EXPORT_BASE_URL = 'http://b2b-bulk-import.vtexcommercestable.com.br'
 
+const normalizeDownloadUrl = (linkToFile: string) => {
+  const url = linkToFile.startsWith('http')
+    ? linkToFile
+    : `${BULK_EXPORT_BASE_URL}${linkToFile.startsWith('/') ? '' : '/'}${linkToFile}`
+
+  return url.replace(
+    /^https:\/\/([a-z0-9-]+(?:\.[a-z0-9-]+)*\.vtexcommercestable\.com\.br)/i,
+    'http://$1'
+  )
+}
+
 export interface BulkExportStatusResponse {
   exportId: string
   status: number
   progressPercentage?: number
+  percentage?: number | string
   exportedRows?: number
+  totalRows?: number
   linkToFile?: string
   lastUpdate?: string
   startDate?: string
@@ -47,6 +60,22 @@ const getReadableErrorMessage = (error: any, fallback: string) => {
   return fallback
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const isRetryableNetworkError = (error: any) => {
+  const message = String(error?.message ?? '')
+  const code = String(error?.code ?? '')
+
+  return (
+    message.includes('socket disconnected') ||
+    message.includes('ECONNRESET') ||
+    message.includes('ETIMEDOUT') ||
+    message.includes('ESOCKETTIMEDOUT') ||
+    code === 'ECONNRESET' ||
+    code === 'ETIMEDOUT'
+  )
+}
+
 export default class BulkExportClient extends ExternalClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
     super(BULK_EXPORT_BASE_URL, ctx, {
@@ -55,7 +84,7 @@ export default class BulkExportClient extends ExternalClient {
         VtexIdclientAutCookie: getAuthToken(ctx),
         ...options?.headers,
       },
-      timeout: 60000,
+      timeout: 120000,
     })
   }
 
@@ -85,38 +114,92 @@ export default class BulkExportClient extends ExternalClient {
   public getExportStatus = async (
     exportId: string
   ): Promise<BulkExportStatusResponse> => {
-    try {
-      return await this.http.get<BulkExportStatusResponse>(
-        `/api/b2b/export/${encodeURIComponent(exportId)}?an=${encodeURIComponent(
-          this.context.account
-        )}`,
-        {
+    const path = `/api/b2b/export/${encodeURIComponent(exportId)}?an=${encodeURIComponent(
+      this.context.account
+    )}`
+    const url = `${BULK_EXPORT_BASE_URL}${path}`
+
+    console.log('[bulkExport.getExportStatus] start', {
+      account: this.context.account,
+      exportId,
+      url,
+    })
+
+    let lastError: any
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const response = await this.http.get<BulkExportStatusResponse>(path, {
           metric: 'bulk-export-status',
+        })
+
+        console.log('[bulkExport.getExportStatus] success', {
+          attempt,
+          exportId,
+          response,
+        })
+
+        return response
+      } catch (err) {
+        lastError = err
+
+        console.log('[bulkExport.getExportStatus] error', {
+          attempt,
+          code: err?.code,
+          exportId,
+          message: err?.message,
+          responseData: err?.response?.data,
+          responseStatus: err?.response?.status,
+          retryable: isRetryableNetworkError(err),
+          url,
+        })
+
+        if (attempt < 3 && isRetryableNetworkError(err)) {
+          await sleep(1000 * attempt)
+          continue
         }
-      )
-    } catch (error) {
-      throw new UserInputError(
-        getReadableErrorMessage(
-          error,
-          'Unable to retrieve export status. Please try again.'
-        )
-      )
+
+        break
+      }
     }
+
+    throw new UserInputError(
+      getReadableErrorMessage(
+        lastError,
+        'Unable to retrieve export status. Please try again.'
+      )
+    )
   }
 
   public downloadFile = async (linkToFile: string): Promise<Buffer> => {
-    const url = linkToFile.startsWith('http')
-      ? linkToFile
-      : `${BULK_EXPORT_BASE_URL}${linkToFile.startsWith('/') ? '' : '/'}${linkToFile}`
+    const url = normalizeDownloadUrl(linkToFile)
+    const isAbsoluteUrl = /^https?:\/\//i.test(url)
+
+    console.log('[bulkExport.downloadFile] start', {
+      isAbsoluteUrl,
+      url: url.slice(0, 120),
+    })
 
     try {
       const data = await this.http.get<ArrayBuffer>(url, {
+        baseURL: isAbsoluteUrl ? '' : undefined,
         metric: 'bulk-export-download',
         responseType: 'arraybuffer',
       })
 
+      console.log('[bulkExport.downloadFile] success', {
+        bytes: data.byteLength,
+      })
+
       return Buffer.from(data)
     } catch (error) {
+      console.log('[bulkExport.downloadFile] error', {
+        code: error?.code,
+        message: error?.message,
+        responseStatus: error?.response?.status,
+        url: url.slice(0, 120),
+      })
+
       throw new UserInputError(
         getReadableErrorMessage(
           error,

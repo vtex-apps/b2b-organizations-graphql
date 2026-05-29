@@ -105,6 +105,13 @@
         "host": "b2b-bulk-import.vtexcommercestable.com.br",
         "path": "/api/b2b/*"
       }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "s3.amazonaws.com",
+        "path": "*"
+      }
     }
   ],
   "$schema": "https://raw.githubusercontent.com/vtex/node-vtex-api/master/gen/manifest.schema"

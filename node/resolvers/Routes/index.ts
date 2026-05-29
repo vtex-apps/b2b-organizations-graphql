@@ -9,6 +9,7 @@ import {
   EXPORT_VBASE_BUCKET,
   getExportFilePath,
 } from '../../utils/export/constants'
+import { ensureExportIsConverted } from '../../utils/export/ensureConvertedExport'
 import { validateAdminToken } from '../directives/helper'
 
 const getUserAndPermissions = async (ctx: Context) => {
@@ -232,23 +233,27 @@ const Index = {
     let metadata: ExportMetadata | null = null
 
     try {
-      metadata = await vbase.getJSON<ExportMetadata>(
-        EXPORT_VBASE_BUCKET,
-        exportId as string
-      )
+      metadata = await ensureExportIsConverted(ctx, exportId as string)
     } catch (error) {
       logger.error({
         error,
         exportId,
-        message: 'exportDownload.metadata-error',
+        message: 'exportDownload.convert-error',
       })
+      throw new UserInputError('Unable to prepare export file for download')
     }
 
     const filename =
       metadata?.filename || `b2b-export-${exportId as string}.csv`
 
     try {
-      const fileStream = await vbase.getFile(
+      console.log('[exportDownload] fetching file', {
+        exportId,
+        filename,
+        path: getExportFilePath(exportId as string),
+      })
+
+      const fileStream = await vbase.getFileStream(
         EXPORT_VBASE_BUCKET,
         getExportFilePath(exportId as string)
       )
@@ -266,6 +271,10 @@ const Index = {
         error,
         exportId,
         message: 'exportDownload.file-error',
+      })
+      console.log('[exportDownload] file-error', {
+        error,
+        exportId,
       })
       throw new UserInputError('Export file not found or expired')
     }

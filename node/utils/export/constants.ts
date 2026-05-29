@@ -1,5 +1,7 @@
 export const EXPORT_VBASE_BUCKET = 'b2b_exports'
 
+export const EXPORT_CSV_VBASE_TTL_SECONDS = 300
+
 export const UTF8_BOM = '\uFEFF'
 
 export const EXPORT_STATUS = {
@@ -20,11 +22,22 @@ export type ExportType =
   | 'members'
   | 'addresses'
 
+export interface ExportStatusSnapshot {
+  capturedAt: string
+  exportedRows?: number | null
+  lastUpdate?: string | null
+  progressPercentage?: number | null
+  startDate?: string | null
+  status: number
+}
+
 export interface ExportMetadata {
+  convertedAt: string
   exportId: string
   exportType: ExportType
   filename: string
-  convertedAt: string
+  lastStatusSnapshot?: ExportStatusSnapshot
+  totalRows?: number | null
 }
 
 export const getExportFilePath = (exportId: string) => `${exportId}.csv`

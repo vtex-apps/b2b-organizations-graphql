@@ -2,6 +2,7 @@ import { UserInputError } from '@vtex/api'
 
 import type { ExportMetadata, ExportType } from '../../utils/export/constants'
 import { EXPORT_VBASE_BUCKET } from '../../utils/export/constants'
+import { countExportTotalRows } from '../../utils/export/countExportTotalRows'
 
 const Export = {
   createExport: async (
@@ -9,10 +10,28 @@ const Export = {
     { exportType }: { exportType: ExportType },
     ctx: Context
   ) => {
-    const { exportId } = await ctx.clients.bulkExport.createExport(exportType)
+    const {
+      clients: { bulkExport, vbase },
+      vtex: { logger },
+    } = ctx
+
+    const { exportId } = await bulkExport.createExport(exportType)
 
     if (!exportId) {
       throw new UserInputError('Unable to start export. Please try again.')
+    }
+
+    let totalRows: number | null = null
+
+    try {
+      totalRows = await countExportTotalRows(exportType, ctx)
+    } catch (error) {
+      logger.warn({
+        error,
+        exportId,
+        exportType,
+        message: 'createExport.countTotalRowsFailed',
+      })
     }
 
     const metadata: ExportMetadata = {
@@ -20,9 +39,10 @@ const Export = {
       exportId,
       exportType,
       filename: '',
+      totalRows,
     }
 
-    await ctx.clients.vbase.saveJSON(EXPORT_VBASE_BUCKET, exportId, metadata)
+    await vbase.saveJSON(EXPORT_VBASE_BUCKET, exportId, metadata)
 
     return { exportId }
   },

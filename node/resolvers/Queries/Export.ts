@@ -1,14 +1,15 @@
-import { Readable } from 'stream'
-
-import type { ExportMetadata, ExportType } from '../../utils/export/constants'
+import type { BulkExportStatusResponse } from '../../clients/bulkExport'
 import {
   buildExportDownloadUrl,
   EXPORT_STATUS,
   EXPORT_STATUS_GRAPHQL,
-  EXPORT_VBASE_BUCKET,
-  getExportFilePath,
 } from '../../utils/export/constants'
-import { convertXlsxToCsv } from '../../utils/export/csvConverter'
+import { getExportMetadata } from '../../utils/export/ensureConvertedExport'
+import {
+  getCachedStatusSnapshot,
+  saveStatusSnapshot,
+  snapshotToStatusResponse,
+} from '../../utils/export/exportStatusCache'
 
 const getRequestHost = (ctx: Context) => {
   const forwardedHost = ctx.headers['x-forwarded-host'] as string | undefined
@@ -16,50 +17,74 @@ const getRequestHost = (ctx: Context) => {
   return ctx.vtex.host || forwardedHost || `${ctx.vtex.account}.myvtex.com`
 }
 
-const getExportMetadata = async (ctx: Context, exportId: string) => {
-  try {
-    return await ctx.clients.vbase.getJSON<ExportMetadata>(
-      EXPORT_VBASE_BUCKET,
-      exportId
-    )
-  } catch (error) {
-    const { data } = (error as any).response ?? {}
-
-    if (data?.code === 'FileNotFound') {
-      return null
-    }
-
-    throw error
+const toGraphQLInt = (value: number | null | undefined) => {
+  if (value == null || Number.isNaN(Number(value))) {
+    return null
   }
+
+  return Math.round(Number(value))
 }
 
-const hasConvertedFile = (metadata: ExportMetadata | null) =>
-  Boolean(metadata?.convertedAt && metadata?.filename)
-
-const storeConvertedExport = async (
-  ctx: Context,
-  exportId: string,
-  exportType: ExportType,
-  csvBuffer: Buffer,
-  filename: string
-) => {
-  const filePath = getExportFilePath(exportId)
-  const metadata: ExportMetadata = {
-    convertedAt: new Date().toISOString(),
-    exportId,
-    exportType,
-    filename,
+const parseNumericValue = (value: unknown) => {
+  if (value == null || value === '') {
+    return null
   }
 
-  await ctx.clients.vbase.saveFile(
-    EXPORT_VBASE_BUCKET,
-    filePath,
-    Readable.from(csvBuffer),
-    true
-  )
-  await ctx.clients.vbase.saveJSON(EXPORT_VBASE_BUCKET, exportId, metadata)
+  const parsed = Number(value)
 
-  return metadata
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+const resolveProgressPercentage = (
+  statusResponse: {
+    exportedRows?: number
+    percentage?: number | string
+    progressPercentage?: number
+    totalRows?: number
+  },
+  storedTotalRows?: number | null
+) => {
+  const rawResponse = statusResponse as typeof statusResponse &
+    Record<string, unknown>
+
+  let progress =
+    parseNumericValue(statusResponse.progressPercentage) ??
+    parseNumericValue(statusResponse.percentage) ??
+    parseNumericValue(rawResponse.ProgressPercentage) ??
+    parseNumericValue(rawResponse.Percentage)
+
+  if (progress != null && progress > 0 && progress <= 1) {
+    progress = Math.round(progress * 100)
+  } else if (progress != null) {
+    progress = Math.round(progress)
+  }
+
+  const exportedRows = parseNumericValue(statusResponse.exportedRows)
+  const totalRows =
+    parseNumericValue(statusResponse.totalRows) ??
+    parseNumericValue(rawResponse.TotalRows) ??
+    parseNumericValue(rawResponse.totalExportedRows) ??
+    parseNumericValue(rawResponse.TotalExportedRows) ??
+    storedTotalRows ??
+    null
+
+  if (
+    (progress == null || progress === 0) &&
+    exportedRows != null &&
+    totalRows != null &&
+    totalRows > 0
+  ) {
+    progress = Math.round((exportedRows / totalRows) * 100)
+  }
+
+  if (
+    progress == null ||
+    (progress === 0 && exportedRows != null && exportedRows > 0)
+  ) {
+    return null
+  }
+
+  return Math.min(100, Math.max(0, progress))
 }
 
 const Export = {
@@ -73,7 +98,30 @@ const Export = {
       vtex: { logger },
     } = ctx
 
-    const statusResponse = await bulkExport.getExportStatus(exportId)
+    console.log('[exportStatus] start', { exportId })
+
+    const metadata = await getExportMetadata(ctx, exportId)
+    let statusResponse: BulkExportStatusResponse
+
+    try {
+      statusResponse = await bulkExport.getExportStatus(exportId)
+    } catch (error) {
+      const snapshot = getCachedStatusSnapshot(ctx, exportId, metadata)
+
+      if (snapshot) {
+        logger.warn({
+          error,
+          exportId,
+          message: 'exportStatus.usingCachedSnapshot',
+        })
+        statusResponse = snapshotToStatusResponse(exportId, snapshot)
+      } else {
+        throw error
+      }
+    }
+
+    await saveStatusSnapshot(ctx, exportId, statusResponse, metadata)
+
     const mappedStatus =
       EXPORT_STATUS_GRAPHQL[
         statusResponse.status as keyof typeof EXPORT_STATUS_GRAPHQL
@@ -81,34 +129,19 @@ const Export = {
 
     const result = {
       exportId: statusResponse.exportId ?? exportId,
-      exportedRows: statusResponse.exportedRows ?? null,
+      exportedRows: toGraphQLInt(statusResponse.exportedRows),
       lastUpdate: statusResponse.lastUpdate ?? null,
       linkToFile: null as string | null,
-      progressPercentage: statusResponse.progressPercentage ?? null,
+      progressPercentage: resolveProgressPercentage(
+        statusResponse,
+        metadata?.totalRows
+      ),
       startDate: statusResponse.startDate ?? null,
       status: mappedStatus,
     }
 
     if (statusResponse.status !== EXPORT_STATUS.COMPLETED) {
-      return result
-    }
-
-    const metadata = await getExportMetadata(ctx, exportId)
-
-    if (hasConvertedFile(metadata)) {
-      result.linkToFile = buildExportDownloadUrl(
-        getRequestHost(ctx),
-        exportId
-      )
-
-      return result
-    }
-
-    if (!statusResponse.linkToFile) {
-      logger.warn({
-        exportId,
-        message: 'exportStatus.missingLinkToFile',
-      })
+      console.log('[exportStatus] result', { exportId, result })
 
       return result
     }
@@ -122,27 +155,18 @@ const Export = {
       return result
     }
 
-    const xlsxBuffer = await bulkExport.downloadFile(statusResponse.linkToFile)
-    const { buffer, filename } = await convertXlsxToCsv(
-      xlsxBuffer,
-      metadata.exportType
-    )
+    if (!statusResponse.linkToFile) {
+      logger.warn({
+        exportId,
+        message: 'exportStatus.missingLinkToFile',
+      })
 
-    await storeConvertedExport(
-      ctx,
-      exportId,
-      metadata.exportType,
-      buffer,
-      filename
-    )
+      return result
+    }
 
     result.linkToFile = buildExportDownloadUrl(getRequestHost(ctx), exportId)
 
-    logger.info({
-      exportId,
-      filename,
-      message: 'exportStatus.converted',
-    })
+    console.log('[exportStatus] result', { exportId, result })
 
     return result
   },
