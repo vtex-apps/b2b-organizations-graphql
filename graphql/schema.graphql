@@ -195,6 +195,13 @@ type Mutation {
   ): MasterDataResponse
     @validateAdminUserAccess(adminPermission: "B2B_ORGANIZATIONS_EDIT")
     @cacheControl(scope: PRIVATE)
+  """
+  When `collections` is omitted from the mutation call, existing organization collections are left unchanged.
+
+  Entries with both `id` and `name` are persisted without Catalog lookup (`id` is authoritative).
+
+  When `id` is omitted and `name` is provided, matching follows the same Catalog name resolution used by `createOrganizationAndCostCentersWithId`/`NormalizedOrganizationInput`.
+  """
   updateOrganization(
     id: ID!
     name: String!
@@ -667,6 +674,11 @@ input AddressInput {
   reference: String
 }
 
+"""
+Collection attachment for an organization. For updates, omit `id` only when resolving the collection via Catalog exact `name` match (parity with normalized create input using collection names).
+
+When both are provided, `id` wins and no Catalog lookup is performed for that row.
+"""
 input CollectionInput {
   id: String
   name: String

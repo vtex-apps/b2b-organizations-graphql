@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Throttled VBase writes during export status polling to reduce rate-limit errors
 
+## [2.4.5] - 2026-06-08
+
+### Fixed
+
+- **`updateOrganization` collections**: resolve `CollectionInput` entries by Catalog name when no `id` is sent, matching `createOrganizationAndCostCentersWithId`/`NormalizedOrganizationInput` behavior so storefront catalog rules stay valid after updates.
+- **Partial updates**: only send `collections` to Master Data when the argument is explicitly provided (`undefined`/omitted leaves existing collections unchanged).
+- **`findCollections`**: drop unresolved entries after Catalog lookup instead of leaving nulls in the stored array.
+
 ## [2.4.4] - 2026-03-14
 
 ### Fixed
