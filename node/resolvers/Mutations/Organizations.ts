@@ -167,33 +167,80 @@ const findSellers = async (sellerNames: string[], ctx: Context) => {
   return sellersFound
 }
 
-const findCollections = async (collectionsNames: string[], ctx: Context) => {
+const trimmedNonEmptyString = (value?: string | null) => {
+  if (value === undefined || value === null) return ''
+  const s = String(value).trim()
+
+  return s.length > 0 ? s : ''
+}
+
+const lookupCollectionByExactName = async (
+  collectionName: string,
+  ctx: Context
+): Promise<Collection | null> => {
   const {
     clients: { catalog },
   } = ctx
 
-  const collectionsFound = collectionsNames
-    .map(async (collectionName: string) => {
-      const availableCollections = (
-        await catalog.collectionsAvailable(collectionName)
-      )?.items
+  const availableCollections = (
+    await catalog.collectionsAvailable(collectionName)
+  )?.items
 
-      const collection = availableCollections.find(
-        (c: any) => c.name === collectionName
-      )
+  const collection = availableCollections?.find(
+    (c: any) => c.name === collectionName
+  )
 
-      if (collection) {
+  if (collection) {
+    return {
+      id: collection.id.toString(),
+      name: collection.name,
+    } as Collection
+  }
+
+  return null
+}
+
+const findCollections = async (collectionsNames: string[], ctx: Context) => {
+  const resolved = await Promise.all(
+    collectionsNames.map((name) =>
+      lookupCollectionByExactName(name.trim(), ctx)
+    )
+  )
+
+  return resolved.filter((item): item is Collection => item !== null)
+}
+
+/**
+ * When `collections` arg is omitted in `updateOrganization`, Master Data collections are untouched.
+ */
+const resolveCollectionInputsForMutation = async (
+  collectionInputs: Array<{ id?: string | null; name?: string | null }>,
+  ctx: Context
+): Promise<Collection[]> => {
+  const resolved = await Promise.all(
+    collectionInputs.map(async (item) => {
+      const trimmedId = trimmedNonEmptyString(item?.id)
+
+      if (trimmedId) {
+        const trimmedName = trimmedNonEmptyString(item?.name)
+
         return {
-          id: collection.id.toString(),
-          name: collection.name,
+          id: trimmedId,
+          ...(trimmedName && { name: trimmedName }),
         } as Collection
+      }
+
+      const trimmedNameOnly = trimmedNonEmptyString(item?.name)
+
+      if (trimmedNameOnly) {
+        return lookupCollectionByExactName(trimmedNameOnly, ctx)
       }
 
       return null
     })
-    .filter((collection: any) => collection !== null)
+  )
 
-  return Promise.all(collectionsFound)
+  return resolved.filter((item): item is Collection => item !== null)
 }
 
 const createOrganizationAndCostCenterWithAdminUser = async (
@@ -713,7 +760,7 @@ const Organizations = {
       name: string
       tradeName?: string
       status: string
-      collections: any[]
+      collections?: any[] | null
       paymentTerms: any[]
       priceTables: any[]
       customFields: any[]
@@ -767,8 +814,18 @@ const Organizations = {
     }
 
     try {
+      const shouldPersistCollections =
+        collections !== undefined && collections !== null
+
+      const persistedCollections =
+        shouldPersistCollections && collections
+          ? await resolveCollectionInputsForMutation(collections, ctx)
+          : undefined
+
       const fields = {
-        collections,
+        ...(shouldPersistCollections && {
+          collections: persistedCollections,
+        }),
         ...((tradeName || tradeName === '') && { tradeName }),
         customFields,
         name,

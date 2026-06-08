@@ -19,11 +19,12 @@ import {
 } from '../../mdSchema'
 import type {
   AddressInput,
+  Collection,
   NormalizedOrganizationInput,
   OrganizationInput,
   OrganizationRequest,
 } from '../../typings'
-import { ORGANIZATION_REQUEST_STATUSES } from '../../utils/constants'
+import { ORGANIZATION_REQUEST_STATUSES, ORGANIZATION_STATUSES } from '../../utils/constants'
 import Organizations from './Organizations'
 
 jest.mock('@vtex/api')
@@ -49,9 +50,16 @@ const mockContext = (
   costId: string = randUuid()
 ) => {
   return {
+    ip: '127.0.0.1',
     clients: {
       analytics: {
-        sendMetric: jest.fn(),
+        sendMetric: jest.fn().mockResolvedValue(undefined),
+      },
+      audit: {
+        sendEvent: jest.fn().mockResolvedValue(undefined),
+      },
+      catalog: {
+        collectionsAvailable: jest.fn().mockResolvedValue({ items: [] }),
       },
       masterdata: {
         createDocument: jest
@@ -76,7 +84,12 @@ const mockContext = (
       },
     },
     vtex: {
-      logger: jest.fn(),
+      account: 'mock-account',
+      logger: {
+        error: jest.fn(),
+        info: jest.fn(),
+        warn: jest.fn(),
+      },
     },
   } as unknown as Context
 }
@@ -427,6 +440,157 @@ describe('given an Organization Mutation', () => {
       })
       it('should create the organization with the id specified', () => {
         expect(result.id).toEqual(orgId)
+      })
+    })
+  })
+
+  describe('when updateOrganization is invoked', () => {
+    const orgId = randUuid()
+
+    let collectionsAvailableSpy: jest.Mock
+    let mockedContext: Context
+
+    const minimalUpdateArgs = {
+      customFields: [],
+      id: orgId,
+      name: 'Updated Org',
+      notifyUsers: false,
+      paymentTerms: [],
+      permissions: {},
+      priceTables: [],
+      sellers: undefined,
+      status: ORGANIZATION_STATUSES.ACTIVE,
+      tradeName: undefined as string | undefined,
+    }
+
+    beforeEach(() => {
+      collectionsAvailableSpy = jest.fn()
+
+      mockedContext = {
+        ip: '127.0.0.1',
+        clients: {
+          analytics: {
+            sendMetric: jest.fn().mockResolvedValue(undefined),
+          },
+          audit: {
+            sendEvent: jest.fn().mockResolvedValue(undefined),
+          },
+          catalog: {
+            collectionsAvailable: collectionsAvailableSpy,
+          },
+          mail: {},
+          masterdata: {
+            getDocument: jest.fn().mockResolvedValue({
+              id: orgId,
+              name: 'Existing',
+              status: ORGANIZATION_STATUSES.ACTIVE,
+            }),
+            updatePartialDocument: jest.fn().mockResolvedValue({}),
+          },
+          storefrontPermissions: {},
+        },
+        vtex: {
+          account: 'testacct',
+          logger: {
+            error: jest.fn(),
+            warn: jest.fn(),
+          },
+        },
+      } as unknown as Context
+    })
+
+    describe('collections resolution', () => {
+      const getPersistedCollections = (): Collection[] =>
+        (mockedContext.clients.masterdata.updatePartialDocument as jest.Mock)
+          .mock.calls[0]?.[0].fields.collections ?? []
+
+      it('resolves Catalog id from name-only payloads', async () => {
+        collectionsAvailableSpy.mockResolvedValue({
+          items: [{ id: 42, name: 'VIP Shelf' }],
+        })
+
+        await Organizations.updateOrganization(jest.fn() as never, {
+          ...minimalUpdateArgs,
+          collections: [{ name: 'VIP Shelf' }],
+        } as never, mockedContext)
+
+        expect(getPersistedCollections()).toEqual([
+          { id: '42', name: 'VIP Shelf' },
+        ])
+        expect(collectionsAvailableSpy).toHaveBeenCalledWith('VIP Shelf')
+      })
+
+      it('does not resolve via Catalog when id is supplied', async () => {
+        await Organizations.updateOrganization(jest.fn() as never, {
+          ...minimalUpdateArgs,
+          collections: [{ id: '77', name: 'Direct Attach' }],
+        } as never, mockedContext)
+
+        expect(collectionsAvailableSpy).not.toHaveBeenCalled()
+
+        expect(getPersistedCollections()).toEqual([
+          { id: '77', name: 'Direct Attach' },
+        ])
+      })
+
+      it('preserves order for mixed explicit-id and resolved-by-name inputs', async () => {
+        collectionsAvailableSpy.mockResolvedValueOnce({
+          items: [{ id: 200, name: 'LateBound' }],
+        })
+
+        await Organizations.updateOrganization(jest.fn() as never, {
+          ...minimalUpdateArgs,
+          collections: [
+            { id: '5', name: 'FirstDirect' },
+            { name: 'LateBound' },
+          ],
+        } as never, mockedContext)
+
+        expect(getPersistedCollections()).toEqual([
+          { id: '5', name: 'FirstDirect' },
+          { id: '200', name: 'LateBound' },
+        ])
+
+        expect(collectionsAvailableSpy).toHaveBeenCalledTimes(1)
+        expect(collectionsAvailableSpy).toHaveBeenCalledWith('LateBound')
+      })
+
+      it('drops unresolved collection names aligned with normalized create semantics', async () => {
+        collectionsAvailableSpy.mockResolvedValue({ items: [] })
+
+        await Organizations.updateOrganization(jest.fn() as never, {
+          ...minimalUpdateArgs,
+          collections: [{ name: 'Unknown Collection' }],
+        } as never, mockedContext)
+
+        expect(getPersistedCollections()).toEqual([])
+      })
+
+      it('persists explicit empty arrays to clear collections', async () => {
+        await Organizations.updateOrganization(jest.fn() as never, {
+          ...minimalUpdateArgs,
+          collections: [],
+        } as never, mockedContext)
+
+        expect(mockedContext.clients.masterdata.updatePartialDocument).toHaveBeenCalled()
+
+        expect(collectionsAvailableSpy).not.toHaveBeenCalled()
+
+        expect(getPersistedCollections()).toEqual([])
+      })
+
+      it('omits collections from partial update payloads when collections argument absent', async () => {
+        await Organizations.updateOrganization(
+          jest.fn() as never,
+          minimalUpdateArgs as never,
+          mockedContext
+        )
+
+        const fields =
+          (mockedContext.clients.masterdata.updatePartialDocument as jest.Mock)
+            .mock.calls[0]?.[0].fields
+
+        expect(fields).not.toHaveProperty('collections')
       })
     })
   })
