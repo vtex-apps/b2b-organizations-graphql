@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- GraphQL bulk export API: `createExport` mutation and `exportStatus` query for `organizations`, `cost_centers`, `members`, and `addresses`
+- Integration with `b2b-bulk-import` service and private CSV download route at `GET /_v/private/b2b/export/:exportId`
+- XLSX to UTF-8 BOM CSV conversion with column normalization for organizations and cost centers; passthrough for members and addresses
+- Export metadata and CSV caching in VBase (CSV expires after 5 minutes)
+- Export usage documentation in `docs/README.md`
+
+### Changed
+
+- Throttled VBase writes during export status polling to reduce rate-limit errors
+
 ## [2.4.5] - 2026-06-08
 
 ### Fixed

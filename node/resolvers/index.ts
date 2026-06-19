@@ -8,11 +8,13 @@ import {
   role,
 } from './fieldResolvers'
 import CostCentersMutation from './Mutations/CostCenters'
+import ExportMutation from './Mutations/Export'
 import MarketingTagsMutation from './Mutations/MarketingTags'
 import OrganizationsMutation from './Mutations/Organizations'
 import SettingsMutation from './Mutations/Settings'
 import UsersMutation from './Mutations/Users'
 import CostCentersQuery from './Queries/CostCenters'
+import ExportQuery from './Queries/Export'
 import MarketingTagsQuery from './Queries/MarketingTags'
 import OrganizationsQuery from './Queries/Organizations'
 import SettingsQuery from './Queries/Settings'
@@ -33,6 +35,7 @@ export const resolvers = {
   },
   Mutation: {
     ...CostCentersMutation,
+    ...ExportMutation,
     ...MarketingTagsMutation,
     ...OrganizationsMutation,
     ...SettingsMutation,
@@ -40,6 +43,7 @@ export const resolvers = {
   },
   Query: {
     ...CostCentersQuery,
+    ...ExportQuery,
     ...MarketingTagsQuery,
     ...OrganizationsQuery,
     ...SettingsQuery,

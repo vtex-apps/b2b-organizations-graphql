@@ -23,6 +23,10 @@ const clients: ClientsConfig<Clients> = {
   // We pass our custom implementation of the clients bag, containing the Status client.
   implementation: Clients,
   options: {
+    bulkExport: {
+      retries: 4,
+      timeout: 120000,
+    },
     // All IO Clients will be initialized with these options, unless otherwise specified.
     default: {
       retries: 2,
