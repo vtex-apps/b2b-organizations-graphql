@@ -79,7 +79,8 @@ interface B2BCustomerInput {
 interface DefaultCostCenterInput {
   id?: string
   name: string
-  address: AddressInput
+  address?: AddressInput
+  addresses?: AddressInput[]
   phoneNumber?: string
   businessDocument?: string
   customFields?: CustomField[]

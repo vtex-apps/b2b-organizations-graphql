@@ -8,5 +8,23 @@ export default class GraphQLError extends Error {
 }
 
 export const getErrorMessage = (e: any) => {
-  return e.message ?? e.response?.data?.message ?? e
+  const responseData = e.response?.data
+
+  if (typeof responseData === 'string') {
+    return responseData
+  }
+
+  if (responseData?.message) {
+    return responseData.message
+  }
+
+  if (responseData?.Message) {
+    return responseData.Message
+  }
+
+  if (Array.isArray(responseData) && responseData[0]?.Message) {
+    return responseData[0].Message
+  }
+
+  return e.message ?? e
 }

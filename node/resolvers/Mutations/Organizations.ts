@@ -8,6 +8,7 @@ import {
   ORGANIZATION_SCHEMA_VERSION,
 } from '../../mdSchema'
 import type {
+  AddressInput,
   B2BSettingsInput,
   Collection,
   DefaultCostCenterInput,
@@ -243,6 +244,26 @@ const resolveCollectionInputsForMutation = async (
   return resolved.filter((item): item is Collection => item !== null)
 }
 
+const normalizeAddressInput = (address: AddressInput): AddressInput => ({
+  ...address,
+  street: address.street ?? '',
+  complement: address.complement ?? '',
+  city: address.city ?? '',
+  state: address.state ?? '',
+})
+
+const resolveCostCenterAddresses = (
+  costCenter: Pick<DefaultCostCenterInput, 'address' | 'addresses'>
+): AddressInput[] => {
+  const addresses = costCenter.addresses?.length
+    ? costCenter.addresses
+    : costCenter.address
+      ? [costCenter.address]
+      : []
+
+  return addresses.map(normalizeAddressInput)
+}
+
 const createOrganizationAndCostCenterWithAdminUser = async (
   _: void,
   organization: NormalizedOrganizationInput,
@@ -302,15 +323,15 @@ const createOrganizationAndCostCenterWithAdminUser = async (
     if (costCenters?.length) {
       await Promise.all(
         costCenters?.map(async (costCenter: DefaultCostCenterInput) => {
-          const addresses = costCenter.address ? [costCenter.address] : []
+          const { address, addresses, ...costCenterFields } = costCenter
 
           const { id: costCenterId } =
             await CostCenterRepository.createCostCenter(
               _,
               organizationId,
               {
-                addresses,
-                ...costCenter,
+                ...costCenterFields,
+                addresses: resolveCostCenterAddresses({ address, addresses }),
               },
               ctx
             )
@@ -335,16 +356,15 @@ const createOrganizationAndCostCenterWithAdminUser = async (
     }
 
     if (defaultCostCenter) {
-      const addresses = defaultCostCenter.address
-        ? [defaultCostCenter.address]
-        : []
+      const { address, addresses, ...defaultCostCenterFields } =
+        defaultCostCenter
 
       const { id: costCenterId } = await CostCenterRepository.createCostCenter(
         _,
         organizationId,
         {
-          addresses,
-          ...defaultCostCenter,
+          ...defaultCostCenterFields,
+          addresses: resolveCostCenterAddresses({ address, addresses }),
         },
         ctx
       )
@@ -456,32 +476,31 @@ const Organizations = {
 
       if (!defaultCostCenter && costCenters?.length) {
         costCenterResult = await Promise.all(
-          costCenters?.map(async (costCenter: any) => {
-            const addresses = costCenter.address ? [costCenter.address] : []
+          costCenters?.map(async (costCenter: DefaultCostCenterInput) => {
+            const { address, addresses, ...costCenterFields } = costCenter
 
-            CostCenterRepository.createCostCenter(
+            return CostCenterRepository.createCostCenter(
               _,
               organizationId,
               {
-                addresses,
-                ...costCenter,
+                ...costCenterFields,
+                addresses: resolveCostCenterAddresses({ address, addresses }),
               },
               ctx
             )
           })
         )
       } else if (defaultCostCenter) {
-        const addresses = defaultCostCenter.address
-          ? [defaultCostCenter.address]
-          : []
+        const { address, addresses, ...defaultCostCenterFields } =
+          defaultCostCenter
 
         costCenterResult = [
           await CostCenterRepository.createCostCenter(
             _,
             organizationId,
             {
-              addresses,
-              ...defaultCostCenter,
+              ...defaultCostCenterFields,
+              addresses: resolveCostCenterAddresses({ address, addresses }),
             },
             ctx
           ),

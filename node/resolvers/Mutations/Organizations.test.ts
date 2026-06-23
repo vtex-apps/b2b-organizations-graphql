@@ -27,6 +27,18 @@ import type {
 import { ORGANIZATION_REQUEST_STATUSES, ORGANIZATION_STATUSES } from '../../utils/constants'
 import Organizations from './Organizations'
 
+const withNormalizedAddressFields = (address?: AddressInput) => {
+  if (!address) return address
+
+  return {
+    ...address,
+    street: address.street ?? '',
+    complement: address.complement ?? '',
+    city: address.city ?? '',
+    state: address.state ?? '',
+  }
+}
+
 jest.mock('@vtex/api')
 jest.mock('@vtex/diagnostics-nodejs', () => ({}))
 jest.mock('../config')
@@ -155,7 +167,11 @@ describe('given an Organization Mutation', () => {
         ).toHaveBeenNthCalledWith(2, {
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: {
-            addresses: [organization.defaultCostCenter?.address],
+            addresses: [
+              withNormalizedAddressFields(
+                organization.defaultCostCenter?.address
+              ),
+            ],
             organization: orgId,
             stateRegistration,
           },
@@ -291,7 +307,7 @@ describe('given an Organization Mutation', () => {
         ).toHaveBeenNthCalledWith(2, {
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: {
-            addresses: [costCenter.address],
+            addresses: [withNormalizedAddressFields(costCenter.address)],
             id: undefined,
             name: costCenter.name,
             organization: orgId,
@@ -305,7 +321,7 @@ describe('given an Organization Mutation', () => {
         ).toHaveBeenNthCalledWith(3, {
           dataEntity: COST_CENTER_DATA_ENTITY,
           fields: {
-            addresses: [defaultCostCenter.address],
+            addresses: [withNormalizedAddressFields(defaultCostCenter.address)],
             name: defaultCostCenter.name,
             organization: orgId,
           },
@@ -440,6 +456,174 @@ describe('given an Organization Mutation', () => {
       })
       it('should create the organization with the id specified', () => {
         expect(result.id).toEqual(orgId)
+      })
+    })
+
+    describe('with multiple addresses in costCenters', () => {
+      const billingAddress = {
+        ...(randAddress() as unknown as AddressInput),
+        addressType: 'BillingAddress',
+      }
+
+      const shippingAddress = {
+        ...(randAddress() as unknown as AddressInput),
+        addressType: 'ShippingAddress',
+      }
+
+      const costCenter = {
+        name: randLastName(),
+        addresses: [billingAddress, shippingAddress],
+      }
+
+      const input = {
+        b2bCustomerAdmin: {
+          email: randEmail(),
+          firstName: randFirstName(),
+        },
+        costCenters: [costCenter],
+        id: orgId,
+        name: randCompanyName(),
+        tradeName: randAirportName(),
+      } as NormalizedOrganizationInput
+
+      let mockedContext: Context
+
+      const roleId = randUuid()
+      const costId = randUuid()
+
+      beforeEach(async () => {
+        mockedContext = mockContext(orgId, roleId, costId)
+        await Organizations.createOrganizationAndCostCentersWithId(
+          jest.fn() as never,
+          { input },
+          mockedContext
+        )
+      })
+
+      it('should persist all addresses on the cost center', () => {
+        expect(
+          mockedContext.clients.masterdata.createDocument
+        ).toHaveBeenNthCalledWith(2, {
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: {
+            addresses: [
+              withNormalizedAddressFields(billingAddress),
+              withNormalizedAddressFields(shippingAddress),
+            ],
+            id: undefined,
+            name: costCenter.name,
+            organization: orgId,
+          },
+          schema: COST_CENTER_SCHEMA_VERSION,
+        })
+      })
+
+    describe('with partial address fields', () => {
+      const roleId = randUuid()
+      const costId = randUuid()
+
+      it('should normalize optional address fields before persisting', async () => {
+        const addressWithoutComplement = {
+          addressType: 'BillingAddress',
+          city: 'Kohler',
+          state: 'WI',
+          street: '444 Highland Drive',
+        } as AddressInput
+
+        const inputWithPartialAddress = {
+          b2bCustomerAdmin: {
+            email: randEmail(),
+            firstName: randFirstName(),
+          },
+          costCenters: [
+            {
+              name: randLastName(),
+              addresses: [addressWithoutComplement],
+            },
+          ],
+          id: orgId,
+          name: randCompanyName(),
+        } as NormalizedOrganizationInput
+
+        const mockedContext = mockContext(orgId, roleId, costId)
+
+        await Organizations.createOrganizationAndCostCentersWithId(
+          jest.fn() as never,
+          { input: inputWithPartialAddress },
+          mockedContext
+        )
+
+        expect(
+          mockedContext.clients.masterdata.createDocument
+        ).toHaveBeenNthCalledWith(2, {
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: {
+            addresses: [withNormalizedAddressFields(addressWithoutComplement)],
+            id: undefined,
+            name: inputWithPartialAddress.costCenters?.[0].name,
+            organization: orgId,
+          },
+          schema: COST_CENTER_SCHEMA_VERSION,
+        })
+      })
+    })
+    })
+
+    describe('when both address and addresses are provided', () => {
+      const singularAddress = {
+        ...(randAddress() as unknown as AddressInput),
+        addressType: 'BillingAddress',
+      }
+
+      const arrayAddress = {
+        ...(randAddress() as unknown as AddressInput),
+        addressType: 'ShippingAddress',
+      }
+
+      const costCenter = {
+        address: singularAddress,
+        name: randLastName(),
+        addresses: [arrayAddress],
+      }
+
+      const input = {
+        b2bCustomerAdmin: {
+          email: randEmail(),
+          firstName: randFirstName(),
+        },
+        costCenters: [costCenter],
+        id: orgId,
+        name: randCompanyName(),
+        tradeName: randAirportName(),
+      } as NormalizedOrganizationInput
+
+      let mockedContext: Context
+
+      const roleId = randUuid()
+      const costId = randUuid()
+
+      beforeEach(async () => {
+        mockedContext = mockContext(orgId, roleId, costId)
+        await Organizations.createOrganizationAndCostCentersWithId(
+          jest.fn() as never,
+          { input },
+          mockedContext
+        )
+      })
+
+      it('should prefer addresses over the singular address field', () => {
+        expect(
+          mockedContext.clients.masterdata.createDocument
+        ).toHaveBeenNthCalledWith(2, {
+          dataEntity: COST_CENTER_DATA_ENTITY,
+          fields: {
+            addresses: [withNormalizedAddressFields(arrayAddress)],
+            id: undefined,
+            name: costCenter.name,
+            organization: orgId,
+          },
+          schema: COST_CENTER_SCHEMA_VERSION,
+        })
       })
     })
   })
