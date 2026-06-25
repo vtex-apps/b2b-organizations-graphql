@@ -19,32 +19,13 @@ export const getAppId = (): string => {
   return appName
 }
 
-export const getAppMajorVersion = (): string => {
-  const appId = process.env.VTEX_APP_ID
-  const [, version] = String(appId).split('@')
-
-  if (!version) {
-    return '0'
-  }
-
-  const [major] = version.split('.')
-
-  return major ?? '0'
-}
-
-const getSchemaSettingsKey = (): string => {
-  return `settings-v${getAppMajorVersion()}`
-}
-
 const checkConfig = async (ctx: Context) => {
   const {
     vtex: { logger },
     clients: { mail, masterdata, vbase },
   } = ctx
 
-  const settingsKey = getSchemaSettingsKey()
-
-  let settings: Settings = await vbase.getJSON('mdSchema', settingsKey, true)
+  let settings: Settings = await vbase.getJSON('mdSchema', 'settings', true)
 
   let schemaChanged = false
   let templatesChanged = false
@@ -143,7 +124,7 @@ const checkConfig = async (ctx: Context) => {
 
   if (schemaChanged || templatesChanged) {
     try {
-      await vbase.saveJSON('mdSchema', settingsKey, settings)
+      await vbase.saveJSON('mdSchema', 'settings', settings)
     } catch (error) {
       logger.error({
         error,
