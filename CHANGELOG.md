@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-06-25
+
 ### Added
 
 - **`DefaultCostCenterInput`**: support `addresses` array on `createOrganizationAndCostCentersWithId` and `createOrganization`, while keeping singular `address` for backward compatibility.
