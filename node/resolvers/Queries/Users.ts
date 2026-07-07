@@ -6,7 +6,7 @@ import {
 } from '../../mdSchema'
 import { toHash } from '../../utils'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-import { getAppId } from '../config'
+import { getAppId, getAppMajorVersion } from '../config'
 
 const SCROLL_AWAIT_TIME = 100
 const SLEEP_ADD_PERCENTAGE = 0.1
@@ -189,12 +189,16 @@ const Users = {
       settings.adminSetup = {}
     }
 
+    const majorVersion = getAppMajorVersion()
     const currHash = toHash(schemas)
 
-    if (
-      !settings.adminSetup?.schemaHash ||
-      settings.adminSetup?.schemaHash !== currHash
-    ) {
+    if (!settings.adminSetup.schemaHashes) {
+      settings.adminSetup.schemaHashes = {}
+    }
+
+    const storedSchemaHash = settings.adminSetup.schemaHashes[majorVersion]
+
+    if (!storedSchemaHash || storedSchemaHash !== currHash) {
       const updates: any = []
 
       schemas.forEach((schema) => {
@@ -218,7 +222,7 @@ const Users = {
 
       await Promise.all(updates)
         .then(() => {
-          settings.adminSetup.schemaHash = currHash
+          settings.adminSetup.schemaHashes[majorVersion] = currHash
         })
         .catch((e) => {
           if (e.response.status !== 304) {
