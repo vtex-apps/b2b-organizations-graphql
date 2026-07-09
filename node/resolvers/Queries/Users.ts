@@ -13,7 +13,7 @@ const SLEEP_ADD_PERCENTAGE = 0.1
 const SCROLL_SIZE = 1000
 
 const USER_DATA_ENTITY = 'b2b_users'
-const USER_DATA_ENTITY_SCHEMA = 'v0.1.2'
+const USER_DATA_ENTITY_SCHEMA = 'v3.1.2'
 
 // This function checks if given email is an user part of a buyer org.
 export const isUserPartOfBuyerOrg = async (email: string, ctx: Context) => {
