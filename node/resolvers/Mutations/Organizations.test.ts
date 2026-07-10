@@ -459,6 +459,73 @@ describe('given an Organization Mutation', () => {
       })
     })
 
+    describe('with optional status', () => {
+      const costCenter = {
+        name: randLastName(),
+      }
+
+      const defaultCostCenter = {
+        name: randSuperheroName(),
+      }
+
+      const baseInput = {
+        b2bCustomerAdmin: {
+          email: randEmail(),
+          firstName: randFirstName(),
+        },
+        costCenters: [costCenter],
+        defaultCostCenter,
+        id: orgId,
+        name: randCompanyName(),
+        tradeName: randAirportName(),
+      }
+
+      const createDate = new Date('2020-01-01')
+      const roleId = randUuid()
+      const costId = randUuid()
+
+      it.each([
+        ['on-hold', ORGANIZATION_STATUSES.ON_HOLD],
+        ['inactive', ORGANIZATION_STATUSES.INACTIVE],
+      ])(
+        'should create the organization with status %s',
+        async (_label, status) => {
+          jest.useFakeTimers().setSystemTime(createDate)
+          const mockedContext = mockContext(orgId, roleId, costId)
+          const input = {
+            ...baseInput,
+            status,
+          } as NormalizedOrganizationInput
+
+          await Organizations.createOrganizationAndCostCentersWithId(
+            jest.fn() as never,
+            { input },
+            mockedContext
+          )
+
+          expect(
+            mockedContext.clients.masterdata.createDocument
+          ).toHaveBeenNthCalledWith(1, {
+            dataEntity: ORGANIZATION_DATA_ENTITY,
+            fields: {
+              collections: [],
+              created: createDate,
+              customFields: [],
+              id: orgId,
+              name: input.name,
+              permissions: {
+                createQuote: true,
+              },
+              sellers: [],
+              status,
+              tradeName: input.tradeName,
+            },
+            schema: ORGANIZATION_SCHEMA_VERSION,
+          })
+        }
+      )
+    })
+
     describe('with multiple addresses in costCenters', () => {
       const billingAddress = {
         ...(randAddress() as unknown as AddressInput),

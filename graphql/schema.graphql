@@ -589,6 +589,11 @@ input OrganizationInput {
   sellers: [SellerInput]
   customFields: [CustomFieldInput]
   collections: [CollectionInput]
+  """
+  Organization lifecycle status. Canonical values: active, inactive, on-hold.
+  Optional; defaults to active when omitted.
+  """
+  status: String
 }
 
 """
@@ -610,6 +615,11 @@ input NormalizedOrganizationInput {
   sellers: [String]
   collections: [String]
   customFields: [CustomFieldInput]
+  """
+  Organization lifecycle status. Canonical values: active, inactive, on-hold.
+  Optional; defaults to active when omitted.
+  """
+  status: String
 }
 
 input B2BUserInput {

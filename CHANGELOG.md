@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **`OrganizationInput` / `NormalizedOrganizationInput`**: optional `status` on `createOrganization` and `createOrganizationAndCostCentersWithId`. When omitted, the organization is created as `active` (backward compatible). Canonical values: `active`, `inactive`, `on-hold`.
+
 ## [2.5.0] - 2026-06-25
 
 ### Added
