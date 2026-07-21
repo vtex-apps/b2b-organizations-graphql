@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **[B2BTEAM-3729] Audit events**: `AuditClient.sendEvent` no longer blocks the caller — the session lookup and the outbound call to `analytics.vtex.com` now run in the background, with errors caught and logged internally. It was being awaited synchronously from `getCostCenterById`, `getMarketingTags` and `getB2BSettings`, which storefront-permissions calls in parallel from `setProfile` under a tight timeout, causing intermittent login timeouts.
+- **Master Data schemas**: hold `ORGANIZATION_REQUEST_SCHEMA_VERSION`, `ORGANIZATION_SCHEMA_VERSION` and `COST_CENTER_SCHEMA_VERSION` at their previous `v0.x` names. The `v2.x` bump introduced in 2.6.0 caused issues in production; rolling forward again is on hold until that's resolved.
+
 ## [2.6.0] - 2026-07-10
 
 ### Fixed
