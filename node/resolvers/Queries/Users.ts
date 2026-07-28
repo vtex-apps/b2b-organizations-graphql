@@ -46,6 +46,10 @@ export const isUserPartOfBuyerOrg = async (email: string, ctx: Context) => {
 
     const found = data.length > 0
 
+    if (found) {
+      return true
+    }
+
     logger.info({
       dataEntity: USER_DATA_ENTITY,
       email,
@@ -55,10 +59,6 @@ export const isUserPartOfBuyerOrg = async (email: string, ctx: Context) => {
       schema: USER_DATA_ENTITY_SCHEMA,
       where,
     })
-
-    if (found) {
-      return true
-    }
   } catch (error) {
     // A failure here is indistinguishable from "user not found" for the
     // caller, so log it explicitly: silently returning false makes the
