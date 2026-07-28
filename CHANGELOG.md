@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Logging around the store-user authorization path so this class of failure is diagnosable: `isUserPartOfBuyerOrg.searchResult` (schema, filter and result count), `validateStoreToken.buyerOrgCheck` (buyer-org outcome), and `isUserPartOfBuyerOrg.searchError` for the Master Data search error that was previously swallowed.
 
+## [2.6.1] - 2026-07-22
+
+### Fixed
+
+- **Master Data schemas**: roll back `ORGANIZATION_REQUEST_SCHEMA_VERSION`, `ORGANIZATION_SCHEMA_VERSION` and `COST_CENTER_SCHEMA_VERSION` to their previous `v0.x` names. The `v2.x` rename introduced in 2.6.0 (`B2BTEAM-3598`, major-based schemas) caused issues with the Master Data indexer in production. Holding the `v0.x` names until it's safe to roll forward again.
+
 ## [2.6.0] - 2026-07-10
 
 ### Fixed
