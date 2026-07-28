@@ -957,8 +957,11 @@ const Organizations = {
       if (status === ORGANIZATION_REQUEST_STATUSES.APPROVED) {
         try {
           // the following copy is fine as organizationRequest does not contain fields that need transformation
+          // `organizationRequest.status` is request-domain (pending/approved/declined), not org lifecycle
+          // status (active/inactive/on-hold) — an approved request always becomes an active organization
           const normalizedOrganizationRequest = {
             ...organizationRequest,
+            status: ORGANIZATION_STATUSES.ACTIVE,
           } as unknown as NormalizedOrganizationInput
 
           const { id: organizationId } =

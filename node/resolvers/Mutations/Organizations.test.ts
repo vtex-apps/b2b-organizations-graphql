@@ -184,6 +184,14 @@ describe('given an Organization Mutation', () => {
           mockedContext.clients.storefrontPermissions.saveUser
         ).toHaveBeenCalledTimes(1)
       })
+
+      it('should create the organization with status active, not the request-domain pending status', () => {
+        const [{ fields }] = (
+          mockedContext.clients.masterdata.createDocument as jest.Mock
+        ).mock.calls[0]
+
+        expect(fields.status).toEqual(ORGANIZATION_STATUSES.ACTIVE)
+      })
     })
 
     describe('with status APPROVED and without state registration', () => {
@@ -233,6 +241,14 @@ describe('given an Organization Mutation', () => {
         expect(
           mockedContext.clients.storefrontPermissions.saveUser
         ).toHaveBeenCalledTimes(1)
+      })
+
+      it('should create the organization with status active, not the request-domain pending status', () => {
+        const [{ fields }] = (
+          mockedContext.clients.masterdata.createDocument as jest.Mock
+        ).mock.calls[0]
+
+        expect(fields.status).toEqual(ORGANIZATION_STATUSES.ACTIVE)
       })
     })
   })

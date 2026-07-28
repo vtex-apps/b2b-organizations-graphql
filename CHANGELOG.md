@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **`OrganizationInput` / `NormalizedOrganizationInput`**: optional `status` on `createOrganization` and `createOrganizationAndCostCentersWithId`. When omitted, the organization is created as `active` (backward compatible). Canonical values: `active`, `inactive`, `on-hold`.
 
+### Fixed
+
+- **`updateOrganizationRequest` (approve)**: the approve path was forwarding the organization request's own request-domain `status` (`pending`/`approved`/`declined`) into the newly added org lifecycle `status` field, so approved organizations could be persisted as `pending` instead of `active`. Approved requests now always create the organization as `active`.
+
 ## [2.6.1] - 2026-07-22
 
 ### Fixed
