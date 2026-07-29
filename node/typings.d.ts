@@ -53,6 +53,7 @@ interface OrganizationInput {
   salesChannel?: string
   sellers?: Seller[]
   collections?: Collection[]
+  status?: string
 }
 
 interface NormalizedOrganizationInput {
@@ -68,6 +69,7 @@ interface NormalizedOrganizationInput {
   salesChannel?: string
   sellers?: string[]
   collections?: string[]
+  status?: string
 }
 
 interface B2BCustomerInput {
