@@ -84,6 +84,7 @@ const createOrganization = async (
     sellers,
     customFields,
     collections,
+    status,
   }: OrganizationInput,
   ctx: Context
 ): Promise<{
@@ -107,7 +108,7 @@ const createOrganization = async (
     ...(sellers && { sellers }),
     ...(collections && { collections }),
     customFields: customFields ?? [],
-    status: ORGANIZATION_STATUSES.ACTIVE,
+    status: status ?? ORGANIZATION_STATUSES.ACTIVE,
     permissions: { createQuote: true },
   }
 
@@ -300,6 +301,7 @@ const createOrganizationAndCostCenterWithAdminUser = async (
       collections: organization.collections
         ? await findCollections(organization.collections, ctx)
         : [],
+      status: organization.status,
     } as OrganizationInput
 
     // create organization
@@ -416,6 +418,7 @@ const Organizations = {
         priceTables,
         salesChannel,
         sellers,
+        status,
       },
       notifyUsers = true,
     }: { input: OrganizationInput; notifyUsers?: boolean },
@@ -439,6 +442,7 @@ const Organizations = {
         salesChannel,
         sellers,
         tradeName,
+        status,
       } as OrganizationInput
 
       // create organization
@@ -953,8 +957,11 @@ const Organizations = {
       if (status === ORGANIZATION_REQUEST_STATUSES.APPROVED) {
         try {
           // the following copy is fine as organizationRequest does not contain fields that need transformation
+          // `organizationRequest.status` is request-domain (pending/approved/declined), not org lifecycle
+          // status (active/inactive/on-hold) — an approved request always becomes an active organization
           const normalizedOrganizationRequest = {
             ...organizationRequest,
+            status: ORGANIZATION_STATUSES.ACTIVE,
           } as unknown as NormalizedOrganizationInput
 
           const { id: organizationId } =

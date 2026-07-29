@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **`OrganizationInput` / `NormalizedOrganizationInput`**: optional `status` on `createOrganization` and `createOrganizationAndCostCentersWithId`. When omitted, the organization is created as `active` (backward compatible). Canonical values: `active`, `inactive`, `on-hold`.
+
+### Fixed
+
+- **`updateOrganizationRequest` (approve)**: the approve path was forwarding the organization request's own request-domain `status` (`pending`/`approved`/`declined`) into the newly added org lifecycle `status` field, so approved organizations could be persisted as `pending` instead of `active`. Approved requests now always create the organization as `active`.
+
 ## [2.6.1] - 2026-07-22
 
 ### Fixed
@@ -19,6 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **Schema auto-update**: scope VBase hash storage by app major version (`settings-v{N}`) so accounts running two majors of the app no longer trigger an infinite Master Data schema update loop.
 - **Master Data schemas**: bump schema versions to `v2.x` so v2 app instances use dedicated schemas instead of legacy `v0.x` versions that could be overwritten by another major.
+
 
 ## [2.5.0] - 2026-06-25
 
