@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **[B2BTEAM-3729] Audit events**: `AuditClient.sendEvent` no longer blocks the caller — the session lookup and the outbound call to `analytics.vtex.com` now run in the background, with errors caught and logged internally. It was being awaited synchronously from `getCostCenterById`, `getMarketingTags` and `getB2BSettings`, which storefront-permissions calls in parallel from `setProfile` under a tight timeout, causing intermittent login timeouts.
+- **Master Data schemas**: hold `ORGANIZATION_REQUEST_SCHEMA_VERSION`, `ORGANIZATION_SCHEMA_VERSION` and `COST_CENTER_SCHEMA_VERSION` at their previous `v0.x` names. The `v2.x` bump introduced in 2.6.0 caused issues in production; rolling forward again is on hold until that's resolved.
+- **[B2BTEAM-3729] Storefront 403 `Unauthorized Access`**: restore `USER_DATA_ENTITY_SCHEMA` to `v0.1.2`. It had been bumped to `v3.1.2`, so the `b2b_users` search in `isUserPartOfBuyerOrg` returned no rows for users whose documents are not associated with that schema version. `validateStoreToken` then left `hasValidStoreToken` false and `@validateStoreUserAccess` answered 403 on `getOrganizationByIdStorefront`, `getCostCenterByIdStorefront` and `getActiveOrganizationsByEmail` — for some users only.
+
+### Added
+
+- Logging around the store-user authorization path so this class of failure is diagnosable: `isUserPartOfBuyerOrg.searchResult` (schema, filter and result count), `validateStoreToken.buyerOrgCheck` (buyer-org outcome), and `isUserPartOfBuyerOrg.searchError` for the Master Data search error that was previously swallowed.
+
 ## [2.6.2] - 2026-07-29
 
 ### Added
@@ -16,6 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - **`updateOrganizationRequest` (approve)**: the approve path was forwarding the organization request's own request-domain `status` (`pending`/`approved`/`declined`) into the newly added org lifecycle `status` field, so approved organizations could be persisted as `pending` instead of `active`. Approved requests now always create the organization as `active`.
+
 
 ## [2.6.1] - 2026-07-22
 

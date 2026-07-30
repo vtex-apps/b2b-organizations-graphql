@@ -172,6 +172,13 @@ export const validateStoreToken = async (
           context
         )
 
+        logger.info({
+          hasCurrentValidStoreToken,
+          message: 'validateStoreToken.buyerOrgCheck',
+          user: authUser.user,
+          userIsPartOfBuyerOrg,
+        })
+
         if (userIsPartOfBuyerOrg) {
           hasValidStoreToken = true
         }

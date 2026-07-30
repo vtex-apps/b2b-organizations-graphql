@@ -13,12 +13,18 @@ const SLEEP_ADD_PERCENTAGE = 0.1
 const SCROLL_SIZE = 1000
 
 const USER_DATA_ENTITY = 'b2b_users'
-const USER_DATA_ENTITY_SCHEMA = 'v3.1.2'
+// IMPORTANT: this must match the schema version the b2b_users documents are
+// actually registered under in Master Data. Searching with a schema version
+// the existing documents are not associated with returns no results, which
+// makes isUserPartOfBuyerOrg report false and the store user gets a 403 from
+// the @validateStoreUserAccess directive. See B2BTEAM-3729.
+const USER_DATA_ENTITY_SCHEMA = 'v0.1.2'
 
 // This function checks if given email is an user part of a buyer org.
 export const isUserPartOfBuyerOrg = async (email: string, ctx: Context) => {
   const {
     clients: { masterdata },
+    vtex: { logger },
   } = ctx
 
   try {
@@ -38,12 +44,32 @@ export const isUserPartOfBuyerOrg = async (email: string, ctx: Context) => {
       data: any
     }
 
-    if (data.length > 0) {
+    const found = data.length > 0
+
+    if (found) {
       return true
     }
+
+    logger.info({
+      dataEntity: USER_DATA_ENTITY,
+      email,
+      found,
+      message: 'isUserPartOfBuyerOrg.searchResult',
+      resultCount: data.length,
+      schema: USER_DATA_ENTITY_SCHEMA,
+      where,
+    })
   } catch (error) {
-    // if it fails at somepoint, we treat it like no user was found
-    // on any buyer org, so we just let the function return false
+    // A failure here is indistinguishable from "user not found" for the
+    // caller, so log it explicitly: silently returning false makes the
+    // resulting 403 impossible to diagnose.
+    logger.error({
+      dataEntity: USER_DATA_ENTITY,
+      email,
+      error,
+      message: 'isUserPartOfBuyerOrg.searchError',
+      schema: USER_DATA_ENTITY_SCHEMA,
+    })
   }
 
   return false

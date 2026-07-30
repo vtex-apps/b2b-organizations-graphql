@@ -38,14 +38,42 @@ export class AuditClient extends ExternalClient {
   }
   
 
-  public async sendEvent(
-    auditEntry: AuditEntry,
-  ): Promise<void> {
+  /**
+   * Registers an audit event.
+   *
+   * IMPORTANT: this is fire-and-forget on purpose. Audit logging must never
+   * add latency to the caller's critical path (e.g. login/session transform
+   * queries like getCostCenterById, getMarketingTags and getB2BSettings,
+   * which run inside storefront-permissions' setProfile with a tight
+   * timeout). Building and sending the event involves a full session fetch
+   * plus an outbound HTTP call to analytics.vtex.com, either of which can be
+   * slow or unavailable without that being a reason to fail or delay the
+   * caller. See B2BTEAM-3729 / TICKET #1433601 (Kohler login timeouts).
+   *
+   * Errors are caught and logged internally; they are never surfaced to the
+   * caller since audit failures must not affect the caller's own result.
+   */
+  public sendEvent(auditEntry: AuditEntry): Promise<void> {
+    const { logger } = this.context
+
+    // Not awaited: intentionally detached from the caller's request flow.
+    this.dispatchEvent(auditEntry).catch((error) => {
+      logger.error({
+        message: 'Error sending audit event',
+        error,
+        auditEntry,
+      })
+    })
+
+    return Promise.resolve()
+  }
+
+  private async dispatchEvent(auditEntry: AuditEntry): Promise<void> {
     const { meta, subjectId, operation } = auditEntry
     const { account, operationId, requestId, userAgent, logger, sessionToken } = this.context
 
     let authorId = 'unknown'
-    
+
     if (sessionToken) {
       authorId = await this.getUserIdFromSession(sessionToken)
     }
