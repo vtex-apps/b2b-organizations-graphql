@@ -13,9 +13,14 @@ import IdentityClient from './IdentityClient'
 import Catalog from './catalog'
 import SellersClient from './sellers'
 import { AuditClient } from './audit'
+import { MasterDataExtended } from './masterDataExtended'
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
+  public get masterDataExtended() {
+    return this.getOrSet('masterDataExtended', MasterDataExtended)
+  }
+
   public get lm() {
     return this.getOrSet('lm', LMClient)
   }

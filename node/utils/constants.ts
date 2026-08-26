@@ -14,3 +14,34 @@ export const ORGANIZATION_REQUEST_STATUSES = {
 export const MARKETING_TAGS = {
   VBASE_BUCKET: 'b2b_marketing_tags',
 }
+
+/**
+ * Application cache for hot GraphQL reads. Two rules of thumb:
+ * - Add the cross-pod VBase layer only when the origin is expensive (Master
+ *   Data, another app's GraphQL). For data that already lives in VBase, an
+ *   in-memory layer is the only thing that helps.
+ * - Keep the TTL short for anything an operator flips (org status, settings).
+ */
+export const VBASE_CACHE_BUCKET = 'b2b-orgs-cache'
+
+/**
+ * Organization and cost center data is admin-edited. TTLs are kept to a minute
+ * because deactivating an organization should take effect quickly.
+ */
+export const ORGANIZATION_CACHE_TTL_IN_MS = 60 * 1000
+export const ORGANIZATION_CACHE_TTL_IN_MINUTES = 2
+
+/**
+ * Cost center documents were measured between roughly 400B and 29KB, so this
+ * cache is bounded by bytes instead of by entry count.
+ */
+export const COST_CENTER_CACHE_MAX_SIZE_BYTES = 8 * 1024 * 1024
+
+/** Schema/template sync flag — memory only (settings already live in VBase). */
+export const CHECK_CONFIG_CACHE_TTL_IN_MS = 5 * 60 * 1000
+
+/** B2B settings already live in VBase (`b2b_settings`); memory-only is enough. */
+export const B2B_SETTINGS_CACHE_TTL_IN_MS = 5 * 60 * 1000
+
+/** How often a hot Query may emit one `cacheStats` info line per pod. */
+export const CACHE_STATS_INTERVAL_MS = 5 * 60 * 1000

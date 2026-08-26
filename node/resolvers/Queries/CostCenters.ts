@@ -5,7 +5,13 @@ import {
 } from '../../mdSchema'
 import type { Address, CostCenter } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-import checkConfig from '../config'
+import { describeClientError } from '../../utils/clientError'
+import {
+  auditQueryEvent,
+  ensureConfigForQuery,
+  withQueryTimings,
+} from '../../utils/queryObservability'
+import { loadCostCenter } from '../../services/organizationDocuments'
 import Organizations from './Organizations'
 
 const getCostCenters = async ({
@@ -82,42 +88,54 @@ const addMissingAddressIds = async (costCenter: CostCenter, ctx: Context) => {
 const costCenters = {
   getCostCenterById: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { masterdata, audit },
       vtex: { logger },
       ip,
     } = ctx
 
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
+    ensureConfigForQuery(ctx)
 
-    try {
-      const result: CostCenter = await masterdata.getDocument({
-        dataEntity: COST_CENTER_DATA_ENTITY,
-        fields: COST_CENTER_FIELDS,
-        id,
-      })
+    return withQueryTimings({
+      ctx,
+      extra: { costId: id },
+      message: 'getCostCenterById.timings',
+      run: async (timer) => {
+        try {
+          const cached: CostCenter = await timer.track(
+            'getDocument',
+            loadCostCenter(ctx, id)
+          )
 
-      /* MasterData client returns empty string when it doesn't find the document */
-      if ((result as unknown as string) !== '') {
-        result.addresses = await addMissingAddressIds(result, ctx)
-      }
+          // Clone so address-id backfill cannot mutate the cached snapshot.
+          const result: CostCenter = {
+            ...cached,
+            addresses: cached.addresses?.map((address) => ({ ...address })),
+          }
 
-      await audit.sendEvent({
-        subjectId: 'get-cost-center-by-id-event',
-        operation: 'GET_COST_CENTER_BY_ID',
-        meta: {
-          entityName: 'CostCenter',
-          remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({}),
-          entityAfterAction: JSON.stringify({}),
-        },
-      })
+          if (result?.addresses) {
+            result.addresses = await addMissingAddressIds(result, ctx)
+          }
 
-      return result
-    } catch (error) {
-      logger.error({ error, message: 'getCostCenterById-error' })
-      throw new GraphQLError(getErrorMessage(error))
-    }
+          auditQueryEvent(ctx, {
+            subjectId: 'get-cost-center-by-id-event',
+            operation: 'GET_COST_CENTER_BY_ID',
+            meta: {
+              entityName: 'CostCenter',
+              remoteIpAddress: ip,
+              entityBeforeAction: JSON.stringify({}),
+              entityAfterAction: JSON.stringify({}),
+            },
+          })
+
+          return result
+        } catch (error) {
+          logger.error({
+            error: describeClientError(error),
+            message: 'getCostCenterById-error',
+          })
+          throw new GraphQLError(getErrorMessage(error))
+        }
+      },
+    })
   },
 
   getCostCenterByIdStorefront: async (
@@ -126,14 +144,12 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit },
       vtex: { logger },
       ip,
       vtex,
     } = ctx
 
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
+    ensureConfigForQuery(ctx)
 
     if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
       throw new Error('This organization is not active')
@@ -158,28 +174,26 @@ const costCenters = {
     }
 
     if (!id) {
-      // get user's organization from session
       id = userCostCenterId
     }
 
     try {
-      const costCenter: CostCenter = await masterdata.getDocument({
-        dataEntity: COST_CENTER_DATA_ENTITY,
-        fields: COST_CENTER_FIELDS,
-        id,
-      })
+      const cached: CostCenter = await loadCostCenter(ctx, id)
 
-      if (costCenter.organization !== userOrganizationId) {
-        const error = () => {
-          throw new GraphQLError('operation-not-permitted')
-        }
-
-        error()
+      const costCenter: CostCenter = {
+        ...cached,
+        addresses: cached.addresses?.map((address) => ({ ...address })),
       }
 
-      costCenter.addresses = await addMissingAddressIds(costCenter, ctx)
+      if (costCenter.organization !== userOrganizationId) {
+        throw new GraphQLError('operation-not-permitted')
+      }
 
-      await audit.sendEvent({
+      if (costCenter.addresses) {
+        costCenter.addresses = await addMissingAddressIds(costCenter, ctx)
+      }
+
+      auditQueryEvent(ctx, {
         subjectId: 'get-cost-center-by-id-storefront-event',
         operation: 'GET_COST_CENTER_BY_ID_STOREFRONT',
         meta: {
@@ -192,21 +206,23 @@ const costCenters = {
 
       return costCenter
     } catch (error) {
-      logger.error({ error, message: 'getCostCenterByIdStorefront-error' })
+      logger.error({
+        error: describeClientError(error),
+        message: 'getCostCenterByIdStorefront-error',
+      })
       throw new GraphQLError(getErrorMessage(error))
     }
   },
 
   getPaymentTerms: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { payments, audit },
+      clients: { payments },
       vtex: { logger },
       ip,
     } = ctx
 
     try {
-
-      await audit.sendEvent({
+      auditQueryEvent(ctx, {
         subjectId: 'get-payment-terms-event',
         operation: 'GET_PAYMENT_TERMS',
         meta: {
@@ -219,7 +235,10 @@ const costCenters = {
 
       return await payments.getPaymentTerms()
     } catch (error) {
-      logger.error({ error, message: 'getPaymentTerms-error' })
+      logger.error({
+        error: describeClientError(error),
+        message: 'getPaymentTerms-error',
+      })
       throw new GraphQLError(getErrorMessage(error))
     }
   },
@@ -242,13 +261,12 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit },
+      clients: { masterdata },
       vtex: { logger },
       ip,
     } = ctx
 
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
+    ensureConfigForQuery(ctx)
 
     let where = ''
 
@@ -266,7 +284,7 @@ const costCenters = {
         ...(where && { where }),
       })
 
-      await audit.sendEvent({
+      auditQueryEvent(ctx, {
         subjectId: 'get-cost-centers-event',
         operation: 'GET_COST_CENTERS',
         meta: {
@@ -280,7 +298,7 @@ const costCenters = {
       return result
     } catch (error) {
       logger.error({
-        error,
+        error: describeClientError(error),
         message: 'getCostCenters-error',
       })
 
@@ -308,17 +326,15 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit },
+      clients: { masterdata },
       vtex: { logger },
       ip,
     } = ctx
 
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
+    ensureConfigForQuery(ctx)
 
     try {
-
-      await audit.sendEvent({
+      auditQueryEvent(ctx, {
         subjectId: 'get-cost-centers-by-organization-id-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID',
         meta: {
@@ -340,7 +356,7 @@ const costCenters = {
       })
     } catch (error) {
       logger.error({
-        error,
+        error: describeClientError(error),
         message: 'getCostCentersByOrganizationId-error',
       })
       throw error
@@ -367,13 +383,12 @@ const costCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, storefrontPermissions, audit },
+      clients: { masterdata, storefrontPermissions },
       vtex: { logger, sessionData },
       ip,
     } = ctx as any
 
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
+    ensureConfigForQuery(ctx)
 
     if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
       throw new Error('This organization is not active')
@@ -386,7 +401,7 @@ const costCenters = {
         .checkUserPermission('vtex.b2b-organizations@3.x')
         .catch((error: any) => {
           logger.error({
-            error,
+            error: describeClientError(error),
             message: 'checkUserPermission-error',
           })
 
@@ -416,7 +431,6 @@ const costCenters = {
       }
 
       if (!id) {
-        // get user's organization from session
         id = userOrganizationId
       }
 
@@ -426,8 +440,7 @@ const costCenters = {
     }
 
     try {
-
-      await audit.sendEvent({
+      auditQueryEvent(ctx, {
         subjectId: 'get-cost-centers-by-organization-id-storefront-event',
         operation: 'GET_COST_CENTERS_BY_ORGANIZATION_ID_STOREFRONT',
         meta: {
@@ -449,7 +462,7 @@ const costCenters = {
       })
     } catch (error) {
       logger.error({
-        error,
+        error: describeClientError(error),
         message: 'getCostCentersByOrganizationId-error',
       })
       throw error

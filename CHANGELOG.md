@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **Performance / caching**: two-layer application cache (in-process LRU + VBase stale-while-revalidate) for `getOrganizationById` / `getCostCenterById` and field resolvers. Memory TTL 60s; VBase SWR 2 min. Bucket `b2b-orgs-cache`. Failures and document misses are never cached; callers clone before mutating defaults/addresses.
+- **Janus `MasterDataExtended`**: hot GET-by-id (and hydrate searches) use `ctx.authToken` without `_schema` / without HttpClient `forceMaxAge`.
+- **Observability**: `describeClientError` on client failures (no PII from Axios bodies/query strings); per-step timings on slow/failed hot queries (`getOrganizationById`, `getCostCenterById`, `getOrganizationsByEmail`, `getOrganizationsPaginatedByEmail`); `cacheStats` info log every 5 minutes on those paths.
+
+### Changed
+
+- **Queries** no longer await `checkConfig` (fire-and-forget with a 5 min per-tenant memory flag) or block on audit events. Mutations still await `checkConfig` and keep audit as before.
+- **`getOrganizationsByEmail` / paginated**: after the SFP user-org list, unique org/CC ids are hydrated in parallel via the cache so field resolvers avoid N+1 Master Data GETs.
+
 ## [2.6.3] - 2026-07-30
 
 ### Fixed

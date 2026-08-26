@@ -1,4 +1,6 @@
 import { MARKETING_TAGS } from '../../utils/constants'
+import { describeClientError } from '../../utils/clientError'
+import { auditQueryEvent } from '../../utils/queryObservability'
 
 const MarketingTags = {
   getMarketingTags: async (
@@ -7,14 +9,13 @@ const MarketingTags = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase, audit },
+      clients: { vbase },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     try {
-
-      await audit.sendEvent({
+      auditQueryEvent(ctx, {
         subjectId: 'get-marketing-tags-event',
         operation: 'GET_MARKETING_TAGS',
         meta: {
@@ -31,7 +32,7 @@ const MarketingTags = {
 
       if (data.code !== 'FileNotFound') {
         logger.error({
-          error,
+          error: describeClientError(error),
           message: 'getMarketingTags.error',
         })
       }

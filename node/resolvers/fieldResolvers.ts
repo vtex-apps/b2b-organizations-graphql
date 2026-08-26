@@ -1,11 +1,9 @@
-import {
-  COST_CENTER_DATA_ENTITY,
-  COST_CENTER_FIELDS,
-  ORGANIZATION_DATA_ENTITY,
-  ORGANIZATION_FIELDS,
-} from '../mdSchema'
 import GraphQLError, { getErrorMessage } from '../utils/GraphQLError'
-import type { CostCenter, Organization } from '../typings'
+import { describeClientError } from '../utils/clientError'
+import {
+  loadCostCenter,
+  loadOrganization,
+} from '../services/organizationDocuments'
 
 export const organizationName = async (
   { orgId }: { orgId: string },
@@ -13,21 +11,16 @@ export const organizationName = async (
   ctx: Context
 ) => {
   const {
-    clients: { masterdata },
     vtex: { logger },
   } = ctx
 
   try {
-    const organization: Organization = await masterdata.getDocument({
-      dataEntity: ORGANIZATION_DATA_ENTITY,
-      fields: ORGANIZATION_FIELDS,
-      id: orgId,
-    })
+    const organization = await loadOrganization(ctx, orgId)
 
     return organization.name
   } catch (error) {
     logger.error({
-      error,
+      error: describeClientError(error),
       message: 'getOrganizationName-error',
     })
     throw new GraphQLError(getErrorMessage(error))
@@ -40,21 +33,16 @@ export const organizationStatus = async (
   ctx: Context
 ) => {
   const {
-    clients: { masterdata },
     vtex: { logger },
   } = ctx
 
   try {
-    const organization: Organization = await masterdata.getDocument({
-      dataEntity: ORGANIZATION_DATA_ENTITY,
-      fields: ORGANIZATION_FIELDS,
-      id: orgId,
-    })
+    const organization = await loadOrganization(ctx, orgId)
 
     return organization.status
   } catch (error) {
     logger.error({
-      error,
+      error: describeClientError(error),
       message: 'getOrganizationStatus-error',
     })
     throw new GraphQLError(getErrorMessage(error))
@@ -67,21 +55,16 @@ export const costCenterName = async (
   ctx: Context
 ) => {
   const {
-    clients: { masterdata },
     vtex: { logger },
   } = ctx
 
   try {
-    const costCenter: CostCenter = await masterdata.getDocument({
-      dataEntity: COST_CENTER_DATA_ENTITY,
-      fields: COST_CENTER_FIELDS,
-      id: costId,
-    })
+    const costCenter = await loadCostCenter(ctx, costId)
 
     return costCenter.name
   } catch (error) {
     logger.error({
-      error,
+      error: describeClientError(error),
       message: 'getCostCenterName-error',
     })
     throw new GraphQLError(getErrorMessage(error))
@@ -105,7 +88,7 @@ export const role = async (
     })
     .catch((error: any) => {
       logger.error({
-        error,
+        error: describeClientError(error),
         message: 'getRoleError',
       })
     })
