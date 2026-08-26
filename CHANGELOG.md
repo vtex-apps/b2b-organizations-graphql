@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-08-26
+
 ### Added
 
 - **Performance / caching**: two-layer application cache (in-process LRU + VBase stale-while-revalidate) for `getOrganizationById` / `getCostCenterById` and field resolvers. Memory TTL 60s; VBase SWR 2 min. Bucket `b2b-orgs-cache`. Failures and document misses are never cached; callers clone before mutating defaults/addresses.
