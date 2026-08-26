@@ -1249,10 +1249,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@vtex/api@6.51.0":
-  version "6.51.0"
-  resolved "https://registry.yarnpkg.com/@vtex/api/-/api-6.51.0.tgz#97aeb306619ff49fd890595b90568883eaf77d83"
-  integrity sha512-vRWKB4G1FPPt67rwWx+xGLanuP5y+M9SVmbKu3PzlTrqgq/aW/mINSUGa/Nhm64UBqIQCkVic7/smZ7kKFq52w==
+"@vtex/api@6.51.3":
+  version "6.51.3"
+  resolved "https://registry.yarnpkg.com/@vtex/api/-/api-6.51.3.tgz#da2b7f223e9abb64f04d8c34b10063224be3e728"
+  integrity sha512-jN6OKhtU8RGjQEugheJhRJDa4JleW2mzXxoFdgTAY0ecrkl1a3aBnOuo3z5ClBhgzO1cu3HYYBd2v1CeCBM9Vg==
   dependencies:
     "@types/koa" "^2.11.0"
     "@types/koa-compose" "^3.2.3"
@@ -4158,7 +4158,7 @@ stack-utils@^2.0.3:
   dependencies:
     escape-string-regexp "^2.0.0"
 
-stats-lite@vtex/node-stats-lite#dist:
+"stats-lite@github:vtex/node-stats-lite#dist":
   version "2.2.1"
   resolved "https://codeload.github.com/vtex/node-stats-lite/tar.gz/a0b5ee91861f31b6ec845146b4906faf5172c430"
   dependencies:

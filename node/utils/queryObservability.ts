@@ -3,8 +3,10 @@ import { collectCacheStats } from '../services/cache'
 import { CACHE_STATS_INTERVAL_MS } from './constants'
 import type { Timer } from './requestTimings'
 import {
+  attachTimer,
   createTimer,
   DEFAULT_SLOW_THRESHOLD_MS,
+  getTimer,
   logRequestTimings,
 } from './requestTimings'
 import checkConfig from '../resolvers/config'
@@ -84,6 +86,9 @@ export interface WithQueryTimingsArgs<T> {
 /**
  * Owns timing telemetry for a hot GraphQL Query: always log on throw; on
  * success only when slow (default 1000ms) or sampled. Also may emit cacheStats.
+ *
+ * Reuses a timer already attached to `ctx` (e.g. by `@validateStoreUserAccess`)
+ * so auth work that runs before the resolver is included in the same breakdown.
  */
 export const withQueryTimings = async <T>({
   ctx,
@@ -93,7 +98,12 @@ export const withQueryTimings = async <T>({
   sampleRate = 0,
   slowThresholdMs = DEFAULT_SLOW_THRESHOLD_MS,
 }: WithQueryTimingsArgs<T>): Promise<T> => {
-  const timer = createTimer()
+  const existing = getTimer(ctx)
+  const timer = existing ?? createTimer()
+
+  if (!existing) {
+    attachTimer(ctx, timer)
+  }
 
   maybeEmitCacheStats(ctx)
 
@@ -101,7 +111,7 @@ export const withQueryTimings = async <T>({
     const result = await run(timer)
 
     logRequestTimings({
-      extra,
+      extra: { ...timer.meta.extra, ...extra },
       logger: ctx.vtex.logger,
       message,
       sampleRate,
@@ -112,7 +122,7 @@ export const withQueryTimings = async <T>({
     return result
   } catch (error) {
     logRequestTimings({
-      extra: { ...extra, failed: true },
+      extra: { ...timer.meta.extra, ...extra, failed: true },
       logger: ctx.vtex.logger,
       message,
       slowThresholdMs: 0,

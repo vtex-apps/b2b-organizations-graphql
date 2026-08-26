@@ -13,6 +13,7 @@ import {
   validateStoreToken,
 } from './helper'
 import audit from '../../utils/audit'
+import { attachTimer, createTimer } from '../../utils/requestTimings'
 
 export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -24,6 +25,12 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       context: Context,
       info: any
     ) => {
+      // Start the request timer here so auth work is visible in the same
+      // timings log as the resolver (getActiveOrganizationsByEmail.timings).
+      const timer = createTimer()
+
+      attachTimer(context, timer)
+
       const {
         vtex: { adminUserAuthToken, storeUserAuthToken, logger },
       } = context
@@ -54,10 +61,13 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       }
 
       const { hasAdminToken, hasValidAdminToken, hasValidAdminRole } =
-        await validateAdminToken(
-          context,
-          adminUserAuthToken as string,
-          requiredPermission
+        await timer.track(
+          'auth.validateAdminToken',
+          validateAdminToken(
+            context,
+            adminUserAuthToken as string,
+            requiredPermission
+          )
         )
 
       // add admin token metrics
@@ -88,7 +98,10 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
         hasAdminTokenOnHeader,
         hasValidAdminTokenOnHeader,
         hasValidAdminRoleOnHeader,
-      } = await validateAdminTokenOnHeader(context, requiredPermission)
+      } = await timer.track(
+        'auth.validateAdminTokenOnHeader',
+        validateAdminTokenOnHeader(context, requiredPermission)
+      )
 
       // add admin header token metrics
       metricFields = {
@@ -121,7 +134,10 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       context.vtex.adminUserAuthToken = undefined
 
       const { hasApiToken, hasValidApiToken, hasValidApiRole } =
-        await validateApiToken(context, requiredPermission)
+        await timer.track(
+          'auth.validateApiToken',
+          validateApiToken(context, requiredPermission)
+        )
 
       // add API token metrics
       metricFields = {
@@ -140,14 +156,15 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
             context?.vtex?.account,
             metricFields,
             'ValidateStoreUserAccessAudit'
-          ),
+          )
         )
+
         return resolve(root, args, context, info)
       }
 
-      const { hasStoreToken, hasValidStoreToken } = await validateStoreToken(
-        context,
-        storeUserAuthToken as string
+      const { hasStoreToken, hasValidStoreToken } = await timer.track(
+        'auth.validateStoreToken',
+        validateStoreToken(context, storeUserAuthToken as string)
       )
 
       // add store token metrics

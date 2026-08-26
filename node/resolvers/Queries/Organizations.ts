@@ -83,20 +83,23 @@ const listOrganizationsByEmail = async (
   let checkUserPermission = null
 
   if (sessionData?.namespaces) {
-    const checkUserPermissionResult = await storefrontPermissions
-      .checkUserPermission('vtex.b2b-organizations@3.x')
-      .catch((error: any) => {
-        logger.error({
-          error: describeClientError(error),
-          message: 'checkUserPermission-error',
-        })
+    const checkUserPermissionResult = await timer.track(
+      'checkUserPermission',
+      storefrontPermissions
+        .checkUserPermission('vtex.b2b-organizations@3.x')
+        .catch((error: any) => {
+          logger.error({
+            error: describeClientError(error),
+            message: 'checkUserPermission-error',
+          })
 
-        return {
-          data: {
-            checkUserPermission: null,
-          },
-        }
-      })
+          return {
+            data: {
+              checkUserPermission: null,
+            },
+          }
+        })
+    )
 
     checkUserPermission = checkUserPermissionResult?.data?.checkUserPermission
   }
@@ -138,7 +141,7 @@ const listOrganizationsByEmail = async (
   })
 
   await timer.track(
-    'hydrate',
+    hydrateOptions?.costCenters === false ? 'hydrateOrgs' : 'hydrate',
     hydrateOrganizationsByEmail(ctx, organizations ?? [], hydrateOptions)
   )
 
@@ -386,6 +389,9 @@ const Organizations = {
     return withQueryTimings({
       ctx,
       message: 'getActiveOrganizationsByEmail.timings',
+      // Always emit while diagnosing the ~3s storefront selector latency.
+      sampleRate: 1,
+      slowThresholdMs: 0,
       run: async (timer) => {
         try {
           // Phase 1: SFP list + org summaries only (no cost-center payloads).
@@ -407,6 +413,12 @@ const Organizations = {
             (organization) =>
               organization.status === ORGANIZATION_STATUSES.ACTIVE
           )
+
+          timer.meta.extra = {
+            ...timer.meta.extra,
+            activeCount: activeOrganizations.length,
+            totalCount: organizations?.length ?? 0,
+          }
 
           // Phase 2: cost-center summaries only for active rows.
           await timer.track(
@@ -468,7 +480,7 @@ const Organizations = {
           } = await timer.track(
             'storefrontPermissions',
             storefrontPermissions.getOrganizationsPaginatedByEmail(
-              email,
+              email ?? '',
               page,
               pageSize
             )
