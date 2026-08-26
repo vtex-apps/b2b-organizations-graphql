@@ -135,6 +135,13 @@ export const staleFromVBaseWhileRevalidate = async <T>(
     params,
     logger
   ).catch((error) => {
+    // Intentional cache-probe miss (e.g. hydrateSummaryBatch throws
+    // summaryCacheMiss to ask "is this key already cached?"). Not an origin
+    // failure — logging it as error floods VictoriaLogs and hides real signal.
+    if (error?.summaryCacheMiss || error?.message === 'summaryCacheMiss') {
+      return
+    }
+
     // The stale value keeps being served, so without this log a failing origin
     // would go completely unnoticed.
     logger?.error({

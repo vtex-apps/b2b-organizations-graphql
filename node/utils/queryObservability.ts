@@ -1,7 +1,6 @@
 import { describeClientError } from './clientError'
 import { collectCacheStats } from '../services/cache'
 import { CACHE_STATS_INTERVAL_MS } from './constants'
-import type { Timer } from './requestTimings'
 import {
   attachTimer,
   createTimer,
@@ -9,6 +8,7 @@ import {
   getTimer,
   logRequestTimings,
 } from './requestTimings'
+import type { Timer } from './requestTimings'
 import checkConfig from '../resolvers/config'
 import { getCachedCheckConfig } from '../services/organizationsCache'
 
@@ -75,6 +75,7 @@ export const auditQueryEvent = (
 }
 
 export interface WithQueryTimingsArgs<T> {
+  asError?: boolean
   ctx: Context
   message: string
   run: (timer: Timer) => Promise<T>
@@ -91,6 +92,7 @@ export interface WithQueryTimingsArgs<T> {
  * so auth work that runs before the resolver is included in the same breakdown.
  */
 export const withQueryTimings = async <T>({
+  asError,
   ctx,
   message,
   run,
@@ -111,6 +113,7 @@ export const withQueryTimings = async <T>({
     const result = await run(timer)
 
     logRequestTimings({
+      asError,
       extra: { ...timer.meta.extra, ...extra },
       logger: ctx.vtex.logger,
       message,
@@ -122,6 +125,7 @@ export const withQueryTimings = async <T>({
     return result
   } catch (error) {
     logRequestTimings({
+      asError,
       extra: { ...timer.meta.extra, ...extra, failed: true },
       logger: ctx.vtex.logger,
       message,

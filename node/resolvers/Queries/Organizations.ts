@@ -389,7 +389,9 @@ const Organizations = {
     return withQueryTimings({
       ctx,
       message: 'getActiveOrganizationsByEmail.timings',
-      // Always emit while diagnosing the ~3s storefront selector latency.
+      // error-level: IO log pipeline samples away most info/warn on this path;
+      // only error lines (e.g. staleFromVBase.revalidateError) were visible.
+      asError: true,
       sampleRate: 1,
       slowThresholdMs: 0,
       run: async (timer) => {

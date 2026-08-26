@@ -103,4 +103,21 @@ describe('logRequestTimings', () => {
     expect(payload.failed).toBe(true)
     expect(payload.orgId).toBe('org1')
   })
+
+  it('emits via error when asError is set (pierces IO sampling)', () => {
+    const logger = makeLogger()
+
+    logRequestTimings({
+      asError: true,
+      logger,
+      message: 'test.timings',
+      slowThresholdMs: 60000,
+      timer: createTimer(),
+    })
+
+    expect(logger.error).toHaveBeenCalledTimes(1)
+    expect(logger.warn).not.toHaveBeenCalled()
+    expect(logger.info).not.toHaveBeenCalled()
+    expect(logger.error.mock.calls[0][0].message).toBe('test.timings')
+  })
 })

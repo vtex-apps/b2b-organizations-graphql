@@ -65,6 +65,12 @@ export const attachTimer = (ctx: object, timer: Timer) => {
 export const getTimer = (ctx: object): Timer | undefined => timers.get(ctx)
 
 export interface LogRequestTimingsArgs {
+  /**
+   * Emit via `logger.error` so the line survives IO Victorialog sampling that
+   * routinely drops `info`/`warn` on hot paths. Use only for short-lived
+   * diagnosis — not as the steady-state level for production volume.
+   */
+  asError?: boolean
   extra?: Record<string, unknown>
   logger: Logger
   message: string
@@ -80,6 +86,7 @@ export interface LogRequestTimingsArgs {
  * signal useful for diagnosing any account without flooding the log pipeline.
  */
 export const logRequestTimings = ({
+  asError,
   extra,
   logger,
   message,
@@ -91,7 +98,7 @@ export const logRequestTimings = ({
   const threshold = slowThresholdMs ?? DEFAULT_SLOW_THRESHOLD_MS
   const isSlow = totalMs >= threshold
 
-  if (!isSlow && !(Math.random() < (sampleRate ?? 0))) {
+  if (!asError && !isSlow && !(Math.random() < (sampleRate ?? 0))) {
     return
   }
 
@@ -110,6 +117,12 @@ export const logRequestTimings = ({
     timings: timer.timings,
     totalMs,
     ...extra,
+  }
+
+  if (asError) {
+    logger.error(payload)
+
+    return
   }
 
   if (isSlow) {

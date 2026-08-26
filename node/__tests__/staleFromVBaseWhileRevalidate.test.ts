@@ -140,6 +140,28 @@ describe('staleFromVBaseWhileRevalidate', () => {
     expect(payload.key).toMatch(/^[0-9a-f]{32}\.json$/)
   })
 
+  it('does not log intentional summaryCacheMiss on background revalidate', async () => {
+    const past = new Date(Date.now() - 60 * 1000)
+    const vbase = makeVBase({ data: { cached: 'stale' }, ttl: past })
+    const logger = { error: jest.fn(), warn: jest.fn() } as any
+    const miss: any = new Error('summaryCacheMiss')
+
+    miss.summaryCacheMiss = true
+
+    const result = await staleFromVBaseWhileRevalidate(
+      vbase,
+      'bucket',
+      'key',
+      jest.fn().mockRejectedValue(miss),
+      undefined,
+      { logger }
+    )
+
+    expect(result).toEqual({ cached: 'stale' })
+    await flush()
+    expect(logger.error).not.toHaveBeenCalled()
+  })
+
   it('logs a warning when the VBase read fails and the origin is used', async () => {
     const vbase = {
       getJSON: jest.fn().mockRejectedValue(new Error('vbase down')),
