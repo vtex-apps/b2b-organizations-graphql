@@ -1,8 +1,8 @@
 import GraphQLError, { getErrorMessage } from '../utils/GraphQLError'
 import { describeClientError } from '../utils/clientError'
 import {
-  loadCostCenter,
-  loadOrganization,
+  loadCostCenterSummary,
+  loadOrganizationSummary,
 } from '../services/organizationDocuments'
 
 export const organizationName = async (
@@ -15,7 +15,7 @@ export const organizationName = async (
   } = ctx
 
   try {
-    const organization = await loadOrganization(ctx, orgId)
+    const organization = await loadOrganizationSummary(ctx, orgId)
 
     return organization.name
   } catch (error) {
@@ -37,7 +37,7 @@ export const organizationStatus = async (
   } = ctx
 
   try {
-    const organization = await loadOrganization(ctx, orgId)
+    const organization = await loadOrganizationSummary(ctx, orgId)
 
     return organization.status
   } catch (error) {
@@ -59,7 +59,7 @@ export const costCenterName = async (
   } = ctx
 
   try {
-    const costCenter = await loadCostCenter(ctx, costId)
+    const costCenter = await loadCostCenterSummary(ctx, costId)
 
     return costCenter.name
   } catch (error) {

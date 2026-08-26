@@ -93,4 +93,52 @@ export class MasterDataExtended extends JanusClient {
       }
     )
   }
+
+  /**
+   * Fetch many documents in as few Master Data round-trips as possible.
+   * One id → GET-by-id. Several → search with `id=a OR id=b` (chunked).
+   */
+  public getDocumentsByIds = async <T extends { id?: string }>(params: {
+    dataEntity: string
+    ids: string[]
+    fields: string[]
+    schema?: string
+  }): Promise<T[]> => {
+    const ids = [...new Set(params.ids.filter(Boolean))]
+
+    if (ids.length === 0) {
+      return []
+    }
+
+    if (ids.length === 1) {
+      const document = await this.getDocumentById<T>(
+        params.dataEntity,
+        ids[0],
+        params.fields
+      )
+
+      return document ? [document] : []
+    }
+
+    const CHUNK = 20
+    const chunks: string[][] = []
+
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      chunks.push(ids.slice(i, i + CHUNK))
+    }
+
+    const results = await Promise.all(
+      chunks.map((chunk) =>
+        this.searchDocuments<T>({
+          dataEntity: params.dataEntity,
+          fields: params.fields,
+          where: chunk.map((id) => `id=${id}`).join(' OR '),
+          schema: params.schema,
+          pagination: { page: 1, pageSize: chunk.length },
+        })
+      )
+    )
+
+    return results.flat()
+  }
 }

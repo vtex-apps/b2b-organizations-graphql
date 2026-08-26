@@ -33,6 +33,8 @@ export const ORGANIZATION_FIELDS = [
   'customFields',
   'permissions',
 ]
+/** Enough for list/selector field resolvers; avoids shipping priceTables/sellers/etc. */
+export const ORGANIZATION_SUMMARY_FIELDS = ['id', 'name', 'status']
 export const ORGANIZATION_SCHEMA_VERSION = 'v0.0.8'
 
 export const COST_CENTER_DATA_ENTITY = 'cost_centers'
@@ -48,6 +50,8 @@ export const COST_CENTER_FIELDS = [
   'stateRegistration',
   'sellers',
 ]
+/** Enough for costCenterName; skips addresses (often the largest field). */
+export const COST_CENTER_SUMMARY_FIELDS = ['id', 'name']
 export const COST_CENTER_SCHEMA_VERSION = 'v0.0.8'
 
 export const schemas = [

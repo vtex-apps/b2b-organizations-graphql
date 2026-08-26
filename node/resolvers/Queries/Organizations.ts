@@ -17,11 +17,12 @@ import {
   ensureConfigForQuery,
   withQueryTimings,
 } from '../../utils/queryObservability'
-import { organizationStatus } from '../fieldResolvers'
 import {
   hydrateOrganizationsByEmail,
+  getOrganizationStatusFromState,
   loadOrganization,
 } from '../../services/organizationDocuments'
+import { ORGANIZATION_STATUSES } from '../../utils/constants'
 
 const getWhereByStatus = ({ status }: { status: string[] }) => {
   const whereArray = []
@@ -38,6 +39,110 @@ const getWhereByStatus = ({ status }: { status: string[] }) => {
   }
 
   return whereArray
+}
+
+type HydrateOptions = { costCenters?: boolean; organizations?: boolean }
+
+/**
+ * Shared SFP list + optional MD hydrate. Kept out of the GraphQL resolver
+ * signature so a 4th `info` argument is never mistaken for options.
+ */
+// eslint-disable-next-line max-params
+const listOrganizationsByEmail = async (
+  email: string,
+  ctx: Context,
+  timer: { track: <T>(step: string, promise: Promise<T>) => Promise<T> },
+  hydrateOptions?: HydrateOptions
+) => {
+  const {
+    clients: { storefrontPermissions, session },
+    vtex: { logger, sessionToken, adminUserAuthToken },
+  } = ctx
+
+  const organizationFilters: string[] = []
+  let fromSession = false
+  let resolvedEmail = email
+
+  const sessionData = await timer.track(
+    'session',
+    session
+      .getSession(sessionToken as string, ['*'])
+      .then((currentSession: any) => {
+        return currentSession.sessionData
+      })
+      .catch((error: any) => {
+        logger.warn({
+          error: describeClientError(error),
+          message: 'getOrganizationsByEmail-session-error',
+        })
+
+        return null
+      })
+  )
+
+  let checkUserPermission = null
+
+  if (sessionData?.namespaces) {
+    const checkUserPermissionResult = await storefrontPermissions
+      .checkUserPermission('vtex.b2b-organizations@3.x')
+      .catch((error: any) => {
+        logger.error({
+          error: describeClientError(error),
+          message: 'checkUserPermission-error',
+        })
+
+        return {
+          data: {
+            checkUserPermission: null,
+          },
+        }
+      })
+
+    checkUserPermission = checkUserPermissionResult?.data?.checkUserPermission
+  }
+
+  if (
+    (!adminUserAuthToken &&
+      !checkUserPermission?.permissions.includes('add-sales-users-all')) ||
+    !(resolvedEmail?.length > 0)
+  ) {
+    if (checkUserPermission?.permissions.includes('add-users-organization')) {
+      const orgId =
+        sessionData?.namespaces?.['storefront-permissions']?.organization?.value
+
+      if (!orgId) {
+        throw new Error('No permission for getting the organizations')
+      }
+
+      organizationFilters.push(orgId)
+    }
+
+    if (!(resolvedEmail?.length > 0)) {
+      resolvedEmail = sessionData?.namespaces?.profile?.email?.value
+      fromSession = true
+    }
+  }
+
+  const organizations = (
+    await timer.track(
+      'storefrontPermissions',
+      storefrontPermissions.getOrganizationsByEmail(resolvedEmail)
+    )
+  ).data?.getOrganizationsByEmail?.filter(({ orgId }: { orgId: string }) => {
+    return (
+      fromSession ||
+      (organizationFilters.length > 0
+        ? organizationFilters.find((id: string) => orgId === id)
+        : true)
+    )
+  })
+
+  await timer.track(
+    'hydrate',
+    hydrateOrganizationsByEmail(ctx, organizations ?? [], hydrateOptions)
+  )
+
+  return organizations
 }
 
 const Organizations = {
@@ -235,105 +340,17 @@ const Organizations = {
     { email }: { email: string },
     ctx: Context
   ) => {
-    const {
-      clients: { storefrontPermissions, session },
-      vtex: { logger, sessionToken, adminUserAuthToken },
-      ip,
-    } = ctx
+    const { ip } = ctx
 
     return withQueryTimings({
       ctx,
       message: 'getOrganizationsByEmail.timings',
       run: async (timer) => {
-        const organizationFilters: string[] = []
-        let fromSession = false
-
-        const sessionData = await timer.track(
-          'session',
-          session
-            .getSession(sessionToken as string, ['*'])
-            .then((currentSession: any) => {
-              return currentSession.sessionData
-            })
-            .catch((error: any) => {
-              logger.warn({
-                error: describeClientError(error),
-                message: 'getOrganizationsByEmail-session-error',
-              })
-
-              return null
-            })
-        )
-
-        let checkUserPermission = null
-
-        if (sessionData?.namespaces) {
-          const checkUserPermissionResult = await storefrontPermissions
-            .checkUserPermission('vtex.b2b-organizations@3.x')
-            .catch((error: any) => {
-              logger.error({
-                error: describeClientError(error),
-                message: 'checkUserPermission-error',
-              })
-
-              return {
-                data: {
-                  checkUserPermission: null,
-                },
-              }
-            })
-
-          checkUserPermission =
-            checkUserPermissionResult?.data?.checkUserPermission
-        }
-
-        if (
-          (!adminUserAuthToken &&
-            !checkUserPermission?.permissions.includes(
-              'add-sales-users-all'
-            )) ||
-          !(email?.length > 0)
-        ) {
-          if (
-            checkUserPermission?.permissions.includes('add-users-organization')
-          ) {
-            const orgId =
-              sessionData?.namespaces?.['storefront-permissions']?.organization
-                ?.value
-
-            if (!orgId) {
-              throw new Error('No permission for getting the organizations')
-            }
-
-            organizationFilters.push(orgId)
-          }
-
-          if (!(email?.length > 0)) {
-            email = sessionData?.namespaces?.profile?.email?.value
-            fromSession = true
-          }
-        }
-
         try {
-          const organizations = (
-            await timer.track(
-              'storefrontPermissions',
-              storefrontPermissions.getOrganizationsByEmail(email)
-            )
-          ).data?.getOrganizationsByEmail?.filter(
-            ({ orgId }: { orgId: string }) => {
-              return (
-                fromSession ||
-                (organizationFilters.length > 0
-                  ? organizationFilters.find((id: string) => orgId === id)
-                  : true)
-              )
-            }
-          )
-
-          await timer.track(
-            'hydrate',
-            hydrateOrganizationsByEmail(ctx, organizations ?? [])
+          const organizations = await listOrganizationsByEmail(
+            email,
+            ctx,
+            timer
           )
 
           auditQueryEvent(ctx, {
@@ -349,7 +366,7 @@ const Organizations = {
 
           return organizations
         } catch (error) {
-          logger.error({
+          ctx.vtex.logger.error({
             error: describeClientError(error),
             message: 'getOrganizationsByEmail-error',
           })
@@ -366,41 +383,61 @@ const Organizations = {
   ) => {
     const { ip } = ctx
 
-    const organizations = await Organizations.getOrganizationsByEmail(
-      _,
-      { email },
-      ctx
-    )
-
-    const organizationsWithStatus: GetOrganizationsByEmailWithStatus[] =
-      await Promise.all(
-        organizations.map(async (organization: { orgId: string }) => {
-          const status = await organizationStatus(
-            { orgId: organization.orgId },
-            _,
-            ctx
+    return withQueryTimings({
+      ctx,
+      message: 'getActiveOrganizationsByEmail.timings',
+      run: async (timer) => {
+        try {
+          // Phase 1: SFP list + org summaries only (no cost-center payloads).
+          const organizations = await listOrganizationsByEmail(
+            email,
+            ctx,
+            timer,
+            { costCenters: false }
           )
 
-          return { ...organization, status }
-        })
-      )
+          const organizationsWithStatus: GetOrganizationsByEmailWithStatus[] = (
+            organizations ?? []
+          ).map((organization: { orgId: string }) => ({
+            ...organization,
+            status: getOrganizationStatusFromState(ctx, organization.orgId),
+          }))
 
-    const activeOrganizations = organizationsWithStatus.filter(
-      (organization) => organization.status === 'active'
-    )
+          const activeOrganizations = organizationsWithStatus.filter(
+            (organization) =>
+              organization.status === ORGANIZATION_STATUSES.ACTIVE
+          )
 
-    auditQueryEvent(ctx, {
-      subjectId: 'get-active-organizations-by-email-event',
-      operation: 'GET_ACTIVE_ORGANIZATIONS_BY_EMAIL',
-      meta: {
-        entityName: 'Organizations',
-        remoteIpAddress: ip,
-        entityBeforeAction: JSON.stringify({}),
-        entityAfterAction: JSON.stringify({}),
+          // Phase 2: cost-center summaries only for active rows.
+          await timer.track(
+            'hydrateActiveCostCenters',
+            hydrateOrganizationsByEmail(ctx, activeOrganizations, {
+              organizations: false,
+              costCenters: true,
+            })
+          )
+
+          auditQueryEvent(ctx, {
+            subjectId: 'get-active-organizations-by-email-event',
+            operation: 'GET_ACTIVE_ORGANIZATIONS_BY_EMAIL',
+            meta: {
+              entityName: 'Organizations',
+              remoteIpAddress: ip,
+              entityBeforeAction: JSON.stringify({}),
+              entityAfterAction: JSON.stringify({}),
+            },
+          })
+
+          return activeOrganizations
+        } catch (error) {
+          ctx.vtex.logger.error({
+            error: describeClientError(error),
+            message: 'getActiveOrganizationsByEmail-error',
+          })
+          throw new GraphQLError(getErrorMessage(error))
+        }
       },
     })
-
-    return activeOrganizations
   },
 
   getOrganizationsPaginatedByEmail: async (
