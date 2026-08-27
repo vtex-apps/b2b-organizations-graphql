@@ -32,7 +32,19 @@ Sending a custom cost center `id` to `createOrganization` may cause a `400` resp
 | `inactive` | Organization is inactive |
 | `on-hold` | Organization is on hold |
 
-Canonical values match `updateOrganization`. Omitting `status` keeps the historical create behavior. Creating with a non-`active` status does **not** send the organization status-changed email (that email only applies when status changes via `updateOrganization`).
+Canonical values match `updateOrganization`. Omitting `status` keeps the historical create behavior. Creating with a non-`active` status does not send the organization status-changed email (that email only applies when status changes via `updateOrganization`).
+
+> ℹ️ The `status` field returned by `createOrganization` and `createOrganizationAndCostCentersWithId` is the mutation's operation result (often empty), not the organization's lifecycle status. Query `getOrganizationById` with the returned `id` to confirm the persisted status.
+
+```graphql
+query GetOrganization($id: ID!) {
+  getOrganizationById(id: $id) {
+    id
+    name
+    status
+  }
+}
+```
 
 ## Cost center addresses
 
