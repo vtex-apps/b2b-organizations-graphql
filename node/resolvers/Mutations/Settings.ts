@@ -128,6 +128,7 @@ const Settings = {
           clearCart:
             uiSettings?.clearCart ?? currentB2BSettings?.uiSettings?.clearCart,
           topBar: uiSettings?.topBar ?? currentB2BSettings?.uiSettings?.topBar,
+          fullImpersonation: uiSettings?.fullImpersonation ?? currentB2BSettings?.uiSettings?.fullImpersonation,
         },
       }
 
