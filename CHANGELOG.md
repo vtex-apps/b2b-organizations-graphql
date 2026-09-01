@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-09-01
+
 ### Fixed
 
 - `getOrganizationsByEmail` / `getActiveOrganizationsByEmail` no longer call `storefront-permissions` without an email. Both resolve the acting user through `listOrganizationsByEmail`, which previously read only `session.namespaces.profile.email` and then issued the downstream query regardless of the result. A session token without private scope carries no `profile` namespace, so an ordinary logged-in shopper could reach `getOrganizationsByEmail(email: String!)` with no variable at all - rejected during GraphQL validation, before the resolver runs, and surfaced as an opaque `INTERNAL_SERVER_ERROR` attributed to `storefront-permissions`. Observed on `kohler` as ~2.1k logged occurrences (~42k after the 20x log sampling) in a 16-hour window, and as a steady daily background across every account on the B2B suite. The resolver now refuses locally with an `AuthenticationError` instead of failing in the neighbouring app.
