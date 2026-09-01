@@ -119,8 +119,13 @@ export const createCachedResource = <T>(
 
     const { account, workspace } = ctx.vtex
 
+    // `:` rather than `-`, because the resource keys are Master Data ids and
+    // those contain hyphens: joining on `-` makes the composed key ambiguous
+    // (account=a/workspace=b-c/key=d and account=a/workspace=b/key=c-d both
+    // collapse to `a-b-c-d`). Only VTEX naming rules keep that from being a
+    // cross-tenant hit today, and tenant isolation should not rest on them.
     // getOrSet is typed as `V | void`, so normalize it for callers.
-    const cached = await cache.getOrSet(`${account}-${workspace}-${key}`, () =>
+    const cached = await cache.getOrSet(`${account}:${workspace}:${key}`, () =>
       readThrough().then((value) => ({
         maxAge: memoryTtlMs,
         value,

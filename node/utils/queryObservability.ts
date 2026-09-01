@@ -39,6 +39,20 @@ export const maybeEmitCacheStats = (ctx: Context) => {
  * Queries must not block on schema/template sync. Fire-and-forget when the
  * per-tenant "already synced" memory flag is cold; mutations still await
  * `checkConfig` directly.
+ *
+ * The `.catch` must stay *outside* `getCachedCheckConfig`. A rejected fetcher
+ * propagates out of the cache before anything is stored, so a failed sync is
+ * never cached and the next Query retries it. Move this handler inside the
+ * fetcher and the failure resolves instead: the entry pins "synced" for the
+ * full TTL and suppresses every retry in that window, on the pod where the
+ * sync is broken.
+ *
+ * Not awaiting is safe for reads because the hot read path does not reference
+ * the schema - `MasterDataExtended.getDocumentById` sends `_fields` only, no
+ * `_schema` - so a Query does not depend on this having run. What is left is an
+ * account whose data entity has never been created, which has no organizations
+ * to return either way; the first mutation still awaits `checkConfig` and
+ * creates it.
  */
 export const ensureConfigForQuery = (ctx: Context) => {
   getCachedCheckConfig(ctx, () => checkConfig(ctx)).catch((error) => {

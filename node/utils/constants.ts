@@ -27,6 +27,17 @@ export const VBASE_CACHE_BUCKET = 'b2b-orgs-cache'
 /**
  * Organization and cost center data is admin-edited. TTLs are kept to a minute
  * because deactivating an organization should take effect quickly.
+ *
+ * This app is not the only cache in front of that data. `storefront-permissions`
+ * keeps its own two-layer cache of the same organization documents with these
+ * same numbers (`getCachedOrganization` in its `setProfile` path), and it reads
+ * Master Data directly rather than through this app - so the two are siblings
+ * over one origin, not a chain, and their windows do not add up. A status change
+ * reaches each app within that app's own window.
+ *
+ * `status` is what drives the inactive-organization path in SFP's `setProfile`,
+ * so tuning these here only fixes half the staleness a shopper can observe: the
+ * mirrored constants on the other side have to move too.
  */
 export const ORGANIZATION_CACHE_TTL_IN_MS = 60 * 1000
 export const ORGANIZATION_CACHE_TTL_IN_MINUTES = 2
