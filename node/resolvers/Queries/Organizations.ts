@@ -1,3 +1,5 @@
+import { AuthenticationError } from '@vtex/api'
+
 import {
   ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_FIELDS,
@@ -11,7 +13,10 @@ import type {
   Organization,
 } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import type { ActingUserEmailSource } from '../../utils/actingUserEmail'
+import { resolveActingUserEmail } from '../../utils/actingUserEmail'
 import { describeClientError } from '../../utils/clientError'
+import type { Timer } from '../../utils/requestTimings'
 import {
   auditQueryEvent,
   ensureConfigForQuery,
@@ -51,17 +56,19 @@ type HydrateOptions = { costCenters?: boolean; organizations?: boolean }
 const listOrganizationsByEmail = async (
   email: string,
   ctx: Context,
-  timer: { track: <T>(step: string, promise: Promise<T>) => Promise<T> },
+  timer: Pick<Timer, 'meta' | 'track'>,
   hydrateOptions?: HydrateOptions
 ) => {
   const {
     clients: { storefrontPermissions, session },
-    vtex: { logger, sessionToken, adminUserAuthToken },
+    vtex: { logger, sessionToken, adminUserAuthToken, storeUserAuthToken },
   } = ctx
 
   const organizationFilters: string[] = []
   let fromSession = false
   let resolvedEmail = email
+  let emailSource: ActingUserEmailSource =
+    email?.length > 0 ? 'argument' : 'none'
 
   const sessionData = await timer.track(
     'session',
@@ -121,9 +128,44 @@ const listOrganizationsByEmail = async (
     }
 
     if (!(resolvedEmail?.length > 0)) {
-      resolvedEmail = sessionData?.namespaces?.profile?.email?.value
-      fromSession = true
+      const actingUser = await resolveActingUserEmail({
+        ctx,
+        email,
+        sessionData,
+        timer,
+      })
+
+      resolvedEmail = actingUser.email as string
+      emailSource = actingUser.source
+
+      // `fromSession` lifts the organization filter below, so it may only be
+      // set when the shopper asking *is* the shopper being looked up. Every
+      // source reachable here satisfies that - the argument is empty by
+      // definition inside this branch, and both the session and the store
+      // token belong to the caller. It must not be set when nothing resolved,
+      // which is what the previous unconditional assignment got wrong.
+      fromSession = actingUser.source !== 'none'
     }
+  }
+
+  timer.meta.extra = { ...timer.meta.extra, emailSource }
+
+  // The downstream query is `getOrganizationsByEmail(email: String!)`: calling
+  // it without the variable is rejected during GraphQL validation, before its
+  // resolver runs, and surfaces as an opaque INTERNAL_SERVER_ERROR attributed
+  // to storefront-permissions. Refuse here instead - an unidentifiable caller
+  // is this app's decision to make, and making it locally keeps the failure
+  // readable and countable.
+  if (!(resolvedEmail?.length > 0)) {
+    logger.warn({
+      hasSessionData: !!sessionData?.namespaces,
+      hasStoreToken: !!storeUserAuthToken,
+      message: 'listOrganizationsByEmail-unresolvedEmail',
+    })
+
+    throw new AuthenticationError(
+      'Could not determine which user to list organizations for: no email argument, and the session and store token did not identify one.'
+    )
   }
 
   const organizations = (
@@ -369,6 +411,13 @@ const Organizations = {
 
           return organizations
         } catch (error) {
+          // An unidentifiable caller is an authentication outcome, not a
+          // failure of this query - let it through untouched instead of
+          // relabelling it as an internal error.
+          if (error instanceof AuthenticationError) {
+            throw error
+          }
+
           ctx.vtex.logger.error({
             error: describeClientError(error),
             message: 'getOrganizationsByEmail-error',
@@ -444,6 +493,11 @@ const Organizations = {
 
           return activeOrganizations
         } catch (error) {
+          // See getOrganizationsByEmail: authentication outcomes pass through.
+          if (error instanceof AuthenticationError) {
+            throw error
+          }
+
           ctx.vtex.logger.error({
             error: describeClientError(error),
             message: 'getActiveOrganizationsByEmail-error',

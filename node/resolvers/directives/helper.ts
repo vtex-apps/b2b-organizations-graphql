@@ -1,5 +1,6 @@
 import { isUserPartOfBuyerOrg } from '../Queries/Users'
 import { LICENSE_MANAGER_ROLES, B2B_LM_PRODUCT_CODE } from '../../constants'
+import { setValidatedStoreUserEmail } from '../../utils/actingUserEmail'
 
 export const validateAdminToken = async (
   context: Context,
@@ -166,6 +167,12 @@ export const validateStoreToken = async (
         // we set this flag to true if the token is valid by current standards
         // in the future we should remove this line
         hasCurrentValidStoreToken = true
+
+        // VTEX ID just told us who this token belongs to. Keep it on the
+        // request so by-email resolvers can recover the shopper when the
+        // session does not expose it (see resolveActingUserEmail), instead of
+        // asking VTEX ID the same question again.
+        setValidatedStoreUserEmail(context, authUser.user)
 
         const userIsPartOfBuyerOrg = await isUserPartOfBuyerOrg(
           authUser?.user,
