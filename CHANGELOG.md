@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- `getCostCenterByIdStorefront` reports `getCostCenterByIdStorefront-organizationMismatch` when it rejects a request with `operation-not-permitted` (B2BTEAM-3849). The rejection is suspected to be mostly a race rather than a real permission problem: `setCurrentOrganization` writes the shopper's new selection to `public.b2bCurrentCostCenter` synchronously, while `storefront-permissions.organization` only catches up on the next session transform, so a storefront querying in between asks for a cost center the session does not yet know about. The log carries `requestedCostCenterId`, `costCenterOrganization`, `sessionOrganization`, `sessionCostCenterId`, `pendingCostCenterId` and `matchesPendingSelection` - that last flag settles race vs. real failure in a single line. Ids only, no shopper identifiers.
+- The same log reports `sessionNamespaces` (namespace names only, no values). This app declares no `vtex.session` configuration of its own, so whether the `public` namespace is returned at all is unverified; without this field a null `pendingCostCenterId` would be ambiguous between "the shopper had not selected this cost center" and "we cannot read that namespace".
+
+### Changed
+
+- `checkOrganizationIsActive` reuses the session the `@withSession` directive already loaded onto the request instead of fetching it again. `getCostCenterByIdStorefront` and `getCostCentersByOrganizationIdStorefront` carry that directive and then call this resolver, so both were paying two reads of the same session microseconds apart - measured at 11 to 37ms each on live traffic. The fetch remains as a fallback: `checkOrganizationIsActive` is also a query field of its own, without the directive.
+
+### Notes
+
+- The pending selection is read for diagnostics only and deliberately does not affect the authorization decision. `public` is a client-writable session namespace, so letting it grant access to a cost center would let any shopper name someone else's. A test asserts the request is still rejected when `matchesPendingSelection` is true.
+- Why this instrumentation rather than log correlation: `operationId` does not survive the hop into `storefront-permissions`, neither side exposes `costCenterId` as an indexed field, and at roughly one organization switch per minute against 1:20 log sampling, timestamp proximity cannot distinguish a real correlation from coincidence.
+
 ## [2.7.1] - 2026-09-01
 
 ### Fixed

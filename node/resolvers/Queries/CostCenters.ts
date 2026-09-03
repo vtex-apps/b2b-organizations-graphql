@@ -173,6 +173,14 @@ const costCenters = {
       },
     }
 
+    /**
+     * Read for diagnostics only - never for the authorization decision below.
+     * `public` is a client-writable session namespace, so trusting it to grant
+     * access to a cost center would let any shopper name someone else's.
+     */
+    const pendingCostCenterId =
+      sessionData.namespaces?.public?.b2bCurrentCostCenter?.value ?? null
+
     if (!id) {
       id = userCostCenterId
     }
@@ -186,6 +194,45 @@ const costCenters = {
       }
 
       if (costCenter.organization !== userOrganizationId) {
+        /**
+         * This rejection is suspected to be mostly a race rather than a real
+         * permission problem: `setCurrentOrganization` writes the shopper's new
+         * selection to `public.b2bCurrentCostCenter` synchronously, but
+         * `storefront-permissions.organization` only catches up on the next
+         * session transform. A storefront that queries in between asks for a
+         * cost center the session does not yet know about.
+         *
+         * `matchesPendingSelection` settles that in one line, with no
+         * cross-app join: true means the shopper had just selected exactly this
+         * cost center and the session had not caught up (the race), false means
+         * something asked for a cost center the shopper never selected (a real
+         * permission failure, or a caller bug). Correlating by `operationId`
+         * does not work here - it does not survive the hop into
+         * storefront-permissions - and log sampling makes timestamp proximity
+         * meaningless at this volume.
+         *
+         * Ids only, no shopper identifiers.
+         */
+        logger.warn({
+          costCenterOrganization: costCenter.organization ?? null,
+          matchesPendingSelection:
+            !!pendingCostCenterId && pendingCostCenterId === id,
+          message: 'getCostCenterByIdStorefront-organizationMismatch',
+          pendingCostCenterId,
+          requestedCostCenterId: id ?? null,
+          /**
+           * Namespace names only, no values. This app declares no
+           * `vtex.session` configuration of its own, so whether the `public`
+           * namespace comes back at all is unverified - without this, a null
+           * `pendingCostCenterId` would be ambiguous between "the shopper had
+           * not selected this cost center" and "we cannot see that namespace",
+           * and the beta would answer neither.
+           */
+          sessionNamespaces: Object.keys(sessionData.namespaces ?? {}),
+          sessionCostCenterId: userCostCenterId ?? null,
+          sessionOrganization: userOrganizationId ?? null,
+        })
+
         throw new GraphQLError('operation-not-permitted')
       }
 
