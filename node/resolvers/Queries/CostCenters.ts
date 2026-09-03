@@ -157,14 +157,14 @@ const costCenters = {
 
     const { sessionData } = vtex as any
 
-    if (!sessionData?.namespaces['storefront-permissions']) {
+    if (!sessionData?.namespaces?.['storefront-permissions']) {
       throw new GraphQLError('organization-data-not-found')
     }
 
     const {
       organization: { value: userOrganizationId },
       costcenter: { value: userCostCenterId },
-    } = sessionData.namespaces['storefront-permissions'] ?? {
+    } = sessionData.namespaces?.['storefront-permissions'] ?? {
       organization: {
         value: null,
       },
@@ -465,13 +465,13 @@ const costCenters = {
     const isSalesAdmin = checkUserPermission?.role.slug.match(/sales-admin/)
 
     if (!isSalesAdmin) {
-      if (!sessionData?.namespaces['storefront-permissions']) {
+      if (!sessionData?.namespaces?.['storefront-permissions']) {
         throw new GraphQLError('organization-data-not-found')
       }
 
       const {
         organization: { value: userOrganizationId },
-      } = sessionData.namespaces['storefront-permissions'] ?? {
+      } = sessionData.namespaces?.['storefront-permissions'] ?? {
         organization: {
           value: null,
         },

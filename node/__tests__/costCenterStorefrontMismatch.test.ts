@@ -183,6 +183,35 @@ describe('getCostCenterByIdStorefront organization mismatch', () => {
     expect(reported.pendingCostCenterId).toBeNull()
   })
 
+  /**
+   * The guard read `sessionData?.namespaces['storefront-permissions']`: the
+   * `?.` covered `sessionData` but not `namespaces`, so a session that arrives
+   * without namespaces threw a TypeError instead of the named error the line
+   * was written to throw. That matters beyond robustness - an incomplete
+   * session is the very condition under investigation here, and a generic
+   * "Cannot read properties of undefined" says nothing about which namespace
+   * was missing. Seen on live traffic on 2.7.0, 2.7.1 and the beta.
+   */
+  it('answers organization-data-not-found when the session carries no namespaces', async () => {
+    const ctx = makeCtx()
+
+    ctx.vtex.sessionData = {}
+
+    await expect(askFor(ctx, 'cc-new')).rejects.toThrow(
+      'organization-data-not-found'
+    )
+  })
+
+  it('answers organization-data-not-found when there is no session at all', async () => {
+    const ctx = makeCtx()
+
+    ctx.vtex.sessionData = null
+
+    await expect(askFor(ctx, 'cc-new')).rejects.toThrow(
+      'organization-data-not-found'
+    )
+  })
+
   it('logs nothing when the cost center belongs to the session organization', async () => {
     loadCostCenterMock.mockResolvedValue({
       addresses: [],
