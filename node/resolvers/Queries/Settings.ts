@@ -1,44 +1,47 @@
 import GraphQLError from '../../utils/GraphQLError'
-import checkConfig from '../config'
+import { describeClientError } from '../../utils/clientError'
+import {
+  auditQueryEvent,
+  ensureConfigForQuery,
+} from '../../utils/queryObservability'
+import { getCachedB2BSettings } from '../../services/organizationsCache'
 import type { B2BSettingsInput } from '../../typings'
 import type { GetSellersOpts } from '../../clients/sellers'
+
+const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
 
 const B2BSettings = {
   getB2BSettings: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { vbase, audit },
-      ip
+      clients: { vbase },
+      ip,
     } = ctx
 
-    const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
-
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
-
-    let settings: Partial<B2BSettingsInput> | null = null
+    ensureConfigForQuery(ctx)
 
     try {
-      settings = await vbase.getJSON<B2BSettingsInput | null>(
-        B2B_SETTINGS_DATA_ENTITY,
-        'settings',
-        true
-      )
+      const settings = await getCachedB2BSettings(ctx, async () => {
+        const raw = await vbase.getJSON<B2BSettingsInput | null>(
+          B2B_SETTINGS_DATA_ENTITY,
+          'settings',
+          true
+        )
 
-      settings = {
-        ...settings,
-        // if custom fields are null, set to an empty array
-        costCenterCustomFields: settings?.costCenterCustomFields ?? [],
-        organizationCustomFields: settings?.organizationCustomFields ?? [],
-        transactionEmailSettings: settings?.transactionEmailSettings ?? {
-          organizationApproved: true,
-          organizationCreated: true,
-          organizationDeclined: true,
-          organizationRequestCreated: false,
-          organizationStatusChanged: true,
-        },
-      }
+        return {
+          ...raw,
+          costCenterCustomFields: raw?.costCenterCustomFields ?? [],
+          organizationCustomFields: raw?.organizationCustomFields ?? [],
+          transactionEmailSettings: raw?.transactionEmailSettings ?? {
+            organizationApproved: true,
+            organizationCreated: true,
+            organizationDeclined: true,
+            organizationRequestCreated: false,
+            organizationStatusChanged: true,
+          },
+        }
+      })
 
-      await audit.sendEvent({
+      auditQueryEvent(ctx, {
         subjectId: 'get-b2b-settings-event',
         operation: 'GET_B2B_SETTINGS',
         meta: {
@@ -49,7 +52,13 @@ const B2BSettings = {
         },
       })
 
+      return settings
     } catch (e) {
+      ctx.vtex.logger.error({
+        error: describeClientError(e),
+        message: 'getB2BSettings-error',
+      })
+
       if (e.message) {
         throw new GraphQLError(e.message)
       } else if (e.response?.data?.message) {
@@ -58,16 +67,14 @@ const B2BSettings = {
         throw new GraphQLError(e)
       }
     }
-
-    return settings
   },
   getSellers: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { sellers, audit },
-      ip
+      clients: { sellers },
+      ip,
     } = ctx
 
-    await audit.sendEvent({
+    auditQueryEvent(ctx, {
       subjectId: 'get-sellers-event',
       operation: 'GET_SELLERS',
       meta: {
@@ -86,13 +93,12 @@ const B2BSettings = {
     ctx: Context
   ) => {
     const {
-      clients: { sellers, audit },
-      ip
+      clients: { sellers },
+      ip,
     } = ctx
 
     try {
-
-      await audit.sendEvent({
+      auditQueryEvent(ctx, {
         subjectId: 'get-sellers-paginated-event',
         operation: 'GET_SELLERS_PAGINATED',
         meta: {
@@ -116,13 +122,14 @@ const B2BSettings = {
   },
   getAccount: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { lm, audit },
-      ip
+      clients: { lm },
+      ip,
     } = ctx
 
     try {
       const result = await lm.getAccount()
-      await audit.sendEvent({
+
+      auditQueryEvent(ctx, {
         subjectId: 'get-account-event',
         operation: 'GET_ACCOUNT',
         meta: {

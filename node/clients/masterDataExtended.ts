@@ -1,0 +1,144 @@
+import type { InstanceOptions, IOContext } from '@vtex/api'
+import { JanusClient } from '@vtex/api'
+
+/*
+  The default Master Data client was causing higher response times compared
+  to calling Master Data directly from the app using this custom client.
+  No forceMaxAge: application cache owns TTLs and "never cache a failure/miss".
+*/
+
+const isEmptyDocument = (document: unknown): boolean =>
+  document === null ||
+  document === undefined ||
+  document === '' ||
+  (typeof document === 'object' &&
+    document !== null &&
+    !Array.isArray(document) &&
+    Object.keys(document as Record<string, unknown>).length === 0)
+
+export class MasterDataExtended extends JanusClient {
+  constructor(context: IOContext, options?: InstanceOptions) {
+    super(context, {
+      ...options,
+      headers: {
+        VtexIdClientAutCookie: context.authToken,
+      },
+    })
+  }
+
+  /**
+   * GET-by-id without `_schema`. Normalizes Master Data's empty-string / empty
+   * object miss shapes to `null` so callers can throw and keep misses out of
+   * the application cache.
+   */
+  public getDocumentById = async <T = unknown>(
+    dataEntity: string,
+    id: string,
+    fields: string[]
+  ): Promise<T | null> => {
+    const document = await this.http.get(
+      `/api/dataentities/${dataEntity}/documents/${id}?_fields=${fields.join(
+        ','
+      )}`,
+      {
+        metric: 'masterdata-get-document',
+      }
+    )
+
+    return isEmptyDocument(document) ? null : (document as T)
+  }
+
+  public searchDocuments = <T = unknown>(params: {
+    dataEntity: string
+    fields: string[]
+    where?: string
+    schema?: string
+    sort?: string
+    pagination?: { page: number; pageSize: number }
+  }) => {
+    const {
+      dataEntity,
+      fields,
+      where,
+      schema,
+      sort,
+      pagination = { page: 1, pageSize: 50 },
+    } = params
+
+    const from = (pagination.page - 1) * pagination.pageSize
+    const to = from + pagination.pageSize - 1
+    const query = new URLSearchParams({
+      _fields: fields.join(','),
+    })
+
+    if (where) {
+      query.set('_where', where)
+    }
+
+    if (schema) {
+      query.set('_schema', schema)
+    }
+
+    if (sort) {
+      query.set('_sort', sort)
+    }
+
+    return this.http.get<T[]>(
+      `/api/dataentities/${dataEntity}/search?${query.toString()}`,
+      {
+        headers: {
+          'REST-Range': `resources=${from}-${to}`,
+        },
+        metric: 'masterdata-search',
+      }
+    )
+  }
+
+  /**
+   * Fetch many documents in as few Master Data round-trips as possible.
+   * One id → GET-by-id. Several → search with `id=a OR id=b` (chunked).
+   */
+  public getDocumentsByIds = async <T extends { id?: string }>(params: {
+    dataEntity: string
+    ids: string[]
+    fields: string[]
+    schema?: string
+  }): Promise<T[]> => {
+    const ids = [...new Set(params.ids.filter(Boolean))]
+
+    if (ids.length === 0) {
+      return []
+    }
+
+    if (ids.length === 1) {
+      const document = await this.getDocumentById<T>(
+        params.dataEntity,
+        ids[0],
+        params.fields
+      )
+
+      return document ? [document] : []
+    }
+
+    const CHUNK = 20
+    const chunks: string[][] = []
+
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      chunks.push(ids.slice(i, i + CHUNK))
+    }
+
+    const results = await Promise.all(
+      chunks.map((chunk) =>
+        this.searchDocuments<T>({
+          dataEntity: params.dataEntity,
+          fields: params.fields,
+          where: chunk.map((id) => `id=${id}`).join(' OR '),
+          schema: params.schema,
+          pagination: { page: 1, pageSize: chunk.length },
+        })
+      )
+    )
+
+    return results.flat()
+  }
+}

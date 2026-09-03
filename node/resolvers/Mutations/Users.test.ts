@@ -17,6 +17,9 @@ const mockContext = (
 ) => {
   return {
     clients: {
+      audit: {
+        sendEvent: jest.fn().mockResolvedValue(undefined),
+      },
       storefrontPermissions: {
         getB2BUser: jest.fn().mockResolvedValue({
           data: {

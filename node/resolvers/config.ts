@@ -1,6 +1,7 @@
 import { schemas } from '../mdSchema'
 import templates from '../templates'
 import { toHash } from '../utils'
+import { describeClientError } from '../utils/clientError'
 
 export interface Settings {
   schemaHash: string | null
@@ -75,7 +76,7 @@ const checkConfig = async (ctx: Context) => {
           .catch((error: any) => {
             if (error?.response?.status !== 304) {
               logger.error({
-                error,
+                error: describeClientError(error),
                 message: 'checkConfig-createOrUpdateSchemaError',
               })
 
@@ -95,7 +96,7 @@ const checkConfig = async (ctx: Context) => {
       })
     } catch (error) {
       logger.error({
-        error,
+        error: describeClientError(error),
         message: 'checkConfig-createOrUpdateSchemaError',
       })
     }
@@ -122,7 +123,7 @@ const checkConfig = async (ctx: Context) => {
       )
     } catch (error) {
       logger.error({
-        error,
+        error: describeClientError(error),
         message: 'checkConfig-updatingTemplatesError',
       })
     }
@@ -134,7 +135,7 @@ const checkConfig = async (ctx: Context) => {
       })
       .catch((error) => {
         logger.error({
-          error,
+          error: describeClientError(error),
           message: 'checkConfig-publishTemplateError',
         })
         throw new Error(error)
@@ -146,7 +147,7 @@ const checkConfig = async (ctx: Context) => {
       await vbase.saveJSON('mdSchema', settingsKey, settings)
     } catch (error) {
       logger.error({
-        error,
+        error: describeClientError(error),
         message: 'checkConfig-saveSettingsError',
       })
     }

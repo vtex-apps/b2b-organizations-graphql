@@ -7,7 +7,34 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [2.6.4] - 2026-08-24
+## [2.7.1] - 2026-09-01
+
+### Fixed
+
+- `getOrganizationsByEmail` / `getActiveOrganizationsByEmail` no longer call `storefront-permissions` without an email. Both resolve the acting user through `listOrganizationsByEmail`, which previously read only `session.namespaces.profile.email` and then issued the downstream query regardless of the result. A session token without private scope carries no `profile` namespace, so an ordinary logged-in shopper could reach `getOrganizationsByEmail(email: String!)` with no variable at all - rejected during GraphQL validation, before the resolver runs, and surfaced as an opaque `INTERNAL_SERVER_ERROR` attributed to `storefront-permissions`. Observed as a steady daily background across every account on the B2B suite. The resolver now refuses locally with an `AuthenticationError` instead of failing in the neighbouring app.
+- Email resolution now tries every source the request carries, in order: the explicit `email` argument, `session.namespaces.profile.email`, `session.namespaces.authentication.storeUserEmail`, and finally the store user token. The token path is what covers the scope-less session, since it does not depend on session scope. Both session namespaces were confirmed populated on a live authenticated B2B session; the `storefront-permissions` namespace carries the organization but no email, so it is not a source.
+- The store token fallback stands down while impersonation is active (`public.impersonate`, or `impersonate.storeUserId` for telemarketing). The token identifies whoever is acting, which during impersonation is the operator rather than the shopper the query is about - answering with it would list the wrong person's organizations, which is worse than not answering because it looks like an answer. `impersonate.canImpersonate` is deliberately not treated as impersonation: it is a capability flag a sales representative carries on every session, including their own.
+- The store token is never decoded locally to read the email out of it. Its payload is attacker-controlled until the signature is verified, and this email decides whose organizations are returned, so identity comes from VTEX ID only. In practice this costs nothing: `@validateStoreUserAccess` already exchanges the same token for the authenticated user to authorize the request, and now leaves the answer on the request context (`utils/actingUserEmail`) for the resolver to reuse. The lazy VTEX ID lookup only runs when that did not happen.
+- `fromSession` is set only when a source actually identified the shopper. It was previously set whenever the fallback was *attempted*, which also lifted the organization filter on the failure path.
+- An `AuthenticationError` raised while resolving the user is no longer caught and relabelled as `getOrganizationsByEmail-error` / `getActiveOrganizationsByEmail-error`; it passes through as the authentication outcome it is.
+
+### Added
+
+- `emailSource` (`argument` / `session-profile` / `session-authentication` / `store-token` / `none`) on the `.timings` log of both queries, so production shows how often each fallback is what saved the request.
+- Tests covering the resolution chain and the guard, including a regression test proven to fail against the previous code.
+
+## [2.7.0] - 2026-08-26
+
+### Added
+
+- **Performance / caching**: two-layer application cache (in-process LRU + VBase stale-while-revalidate) for `getOrganizationById` / `getCostCenterById` and field resolvers. Memory TTL 60s; VBase SWR 2 min. Bucket `b2b-orgs-cache`. Failures and document misses are never cached; callers clone before mutating defaults/addresses.
+- **Janus `MasterDataExtended`**: hot GET-by-id (and hydrate searches) use `ctx.authToken` without `_schema` / without HttpClient `forceMaxAge`.
+- **Observability**: `describeClientError` on client failures (no PII from Axios bodies/query strings); per-step timings on slow/failed hot queries (`getOrganizationById`, `getCostCenterById`, `getOrganizationsByEmail`, `getOrganizationsPaginatedByEmail`); `cacheStats` info log every 5 minutes on those paths.
+
+### Changed
+
+- **Queries** no longer await `checkConfig` (fire-and-forget with a 5 min per-tenant memory flag) or block on audit events. Mutations still await `checkConfig` and keep audit as before.
+- **`getOrganizationsByEmail` / paginated**: after the SFP user-org list, unique org/CC ids are hydrated in parallel via the cache so field resolvers avoid N+1 Master Data GETs.
 
 ## [2.6.3] - 2026-07-30
 

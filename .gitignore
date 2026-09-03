@@ -45,3 +45,4 @@ react/package-lock.json
 cy-runner
 /node/coverage/
 .cursor
+.claude

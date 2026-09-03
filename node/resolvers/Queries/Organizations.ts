@@ -1,3 +1,5 @@
+import { AuthenticationError } from '@vtex/api'
+
 import {
   ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_FIELDS,
@@ -11,8 +13,21 @@ import type {
   Organization,
 } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
-import checkConfig from '../config'
-import { organizationStatus } from '../fieldResolvers'
+import type { ActingUserEmailSource } from '../../utils/actingUserEmail'
+import { resolveActingUserEmail } from '../../utils/actingUserEmail'
+import { describeClientError } from '../../utils/clientError'
+import type { Timer } from '../../utils/requestTimings'
+import {
+  auditQueryEvent,
+  ensureConfigForQuery,
+  withQueryTimings,
+} from '../../utils/queryObservability'
+import {
+  hydrateOrganizationsByEmail,
+  getOrganizationStatusFromState,
+  loadOrganization,
+} from '../../services/organizationDocuments'
+import { ORGANIZATION_STATUSES } from '../../utils/constants'
 
 const getWhereByStatus = ({ status }: { status: string[] }) => {
   const whereArray = []
@@ -31,6 +46,150 @@ const getWhereByStatus = ({ status }: { status: string[] }) => {
   return whereArray
 }
 
+type HydrateOptions = { costCenters?: boolean; organizations?: boolean }
+
+/**
+ * Shared SFP list + optional MD hydrate. Kept out of the GraphQL resolver
+ * signature so a 4th `info` argument is never mistaken for options.
+ */
+// eslint-disable-next-line max-params
+const listOrganizationsByEmail = async (
+  email: string,
+  ctx: Context,
+  timer: Pick<Timer, 'meta' | 'track'>,
+  hydrateOptions?: HydrateOptions
+) => {
+  const {
+    clients: { storefrontPermissions, session },
+    vtex: { logger, sessionToken, adminUserAuthToken, storeUserAuthToken },
+  } = ctx
+
+  const organizationFilters: string[] = []
+  let fromSession = false
+  let resolvedEmail = email
+  let emailSource: ActingUserEmailSource =
+    email?.length > 0 ? 'argument' : 'none'
+
+  const sessionData = await timer.track(
+    'session',
+    session
+      .getSession(sessionToken as string, ['*'])
+      .then((currentSession: any) => {
+        return currentSession.sessionData
+      })
+      .catch((error: any) => {
+        logger.warn({
+          error: describeClientError(error),
+          message: 'getOrganizationsByEmail-session-error',
+        })
+
+        return null
+      })
+  )
+
+  let checkUserPermission = null
+
+  if (sessionData?.namespaces) {
+    const checkUserPermissionResult = await timer.track(
+      'checkUserPermission',
+      storefrontPermissions
+        .checkUserPermission('vtex.b2b-organizations@3.x')
+        .catch((error: any) => {
+          logger.error({
+            error: describeClientError(error),
+            message: 'checkUserPermission-error',
+          })
+
+          return {
+            data: {
+              checkUserPermission: null,
+            },
+          }
+        })
+    )
+
+    checkUserPermission = checkUserPermissionResult?.data?.checkUserPermission
+  }
+
+  if (
+    (!adminUserAuthToken &&
+      !checkUserPermission?.permissions.includes('add-sales-users-all')) ||
+    !(resolvedEmail?.length > 0)
+  ) {
+    if (checkUserPermission?.permissions.includes('add-users-organization')) {
+      const orgId =
+        sessionData?.namespaces?.['storefront-permissions']?.organization?.value
+
+      if (!orgId) {
+        throw new Error('No permission for getting the organizations')
+      }
+
+      organizationFilters.push(orgId)
+    }
+
+    if (!(resolvedEmail?.length > 0)) {
+      const actingUser = await resolveActingUserEmail({
+        ctx,
+        email,
+        sessionData,
+        timer,
+      })
+
+      resolvedEmail = actingUser.email as string
+      emailSource = actingUser.source
+
+      // `fromSession` lifts the organization filter below, so it may only be
+      // set when the shopper asking *is* the shopper being looked up. Every
+      // source reachable here satisfies that - the argument is empty by
+      // definition inside this branch, and both the session and the store
+      // token belong to the caller. It must not be set when nothing resolved,
+      // which is what the previous unconditional assignment got wrong.
+      fromSession = actingUser.source !== 'none'
+    }
+  }
+
+  timer.meta.extra = { ...timer.meta.extra, emailSource }
+
+  // The downstream query is `getOrganizationsByEmail(email: String!)`: calling
+  // it without the variable is rejected during GraphQL validation, before its
+  // resolver runs, and surfaces as an opaque INTERNAL_SERVER_ERROR attributed
+  // to storefront-permissions. Refuse here instead - an unidentifiable caller
+  // is this app's decision to make, and making it locally keeps the failure
+  // readable and countable.
+  if (!(resolvedEmail?.length > 0)) {
+    logger.warn({
+      hasSessionData: !!sessionData?.namespaces,
+      hasStoreToken: !!storeUserAuthToken,
+      message: 'listOrganizationsByEmail-unresolvedEmail',
+    })
+
+    throw new AuthenticationError(
+      'Could not determine which user to list organizations for: no email argument, and the session and store token did not identify one.'
+    )
+  }
+
+  const organizations = (
+    await timer.track(
+      'storefrontPermissions',
+      storefrontPermissions.getOrganizationsByEmail(resolvedEmail)
+    )
+  ).data?.getOrganizationsByEmail?.filter(({ orgId }: { orgId: string }) => {
+    return (
+      fromSession ||
+      (organizationFilters.length > 0
+        ? organizationFilters.find((id: string) => orgId === id)
+        : true)
+    )
+  })
+
+  await timer.track(
+    hydrateOptions?.costCenters === false ? 'hydrateOrgs' : 'hydrate',
+    hydrateOrganizationsByEmail(ctx, organizations ?? [], hydrateOptions)
+  )
+
+  return organizations
+}
+
 const Organizations = {
   checkOrganizationIsActive: async (
     _: void,
@@ -38,7 +197,7 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { session, audit },
+      clients: { session },
       vtex: { logger, sessionToken, adminUserAuthToken },
       ip,
     } = ctx
@@ -50,7 +209,7 @@ const Organizations = {
       })
       .catch((error: any) => {
         logger.warn({
-          error,
+          error: describeClientError(error),
           message: 'checkOrganizationIsActive-error',
         })
 
@@ -78,7 +237,7 @@ const Organizations = {
       throw new Error('Organization not found')
     }
 
-    await audit.sendEvent({
+    auditQueryEvent(ctx, {
       subjectId: 'check-organization-is-active-event',
       operation: 'CHECK_ORGANIZATION_IS_ACTIVE',
       meta: {
@@ -97,43 +256,48 @@ const Organizations = {
     { id }: { id: string },
     ctx: Context
   ) => {
-    const {
-      clients: { masterdata, audit },
-      vtex: { logger },
-      ip,
-    } = ctx
+    const { ip } = ctx
 
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
+    ensureConfigForQuery(ctx)
 
-    try {
-      const org: Organization = await masterdata.getDocument({
-        dataEntity: ORGANIZATION_DATA_ENTITY,
-        fields: ORGANIZATION_FIELDS,
-        id,
-      })
+    return withQueryTimings({
+      ctx,
+      extra: { orgId: id },
+      message: 'getOrganizationById.timings',
+      run: async (timer) => {
+        try {
+          const org: Organization = await timer.track(
+            'getDocument',
+            loadOrganization(ctx, id)
+          )
 
-      await audit.sendEvent({
-        subjectId: 'get-organization-by-id-event',
-        operation: 'GET_ORGANIZATION_BY_ID',
-        meta: {
-          entityName: 'Organization',
-          remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({}),
-          entityAfterAction: JSON.stringify({}),
-        },
-      })
+          // Clone before defaults so a caller cannot mutate the cached snapshot.
+          const result = {
+            ...org,
+            permissions: org.permissions ?? { createQuote: true },
+          }
 
-      return {
-        ...org,
-        // the previous data registered doesn't have this propertty on masterdata
-        // so we need to add it to the response
-        permissions: org.permissions ?? { createQuote: true },
-      }
-    } catch (error) {
-      logger.error({ error, message: 'getOrganizationById-error' })
-      throw new GraphQLError(getErrorMessage(error))
-    }
+          auditQueryEvent(ctx, {
+            subjectId: 'get-organization-by-id-event',
+            operation: 'GET_ORGANIZATION_BY_ID',
+            meta: {
+              entityName: 'Organization',
+              remoteIpAddress: ip,
+              entityBeforeAction: JSON.stringify({}),
+              entityAfterAction: JSON.stringify({}),
+            },
+          })
+
+          return result
+        } catch (error) {
+          ctx.vtex.logger.error({
+            error: describeClientError(error),
+            message: 'getOrganizationById-error',
+          })
+          throw new GraphQLError(getErrorMessage(error))
+        }
+      },
+    })
   },
 
   getOrganizations: async (
@@ -156,13 +320,12 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit },
+      clients: { masterdata },
       vtex: { logger },
       ip,
     } = ctx
 
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
+    ensureConfigForQuery(ctx)
 
     const whereArray = getWhereByStatus({ status })
 
@@ -189,13 +352,11 @@ const Organizations = {
       const mappedOrganizations = organizationsDB.data.map((org) => {
         return {
           ...org,
-          // the previous data registered doesn't have this propertty on masterdata
-          // so we need to add it to the response
           permissions: org.permissions ?? { createQuote: true },
         }
       })
 
-      await audit.sendEvent({
+      auditQueryEvent(ctx, {
         subjectId: 'get-organizations-event',
         operation: 'GET_ORGANIZATIONS',
         meta: {
@@ -212,7 +373,7 @@ const Organizations = {
       }
     } catch (error) {
       logger.error({
-        error,
+        error: describeClientError(error),
         message: 'getOrganizations-error',
       })
       throw new GraphQLError(getErrorMessage(error))
@@ -224,104 +385,47 @@ const Organizations = {
     { email }: { email: string },
     ctx: Context
   ) => {
-    const {
-      clients: { storefrontPermissions, session, audit },
-      vtex: { logger, sessionToken, adminUserAuthToken },
-      ip,
-    } = ctx
+    const { ip } = ctx
 
-    const organizationFilters: string[] = []
-    let fromSession = false
+    return withQueryTimings({
+      ctx,
+      message: 'getOrganizationsByEmail.timings',
+      run: async (timer) => {
+        try {
+          const organizations = await listOrganizationsByEmail(
+            email,
+            ctx,
+            timer
+          )
 
-    const sessionData = await session
-      .getSession(sessionToken as string, ['*'])
-      .then((currentSession: any) => {
-        return currentSession.sessionData
-      })
-      .catch((error: any) => {
-        logger.warn({
-          error,
-          message: 'getOrganizationsByEmail-session-error',
-        })
-
-        return null
-      })
-
-    let checkUserPermission = null
-
-    if (sessionData?.namespaces) {
-      const checkUserPermissionResult = await storefrontPermissions
-        .checkUserPermission('vtex.b2b-organizations@3.x')
-        .catch((error: any) => {
-          logger.error({
-            error,
-            message: 'checkUserPermission-error',
+          auditQueryEvent(ctx, {
+            subjectId: 'get-organizations-by-email-event',
+            operation: 'GET_ORGANIZATIONS_BY_EMAIL',
+            meta: {
+              entityName: 'Organizations',
+              remoteIpAddress: ip,
+              entityBeforeAction: JSON.stringify({}),
+              entityAfterAction: JSON.stringify({}),
+            },
           })
 
-          return {
-            data: {
-              checkUserPermission: null,
-            },
+          return organizations
+        } catch (error) {
+          // An unidentifiable caller is an authentication outcome, not a
+          // failure of this query - let it through untouched instead of
+          // relabelling it as an internal error.
+          if (error instanceof AuthenticationError) {
+            throw error
           }
-        })
 
-      checkUserPermission = checkUserPermissionResult?.data?.checkUserPermission
-    }
-
-    if (
-      (!adminUserAuthToken &&
-        !checkUserPermission?.permissions.includes('add-sales-users-all')) ||
-      !(email?.length > 0)
-    ) {
-      if (checkUserPermission?.permissions.includes('add-users-organization')) {
-        const orgId =
-          sessionData?.namespaces?.['storefront-permissions']?.organization
-            ?.value
-
-        if (!orgId) {
-          throw new Error('No permission for getting the organizations')
+          ctx.vtex.logger.error({
+            error: describeClientError(error),
+            message: 'getOrganizationsByEmail-error',
+          })
+          throw new GraphQLError(getErrorMessage(error))
         }
-
-        organizationFilters.push(orgId)
-      }
-
-      if (!(email?.length > 0)) {
-        email = sessionData?.namespaces?.profile?.email?.value
-        fromSession = true
-      }
-    }
-
-    const organizations = (
-      await storefrontPermissions.getOrganizationsByEmail(email)
-    ).data?.getOrganizationsByEmail?.filter(({ orgId }: { orgId: string }) => {
-      return (
-        fromSession ||
-        (organizationFilters.length > 0
-          ? organizationFilters.find((id: string) => orgId === id)
-          : true)
-      )
+      },
     })
-
-    try {
-      await audit.sendEvent({
-        subjectId: 'get-organizations-by-email-event',
-        operation: 'GET_ORGANIZATIONS_BY_EMAIL',
-        meta: {
-          entityName: 'Organizations',
-          remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({}),
-          entityAfterAction: JSON.stringify({}),
-        },
-      })
-
-      return organizations
-    } catch (error) {
-      logger.error({
-        error,
-        message: 'getOrganizationsByEmail-error',
-      })
-      throw new GraphQLError(getErrorMessage(error))
-    }
   },
 
   getActiveOrganizationsByEmail: async (
@@ -329,55 +433,79 @@ const Organizations = {
     { email }: { email: string },
     ctx: Context
   ) => {
-    const {
-      clients: { audit },
-      vtex: { logger },
-      ip,
-    } = ctx
+    const { ip } = ctx
 
-    const organizations = await Organizations.getOrganizationsByEmail(
-      _,
-      { email },
-      ctx
-    )
-
-    const organizationsWithStatus: GetOrganizationsByEmailWithStatus[] =
-      await Promise.all(
-        organizations.map(async (organization: { orgId: string }) => {
-          const status = await organizationStatus(
-            { orgId: organization.orgId },
-            _,
-            ctx
+    return withQueryTimings({
+      ctx,
+      message: 'getActiveOrganizationsByEmail.timings',
+      // error-level: IO log pipeline samples away most info/warn on this path;
+      // only error lines (e.g. staleFromVBase.revalidateError) were visible.
+      asError: true,
+      sampleRate: 1,
+      slowThresholdMs: 0,
+      run: async (timer) => {
+        try {
+          // Phase 1: SFP list + org summaries only (no cost-center payloads).
+          const organizations = await listOrganizationsByEmail(
+            email,
+            ctx,
+            timer,
+            { costCenters: false }
           )
 
-          return { ...organization, status }
-        })
-      )
+          const organizationsWithStatus: GetOrganizationsByEmailWithStatus[] = (
+            organizations ?? []
+          ).map((organization: { orgId: string }) => ({
+            ...organization,
+            status: getOrganizationStatusFromState(ctx, organization.orgId),
+          }))
 
-    const activeOrganizations = organizationsWithStatus.filter(
-      (organization) => organization.status === 'active'
-    )
+          const activeOrganizations = organizationsWithStatus.filter(
+            (organization) =>
+              organization.status === ORGANIZATION_STATUSES.ACTIVE
+          )
 
-    try {
-      await audit.sendEvent({
-        subjectId: 'get-active-organizations-by-email-event',
-        operation: 'GET_ACTIVE_ORGANIZATIONS_BY_EMAIL',
-        meta: {
-          entityName: 'Organizations',
-          remoteIpAddress: ip,
-          entityBeforeAction: JSON.stringify({}),
-          entityAfterAction: JSON.stringify({}),
-        },
-      })
+          timer.meta.extra = {
+            ...timer.meta.extra,
+            activeCount: activeOrganizations.length,
+            totalCount: organizations?.length ?? 0,
+          }
 
-      return activeOrganizations
-    } catch (error) {
-      logger.error({
-        error,
-        message: 'getActiveOrganizationsByEmail-error',
-      })
-      throw new GraphQLError(getErrorMessage(error))
-    }
+          // Phase 2: cost-center summaries only for active rows.
+          await timer.track(
+            'hydrateActiveCostCenters',
+            hydrateOrganizationsByEmail(ctx, activeOrganizations, {
+              organizations: false,
+              costCenters: true,
+            })
+          )
+
+          auditQueryEvent(ctx, {
+            subjectId: 'get-active-organizations-by-email-event',
+            operation: 'GET_ACTIVE_ORGANIZATIONS_BY_EMAIL',
+            meta: {
+              entityName: 'Organizations',
+              remoteIpAddress: ip,
+              entityBeforeAction: JSON.stringify({}),
+              entityAfterAction: JSON.stringify({}),
+            },
+          })
+
+          return activeOrganizations
+        } catch (error) {
+          // See getOrganizationsByEmail: authentication outcomes pass through.
+          if (error instanceof AuthenticationError) {
+            throw error
+          }
+
+          ctx.vtex.logger.error({
+            error: describeClientError(error),
+            message: 'getActiveOrganizationsByEmail-error',
+          })
+          throw new GraphQLError(getErrorMessage(error))
+        }
+      },
+    })
   },
 
   getOrganizationsPaginatedByEmail: async (
@@ -391,25 +519,43 @@ const Organizations = {
       page: number
       pageSize: number
     },
-    { clients: { storefrontPermissions }, vtex: { logger } }: any
+    ctx: Context
   ) => {
-    try {
-      const {
-        data: { getOrganizationsPaginatedByEmail },
-      } = await storefrontPermissions.getOrganizationsPaginatedByEmail(
-        email,
-        page,
-        pageSize
-      )
+    const {
+      clients: { storefrontPermissions },
+      vtex: { logger },
+    } = ctx
 
-      return getOrganizationsPaginatedByEmail
-    } catch (error) {
-      logger.error({
-        error,
-        message: 'getOrganizationsPaginatedByEmail-error',
-      })
-      throw new GraphQLError(getErrorMessage(error))
-    }
+    return withQueryTimings({
+      ctx,
+      message: 'getOrganizationsPaginatedByEmail.timings',
+      run: async (timer) => {
+        try {
+          const {
+            data: { getOrganizationsPaginatedByEmail },
+          } = await timer.track(
+            'storefrontPermissions',
+            storefrontPermissions.getOrganizationsPaginatedByEmail(
+              email ?? '',
+              page,
+              pageSize
+            )
+          )
+
+          const rows = getOrganizationsPaginatedByEmail?.data ?? []
+
+          await timer.track('hydrate', hydrateOrganizationsByEmail(ctx, rows))
+
+          return getOrganizationsPaginatedByEmail
+        } catch (error) {
+          logger.error({
+            error: describeClientError(error),
+            message: 'getOrganizationsPaginatedByEmail-error',
+          })
+          throw new GraphQLError(getErrorMessage(error))
+        }
+      },
+    })
   },
 
   getOrganizationByIdStorefront: async (
@@ -418,13 +564,11 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit },
       vtex: { sessionData, logger },
       ip,
     } = ctx as any
 
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
+    ensureConfigForQuery(ctx)
 
     if (!sessionData?.namespaces['storefront-permissions']) {
       throw new GraphQLError('organization-data-not-found')
@@ -439,7 +583,6 @@ const Organizations = {
     }
 
     if (!id) {
-      // get user's organization from session
       id = userOrganizationId
     }
 
@@ -447,14 +590,10 @@ const Organizations = {
       throw new GraphQLError('operation-not-permitted')
     }
 
-    const organization: Organization = await masterdata.getDocument({
-      dataEntity: ORGANIZATION_DATA_ENTITY,
-      fields: ORGANIZATION_FIELDS,
-      id,
-    })
-
     try {
-      await audit.sendEvent({
+      const organization: Organization = await loadOrganization(ctx, id)
+
+      auditQueryEvent(ctx, {
         subjectId: 'get-organization-by-id-storefront-event',
         operation: 'GET_ORGANIZATION_BY_ID_STOREFRONT',
         meta: {
@@ -471,7 +610,7 @@ const Organizations = {
       }
     } catch (error) {
       logger.error({
-        error,
+        error: describeClientError(error),
         message: 'getOrganizationByIdStorefront-error',
       })
       throw new GraphQLError(getErrorMessage(error))
@@ -484,16 +623,15 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit },
+      clients: { masterdata },
       vtex: { logger },
       ip,
     } = ctx
 
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
+    ensureConfigForQuery(ctx)
 
     try {
-      await audit.sendEvent({
+      auditQueryEvent(ctx, {
         subjectId: 'get-organization-request-by-id-event',
         operation: 'GET_ORGANIZATION_REQUEST_BY_ID',
         meta: {
@@ -511,7 +649,7 @@ const Organizations = {
       })
     } catch (error) {
       logger.error({
-        error,
+        error: describeClientError(error),
         message: 'getOrganizationRequestById-error',
       })
       throw new GraphQLError(getErrorMessage(error))
@@ -538,13 +676,12 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit },
+      clients: { masterdata },
       vtex: { logger },
       ip,
     } = ctx
 
-    // create schema if it doesn't exist
-    await checkConfig(ctx)
+    ensureConfigForQuery(ctx)
     const whereArray = getWhereByStatus({ status })
 
     if (search) {
@@ -567,7 +704,7 @@ const Organizations = {
         ...(where && { where }),
       })
 
-      await audit.sendEvent({
+      auditQueryEvent(ctx, {
         subjectId: 'get-organization-requests-event',
         operation: 'GET_ORGANIZATION_REQUESTS',
         meta: {
@@ -581,7 +718,7 @@ const Organizations = {
       return result
     } catch (error) {
       logger.error({
-        error,
+        error: describeClientError(error),
         message: 'getOrganizationRequests-error',
       })
       throw new GraphQLError(getErrorMessage(error))

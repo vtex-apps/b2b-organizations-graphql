@@ -1,6 +1,7 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
 import { ExternalClient, Session } from '@vtex/api'
 
+import { describeClientError } from '../utils/clientError'
 
 export class AuditClient extends ExternalClient {
   private session: Session
@@ -18,25 +19,26 @@ export class AuditClient extends ExternalClient {
   }
 
   private async getUserIdFromSession(sessionToken: string): Promise<string> {
-    const {logger} = this.context
+    const { logger } = this.context
+
     try {
-      const { sessionData } = await this.session.getSession(sessionToken, ['*'])  
-      const userId = 
+      const { sessionData } = await this.session.getSession(sessionToken, ['*'])
+      const userId =
         sessionData?.namespaces?.authentication?.adminUserId?.value ||
         sessionData?.namespaces?.authentication?.storeUserId?.value ||
         sessionData?.namespaces?.profile?.id?.value ||
         'unknown'
-      
+
       return userId
     } catch (error) {
       logger.error({
         message: 'Error fetching user ID from session',
-        error,
+        error: describeClientError(error),
       })
+
       return 'unknown'
     }
   }
-  
 
   /**
    * Registers an audit event.
@@ -60,8 +62,9 @@ export class AuditClient extends ExternalClient {
     this.dispatchEvent(auditEntry).catch((error) => {
       logger.error({
         message: 'Error sending audit event',
-        error,
-        auditEntry,
+        error: describeClientError(error),
+        operation: auditEntry.operation,
+        subjectId: auditEntry.subjectId,
       })
     })
 
@@ -70,7 +73,8 @@ export class AuditClient extends ExternalClient {
 
   private async dispatchEvent(auditEntry: AuditEntry): Promise<void> {
     const { meta, subjectId, operation } = auditEntry
-    const { account, operationId, requestId, userAgent, logger, sessionToken } = this.context
+    const { account, operationId, requestId, userAgent, logger, sessionToken } =
+      this.context
 
     let authorId = 'unknown'
 
@@ -95,15 +99,13 @@ export class AuditClient extends ExternalClient {
     }
 
     try {
-      await this.http.post(
-        `/api/audit/events?an=${account}`,
-        auditEvent
-      )
+      await this.http.post(`/api/audit/events?an=${account}`, auditEvent)
     } catch (error) {
       logger.error({
         message: 'Error sending audit event',
-        error,
-        auditEvent,
+        error: describeClientError(error),
+        operation,
+        subjectId,
       })
     }
   }
