@@ -12,6 +12,7 @@ import {
   withQueryTimings,
 } from '../../utils/queryObservability'
 import { loadCostCenter } from '../../services/organizationDocuments'
+import { sendCostCenterMismatchMetric } from '../../utils/metrics/costCenter'
 import Organizations from './Organizations'
 
 const getCostCenters = async ({
@@ -213,11 +214,10 @@ const costCenters = {
          *
          * Ids only, no shopper identifiers.
          */
-        logger.warn({
+        const mismatch = {
           costCenterOrganization: costCenter.organization ?? null,
           matchesPendingSelection:
             !!pendingCostCenterId && pendingCostCenterId === id,
-          message: 'getCostCenterByIdStorefront-organizationMismatch',
           pendingCostCenterId,
           requestedCostCenterId: id ?? null,
           /**
@@ -231,7 +231,19 @@ const costCenters = {
           sessionNamespaces: Object.keys(sessionData.namespaces ?? {}),
           sessionCostCenterId: userCostCenterId ?? null,
           sessionOrganization: userOrganizationId ?? null,
+        }
+
+        // The debugging surface. Sampled 1:20 by the IO pipeline, so it shows
+        // individual cases but cannot be counted - the metric below is what
+        // answers the question.
+        logger.warn({
+          ...mismatch,
+          message: 'getCostCenterByIdStorefront-organizationMismatch',
         })
+
+        // The measuring surface: not sampled, lands in
+        // vtex.schemaless.b2b_suite_buyerorg_data_raw.
+        sendCostCenterMismatchMetric(ctx, logger, mismatch)
 
         throw new GraphQLError('operation-not-permitted')
       }

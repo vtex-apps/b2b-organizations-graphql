@@ -35,11 +35,13 @@ const OTHER_ORG = 'org-other'
 
 const makeCtx = ({
   pendingCostCenter,
+  sendMetric = jest.fn().mockResolvedValue(undefined),
   sessionCostCenter = 'cc-session',
   sessionOrganization = SESSION_ORG,
   withPublicNamespace = true,
 }: {
   pendingCostCenter?: string
+  sendMetric?: jest.Mock
   sessionCostCenter?: string
   sessionOrganization?: string
   withPublicNamespace?: boolean
@@ -61,14 +63,21 @@ const makeCtx = ({
 
   return {
     clients: {
+      analytics: { sendMetric },
       audit: { sendEvent: jest.fn().mockResolvedValue(undefined) },
       session: { getSession: jest.fn() },
     },
     ip: '127.0.0.1',
     logger,
+    sendMetric,
     vtex: { account: 'acc', logger, sessionData: { namespaces } },
   } as any
 }
+
+const metricFrom = (ctx: any) =>
+  ctx.sendMetric.mock.calls.find(
+    (call: any[]) => call[0]?.kind === 'cost-center-organization-mismatch-event'
+  )?.[0]
 
 const mismatchLog = (ctx: any) =>
   ctx.logger.warn.mock.calls.find(
@@ -192,6 +201,73 @@ describe('getCostCenterByIdStorefront organization mismatch', () => {
    * "Cannot read properties of undefined" says nothing about which namespace
    * was missing. Seen on live traffic on 2.7.0, 2.7.1 and the beta.
    */
+  /**
+   * The log alone cannot answer this: the IO pipeline samples every line 1:20
+   * independently, per line rather than per request, so a rejection that emits
+   * three lines still has only ~5% odds of the diagnostic one surviving. At the
+   * observed four to five rejections a day that is one sample every four days.
+   * Analytics is not sampled, so the same fields also go there.
+   */
+  it('also ships the diagnostics through the unsampled analytics channel', async () => {
+    loadCostCenterMock.mockResolvedValue({
+      addresses: [],
+      id: 'cc-new',
+      organization: OTHER_ORG,
+    })
+
+    const ctx = makeCtx({ pendingCostCenter: 'cc-new' })
+
+    await expect(askFor(ctx, 'cc-new')).rejects.toBeDefined()
+
+    const metric = metricFrom(ctx)
+
+    expect(metric).toMatchObject({
+      account: 'acc',
+      kind: 'cost-center-organization-mismatch-event',
+      name: 'b2b-suite-buyerorg-data',
+    })
+
+    // The two surfaces must not drift apart: same fields, one sampled, one not.
+    const { message, ...logged } = mismatchLog(ctx)
+
+    expect(metric.fields).toEqual(logged)
+  })
+
+  it('does not let a failing metric turn the rejection into something else', async () => {
+    loadCostCenterMock.mockResolvedValue({
+      addresses: [],
+      id: 'cc-new',
+      organization: OTHER_ORG,
+    })
+
+    const ctx = makeCtx({
+      pendingCostCenter: 'cc-new',
+      sendMetric: jest.fn().mockRejectedValue(new Error('analytics down')),
+    })
+
+    await expect(askFor(ctx, 'cc-new')).rejects.toThrow(
+      'operation-not-permitted'
+    )
+  })
+
+  it('sends no metric when the cost center is allowed', async () => {
+    loadCostCenterMock.mockResolvedValue({
+      addresses: [],
+      id: 'cc-ok',
+      organization: SESSION_ORG,
+    })
+
+    const ctx = makeCtx()
+
+    await CostCenters.getCostCenterByIdStorefront(
+      undefined as any,
+      { id: 'cc-ok' },
+      ctx
+    )
+
+    expect(metricFrom(ctx)).toBeUndefined()
+  })
+
   it('answers organization-data-not-found when the session carries no namespaces', async () => {
     const ctx = makeCtx()
 
