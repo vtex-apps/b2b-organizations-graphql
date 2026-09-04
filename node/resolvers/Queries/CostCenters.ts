@@ -12,7 +12,8 @@ import {
   withQueryTimings,
 } from '../../utils/queryObservability'
 import { loadCostCenter } from '../../services/organizationDocuments'
-import { sendCostCenterMismatchMetric } from '../../utils/metrics/costCenter'
+import { describeCaller } from '../../utils/caller'
+import { reportStorefrontAccessDenied } from '../../utils/metrics/storefrontAccess'
 import Organizations from './Organizations'
 
 const getCostCenters = async ({
@@ -152,13 +153,57 @@ const costCenters = {
 
     ensureConfigForQuery(ctx)
 
+    const caller = describeCaller(ctx)
+
     if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
+      /**
+       * Distinct from `organization-not-found`: Master Data returned the
+       * organization, its status simply is not active. Left as a bare Error
+       * rather than a GraphQLError to preserve the message partners already
+       * match on.
+       */
+      const { sessionData: activeCheckSession } = vtex as any
+
+      reportStorefrontAccessDenied(
+        ctx,
+        logger,
+        'getCostCenterByIdStorefront-organizationNotActive',
+        {
+          ...caller,
+          reason: 'organization-not-active',
+          requestedCostCenterId: id ?? null,
+          sessionNamespaces: Object.keys(activeCheckSession?.namespaces ?? {}),
+          sessionOrganization:
+            activeCheckSession?.namespaces?.['storefront-permissions']
+              ?.organization?.value ?? null,
+        }
+      )
+
       throw new Error('This organization is not active')
     }
 
     const { sessionData } = vtex as any
 
     if (!sessionData?.namespaces?.['storefront-permissions']) {
+      /**
+       * The session reached the resolver without the namespace that carries
+       * the shopper's organization. Suspected to be the same underlying defect
+       * as the empty session transforms in storefront-permissions, which is
+       * why `sessionNamespaces` is reported: it separates "no session at all"
+       * from "a session that lost only this namespace".
+       */
+      reportStorefrontAccessDenied(
+        ctx,
+        logger,
+        'getCostCenterByIdStorefront-missingPermissionsNamespace',
+        {
+          ...caller,
+          reason: 'missing-storefront-permissions-namespace',
+          requestedCostCenterId: id ?? null,
+          sessionNamespaces: Object.keys(sessionData?.namespaces ?? {}),
+        }
+      )
+
       throw new GraphQLError('organization-data-not-found')
     }
 
@@ -215,6 +260,7 @@ const costCenters = {
          * Ids only, no shopper identifiers.
          */
         const mismatch = {
+          ...caller,
           costCenterOrganization: costCenter.organization ?? null,
           matchesPendingSelection:
             !!pendingCostCenterId && pendingCostCenterId === id,
@@ -233,17 +279,12 @@ const costCenters = {
           sessionOrganization: userOrganizationId ?? null,
         }
 
-        // The debugging surface. Sampled 1:20 by the IO pipeline, so it shows
-        // individual cases but cannot be counted - the metric below is what
-        // answers the question.
-        logger.warn({
-          ...mismatch,
-          message: 'getCostCenterByIdStorefront-organizationMismatch',
-        })
-
-        // The measuring surface: not sampled, lands in
-        // vtex.schemaless.b2b_suite_buyerorg_data_raw.
-        sendCostCenterMismatchMetric(ctx, logger, mismatch)
+        reportStorefrontAccessDenied(
+          ctx,
+          logger,
+          'getCostCenterByIdStorefront-organizationMismatch',
+          { ...mismatch, reason: 'cost-center-organization-mismatch' }
+        )
 
         throw new GraphQLError('operation-not-permitted')
       }

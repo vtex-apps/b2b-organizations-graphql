@@ -76,7 +76,7 @@ const makeCtx = ({
 
 const metricFrom = (ctx: any) =>
   ctx.sendMetric.mock.calls.find(
-    (call: any[]) => call[0]?.kind === 'cost-center-organization-mismatch-event'
+    (call: any[]) => call[0]?.kind === 'storefront-access-denied-event'
   )?.[0]
 
 const mismatchLog = (ctx: any) =>
@@ -223,7 +223,7 @@ describe('getCostCenterByIdStorefront organization mismatch', () => {
 
     expect(metric).toMatchObject({
       account: 'acc',
-      kind: 'cost-center-organization-mismatch-event',
+      kind: 'storefront-access-denied-event',
       name: 'b2b-suite-buyerorg-data',
     })
 
@@ -380,5 +380,177 @@ describe('checkOrganizationIsActive session reuse', () => {
     expect(ctx.clients.session.getSession).toHaveBeenCalledWith('token', ['*'])
 
     jest.restoreAllMocks()
+  })
+})
+
+/**
+ * Everything that refuses the storefront on this path now reports through one
+ * event kind with a `reason`. Four of these five throws used to be bare
+ * `Error`s with no log and no metric at all, which is why "Failed to fetch
+ * ship-to accounts" and "Failed to fetch cost center addresses" could not be
+ * attributed to a cause: the partner app discards the GraphQL error before
+ * logging, so a throw that says nothing on our side says nothing anywhere.
+ */
+describe('storefront access denied reasons', () => {
+  const reasonOf = (ctx: any) => metricFrom(ctx)?.fields?.reason
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it('reports an organization whose status is not active', async () => {
+    jest
+      .spyOn(Organizations, 'checkOrganizationIsActive')
+      .mockResolvedValue(false as any)
+
+    const ctx = makeCtx()
+
+    await expect(askFor(ctx, 'cc-new')).rejects.toThrow(
+      'This organization is not active'
+    )
+
+    expect(reasonOf(ctx)).toBe('organization-not-active')
+  })
+
+  /**
+   * The suspected link to the empty session transforms in
+   * storefront-permissions: a session that arrives having lost this namespace
+   * looks identical, from the resolver, to a shopper with no B2B data at all.
+   */
+  it('reports a session that lost the storefront-permissions namespace', async () => {
+    jest
+      .spyOn(Organizations, 'checkOrganizationIsActive')
+      .mockResolvedValue(true as any)
+
+    const ctx = makeCtx()
+
+    ctx.vtex.sessionData = { namespaces: { public: {} } }
+
+    await expect(askFor(ctx, 'cc-new')).rejects.toThrow(
+      'organization-data-not-found'
+    )
+
+    expect(metricFrom(ctx).fields).toMatchObject({
+      reason: 'missing-storefront-permissions-namespace',
+      requestedCostCenterId: 'cc-new',
+      sessionNamespaces: ['public'],
+    })
+  })
+
+  it('reports when no session reached the resolver at all', async () => {
+    const ctx = makeCtx()
+
+    ctx.vtex.sessionData = undefined
+    ctx.vtex.sessionToken = undefined
+    ctx.clients.session.getSession.mockResolvedValue({})
+
+    await expect(
+      Organizations.checkOrganizationIsActive(undefined as any, null, ctx)
+    ).rejects.toThrow('No session data')
+
+    expect(reasonOf(ctx)).toBe('no-session-data')
+  })
+
+  it('reports the organization id that Master Data did not return', async () => {
+    jest
+      .spyOn(Organizations, 'getOrganizationById')
+      .mockResolvedValue(null as any)
+
+    const ctx = makeCtx()
+
+    await expect(
+      Organizations.checkOrganizationIsActive(undefined as any, null, ctx)
+    ).rejects.toThrow('Organization not found')
+
+    expect(metricFrom(ctx).fields).toMatchObject({
+      lookedUpOrganizationId: SESSION_ORG,
+      reason: 'organization-not-found',
+      sessionOrganization: SESSION_ORG,
+    })
+  })
+
+  /**
+   * Both checkout errors under investigation reach the same resolver, so
+   * without this the events cannot be attributed to one or the other.
+   */
+  it('attributes the denial to the app and query that caused it', async () => {
+    jest
+      .spyOn(Organizations, 'checkOrganizationIsActive')
+      .mockResolvedValue(true as any)
+
+    loadCostCenterMock.mockResolvedValue({
+      addresses: [],
+      id: 'cc-new',
+      organization: OTHER_ORG,
+    })
+
+    const ctx = makeCtx()
+
+    ctx.graphql = {
+      query: {
+        operationName: 'getShipToAccountsByCostCenter',
+        senderApp: 'acme.checkout@3.1.0',
+      },
+    }
+
+    await expect(askFor(ctx, 'cc-new')).rejects.toBeDefined()
+
+    expect(metricFrom(ctx).fields).toMatchObject({
+      callerApp: 'acme.checkout@3.1.0',
+      operationName: 'getShipToAccountsByCostCenter',
+    })
+  })
+
+  it('reports nulls rather than guesses when the caller did not identify itself', async () => {
+    jest
+      .spyOn(Organizations, 'checkOrganizationIsActive')
+      .mockResolvedValue(true as any)
+
+    loadCostCenterMock.mockResolvedValue({
+      addresses: [],
+      id: 'cc-new',
+      organization: OTHER_ORG,
+    })
+
+    const ctx = makeCtx()
+
+    await expect(askFor(ctx, 'cc-new')).rejects.toBeDefined()
+
+    expect(metricFrom(ctx).fields).toMatchObject({
+      callerApp: null,
+      operationName: null,
+    })
+  })
+
+  it('falls back to the sender header when the query carries no senderApp', async () => {
+    jest
+      .spyOn(Organizations, 'checkOrganizationIsActive')
+      .mockResolvedValue(false as any)
+
+    const ctx = makeCtx()
+
+    ctx.request = { header: { 'x-b2b-senderapp': 'acme.checkout@3.1.0' } }
+
+    await expect(askFor(ctx, 'cc-new')).rejects.toBeDefined()
+
+    expect(metricFrom(ctx).fields.callerApp).toBe('acme.checkout@3.1.0')
+  })
+
+  it('does not let a failing metric change how any of them fail', async () => {
+    jest
+      .spyOn(Organizations, 'checkOrganizationIsActive')
+      .mockResolvedValue(false as any)
+
+    const ctx = makeCtx({
+      sendMetric: jest.fn().mockRejectedValue(new Error('analytics down')),
+    })
+
+    await expect(askFor(ctx, 'cc-new')).rejects.toThrow(
+      'This organization is not active'
+    )
   })
 })

@@ -15,7 +15,9 @@ import type {
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import type { ActingUserEmailSource } from '../../utils/actingUserEmail'
 import { resolveActingUserEmail } from '../../utils/actingUserEmail'
+import { describeCaller } from '../../utils/caller'
 import { describeClientError } from '../../utils/clientError'
+import { reportStorefrontAccessDenied } from '../../utils/metrics/storefrontAccess'
 import type { Timer } from '../../utils/requestTimings'
 import {
   auditQueryEvent,
@@ -230,6 +232,19 @@ const Organizations = {
         }))
 
     if (!sessionData) {
+      /**
+       * Neither the directive nor the fallback fetch produced a session. The
+       * storefront cost-center queries reach this before any of their own
+       * checks, so this is one of the ways they fail with no diagnostic of
+       * their own.
+       */
+      reportStorefrontAccessDenied(
+        ctx,
+        logger,
+        'checkOrganizationIsActive-noSessionData',
+        { ...describeCaller(ctx), reason: 'no-session-data' }
+      )
+
       throw new Error('No session data for this current user')
     }
 
@@ -247,6 +262,32 @@ const Organizations = {
     )) as { status: string; permissions?: { createQuote: boolean } }
 
     if (!organization) {
+      /**
+       * The session names an organization Master Data does not return. The
+       * ticket calls this `organizationNotFound`, and it is worth keeping
+       * apart from a missing cost center: the id being looked up came from the
+       * session, so a stale or half-written session produces it just as a
+       * genuinely deleted organization would. `lookedUpOrganizationId` is what
+       * separates the two without a Master Data query per case.
+       */
+      reportStorefrontAccessDenied(
+        ctx,
+        logger,
+        'checkOrganizationIsActive-organizationNotFound',
+        {
+          ...describeCaller(ctx),
+          lookedUpOrganizationId: orgId ?? null,
+          reason: 'organization-not-found',
+          sessionNamespaces: Object.keys(sessionData?.namespaces ?? {}),
+          sessionCostCenterId:
+            sessionData?.namespaces?.['storefront-permissions']?.costcenter
+              ?.value ?? null,
+          sessionOrganization:
+            sessionData?.namespaces?.['storefront-permissions']?.organization
+              ?.value ?? null,
+        }
+      )
+
       throw new Error('Organization not found')
     }
 
