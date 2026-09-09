@@ -625,6 +625,29 @@ const Organizations = {
     ensureConfigForQuery(ctx)
 
     if (!sessionData?.namespaces?.['storefront-permissions']) {
+      /**
+       * `organization-data-not-found` says nothing about whether the session
+       * arrived at all, and that is the distinction B2BTEAM-3852 turns on:
+       * three captures show the browser holding a complete, authenticated
+       * session at the moment this fired, while the resolver saw no
+       * namespaces. `sessionKeys` separates "no session reached us" from "a
+       * session reached us without this namespace" - different owners,
+       * different fixes.
+       */
+      reportStorefrontAccessDenied(
+        ctx,
+        logger,
+        'getOrganizationByIdStorefront-missingPermissionsNamespace',
+        {
+          ...describeCaller(ctx),
+          hasSessionToken: !!ctx.vtex.sessionToken,
+          lookedUpOrganizationId: id ?? null,
+          reason: 'missing-storefront-permissions-namespace',
+          sessionKeys: Object.keys(sessionData ?? {}),
+          sessionNamespaces: Object.keys(sessionData?.namespaces ?? {}),
+        }
+      )
+
       throw new GraphQLError('organization-data-not-found')
     }
 

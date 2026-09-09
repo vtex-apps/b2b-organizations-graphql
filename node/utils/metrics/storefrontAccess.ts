@@ -39,6 +39,14 @@ export interface StorefrontAccessDeniedFields extends CallerDescription {
   /** `public.b2bCurrentCostCenter` - the shopper's last explicit selection. */
   pendingCostCenterId: string | null
   /**
+   * Whether the request carried a session token at all. Separates "nothing
+   * was sent" from "a token was sent and the session service returned
+   * nothing for it" - the two have different owners.
+   */
+  hasSessionToken: boolean | null
+  /** Top-level keys of `sessionData`, to tell an empty session from a partial one. */
+  sessionKeys: string[]
+  /**
    * True means the shopper had just selected exactly the rejected cost center
    * and the session had not caught up (the race). False means something asked
    * for one they never selected - a real permission failure, or a caller bug.
@@ -50,6 +58,8 @@ export interface StorefrontAccessDeniedFields extends CallerDescription {
 const EMPTY_FIELDS: Omit<StorefrontAccessDeniedFields, 'reason'> = {
   callerApp: null,
   costCenterOrganization: null,
+  hasSessionToken: null,
+  sessionKeys: [],
   lookedUpOrganizationId: null,
   matchesPendingSelection: null,
   operationName: null,
