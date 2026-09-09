@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.7.2] - 2026-09-09
+
 ### Fixed
 
 - The five session guards that answer `organization-data-not-found` were reading `sessionData?.namespaces['storefront-permissions']`: the `?.` covered `sessionData` but not `namespaces`, so a session arriving without namespaces threw `Cannot read properties of undefined (reading 'storefront-permissions')` instead of the named error the line was written to throw. Seen on live traffic on 2.7.0 and 2.7.1. A generic TypeError says nothing about which namespace was missing, which is the one thing worth knowing when a storefront query is refused. Fixed in `Queries/CostCenters.ts` (two sites), `Queries/Organizations.ts`, `Mutations/CostCenters.ts` and `Queries/Users.ts`. The same pattern remains in `Mutations/Users.ts` (including three `.value` reads with no guard at all) and `Routes/index.ts`; those are different flows and are left for a separate change.
