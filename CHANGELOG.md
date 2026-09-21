@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- VBase stale-while-revalidate: coalesce in-flight revalidations per cache key (singleflight) so concurrent callers for the same file trigger at most one upstream fetch and one VBase PUT, avoiding thundering-herd `429` responses on `b2b-orgs-cache` (e.g. Kohler go-live, 2026-09-20/21).
+
 ## [2.7.2] - 2026-09-09
 
 ### Fixed

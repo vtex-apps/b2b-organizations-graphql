@@ -41,6 +41,11 @@ const getTTL = (expirationInMinutes?: number) => {
 const normalizedJSONFile = (filePath: string) =>
   `${createHash('md5').update(filePath).digest('hex')}.json`
 
+const inFlightRevalidates = new Map<string, Promise<unknown>>()
+
+const revalidateFlightKey = (bucket: string, filePath: string) =>
+  `${bucket}\0${filePath}`
+
 const revalidate = async <T>(
   vbase: VBase,
   bucket: string,
@@ -68,6 +73,49 @@ const revalidate = async <T>(
     })
 
   return data
+}
+
+/**
+ * At most one in-flight revalidate (upstream fetch + VBase save) per bucket/file.
+ * Concurrent callers for the same key share the same Promise; the map entry is
+ * removed when that Promise settles, success or failure.
+ */
+const revalidateWithSingleflight = <T>(
+  vbase: VBase,
+  bucket: string,
+  filePath: string,
+  endDate: Date,
+  validateFunction: (params?: any) => Promise<T>,
+  params?: unknown,
+  logger?: Logger
+): Promise<T> => {
+  const flightKey = revalidateFlightKey(bucket, filePath)
+  const existing = inFlightRevalidates.get(flightKey)
+
+  if (existing) {
+    return existing as Promise<T>
+  }
+
+  // Register before scheduling revalidate: `revalidate` awaits the fetcher on
+  // its first line, so a bare call would yield before the map entry exists and
+  // concurrent callers would each start their own PUT (the Kohler 429 pattern).
+  const flight = Promise.resolve().then(() =>
+    revalidate<T>(
+      vbase,
+      bucket,
+      filePath,
+      endDate,
+      validateFunction,
+      params,
+      logger
+    )
+  )
+
+  inFlightRevalidates.set(flightKey, flight)
+
+  return flight.finally(() => {
+    inFlightRevalidates.delete(flightKey)
+  }) as Promise<T>
 }
 
 /**
@@ -109,7 +157,7 @@ export const staleFromVBaseWhileRevalidate = async <T>(
     })) as StaleRevalidateData<T> | null
 
   if (!cachedData) {
-    return revalidate<T>(
+    return revalidateWithSingleflight<T>(
       vbase,
       bucket,
       normalizedFilePath,
@@ -126,7 +174,7 @@ export const staleFromVBaseWhileRevalidate = async <T>(
     return data
   }
 
-  revalidate<T>(
+  revalidateWithSingleflight<T>(
     vbase,
     bucket,
     normalizedFilePath,
