@@ -162,6 +162,60 @@ describe('staleFromVBaseWhileRevalidate', () => {
     expect(logger.error).not.toHaveBeenCalled()
   })
 
+  it('coalesces concurrent cold misses into one fetch and one save', async () => {
+    const vbase = makeVBase(null)
+    let resolveFetcher!: (value: { n: number }) => void
+    const fetcher = jest.fn(
+      () =>
+        new Promise<{ n: number }>((resolve) => {
+          resolveFetcher = resolve
+        })
+    )
+
+    const run = () =>
+      staleFromVBaseWhileRevalidate(vbase, 'bucket', 'same-key', fetcher)
+
+    const p1 = run()
+    const p2 = run()
+    const p3 = run()
+
+    await flush()
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    resolveFetcher({ n: 1 })
+
+    const [r1, r2, r3] = await Promise.all([p1, p2, p3])
+
+    expect(r1).toEqual({ n: 1 })
+    expect(r2).toEqual({ n: 1 })
+    expect(r3).toEqual({ n: 1 })
+    expect(fetcher).toHaveBeenCalledTimes(1)
+
+    await flush()
+    expect(vbase.saveJSON).toHaveBeenCalledTimes(1)
+  })
+
+  it('coalesces concurrent stale revalidations into one fetch and one save', async () => {
+    const past = new Date(Date.now() - 60 * 1000)
+    const vbase = makeVBase({ data: { cached: 'stale' }, ttl: past })
+    const fetcher = jest.fn().mockResolvedValue({ cached: 'fresh' })
+
+    const results = await Promise.all([
+      staleFromVBaseWhileRevalidate(vbase, 'bucket', 'same-key', fetcher),
+      staleFromVBaseWhileRevalidate(vbase, 'bucket', 'same-key', fetcher),
+      staleFromVBaseWhileRevalidate(vbase, 'bucket', 'same-key', fetcher),
+    ])
+
+    expect(results).toEqual([
+      { cached: 'stale' },
+      { cached: 'stale' },
+      { cached: 'stale' },
+    ])
+
+    await flush()
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    expect(vbase.saveJSON).toHaveBeenCalledTimes(1)
+  })
+
   it('logs a warning when the VBase read fails and the origin is used', async () => {
     const vbase = {
       getJSON: jest.fn().mockRejectedValue(new Error('vbase down')),
