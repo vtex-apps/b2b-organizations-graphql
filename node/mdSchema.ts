@@ -174,13 +174,13 @@ export const schemas = [
             type: 'object',
             properties: {
               name: {
-                type: 'string',
+                type: ['string', 'null'],
               },
               type: {
-                type: 'string',
+                type: ['string', 'null'],
               },
               value: {
-                type: 'string',
+                type: ['string', 'null'],
               },
             },
           },

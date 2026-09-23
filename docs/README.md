@@ -6,7 +6,7 @@ This app exposes admin and storefront GraphQL APIs to create and manage B2B orga
 
 ## Searching organizations by custom field (admin)
 
-Organizations persist custom field values on the Master Data entity `organizations` as an EAV array: each entry is `{ name, type, value }`. **Definitions** for those fields (type, dropdown options, registration flags) are stored in VBase `b2b_settings` as `organizationCustomFields`.
+Organizations persist custom field values on the Master Data entity `organizations` as an EAV array: each entry is `{ name, type, value }` (each property may be `string` or `null` in Master Data). **Definitions** for those fields (type, dropdown options, registration flags) are stored in VBase `b2b_settings` as `organizationCustomFields`.
 
 ### Master Data schema
 
@@ -16,7 +16,7 @@ For custom-field search, the schema:
 
 | Piece | Detail |
 | --- | --- |
-| `customFields` items | Typed object properties: `name`, `type`, `value` |
+| `customFields` items | Typed object properties: `name`, `type`, `value` (`string \| null` each, same pattern as `tradeName`) |
 | `v-indexed` | Includes `customFields` so Master Data `_where` can use `customFields.name` and `customFields.value` together (AND) |
 
 Dynamic paths such as `customFields.sapeccid=…` are **not** supported — `sapeccid` is not a top-level schema property. Use `getOrganizations` with `customFieldName` and `search` instead.
