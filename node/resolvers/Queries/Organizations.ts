@@ -28,6 +28,7 @@ import {
   loadOrganization,
 } from '../../services/organizationDocuments'
 import { ORGANIZATION_STATUSES } from '../../utils/constants'
+import { appendOrganizationSearchToWhere } from '../../utils/organizationSearch'
 
 const getWhereByStatus = ({ status }: { status: string[] }) => {
   const whereArray = []
@@ -318,6 +319,7 @@ const Organizations = {
     {
       status,
       search,
+      customFieldName,
       page,
       pageSize,
       sortOrder,
@@ -325,6 +327,7 @@ const Organizations = {
     }: {
       status: string[]
       search: string
+      customFieldName?: string
       page: number
       pageSize: number
       sortOrder: string
@@ -342,9 +345,7 @@ const Organizations = {
 
     const whereArray = getWhereByStatus({ status })
 
-    if (search) {
-      whereArray.push(`(name="*${search}*" OR tradeName="*${search}*")`)
-    }
+    appendOrganizationSearchToWhere(whereArray, { search, customFieldName })
 
     const where = whereArray.join(' AND ')
 

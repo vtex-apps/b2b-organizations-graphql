@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **[B2BTEAM-3594]** Master Data schema for `organizations`: typed `customFields` items (`name`, `type`, `value` as `string | null` each, matching live data and MD nullability) and `customFields` in `v-indexed` so admin search can query `customFields.name` and `customFields.value`. Existing organization documents must be updated (non no-op) after deploy; allow ~5 minutes for reindexing before custom-field search works.
+- **`getOrganizations`**: optional `customFieldName` argument. With `search`, filters by that custom field definition name and value; when omitted, `search` still matches organization name and trade name.
+- **`getOrganizationCustomFields`**: returns organization custom field definitions (`SettingsCustomField[]`, same data as `getB2BSettings.organizationCustomFields`) for admin dropdowns (`name` as label and value).
+
 ## [2.7.3] - 2026-09-21
 
 ### Fixed

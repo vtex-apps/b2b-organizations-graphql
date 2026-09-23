@@ -10,36 +10,41 @@ import type { GetSellersOpts } from '../../clients/sellers'
 
 const B2B_SETTINGS_DATA_ENTITY = 'b2b_settings'
 
+const loadB2BSettings = async (ctx: Context) => {
+  const {
+    clients: { vbase },
+  } = ctx
+
+  return getCachedB2BSettings(ctx, async () => {
+    const raw = await vbase.getJSON<B2BSettingsInput | null>(
+      B2B_SETTINGS_DATA_ENTITY,
+      'settings',
+      true
+    )
+
+    return {
+      ...raw,
+      costCenterCustomFields: raw?.costCenterCustomFields ?? [],
+      organizationCustomFields: raw?.organizationCustomFields ?? [],
+      transactionEmailSettings: raw?.transactionEmailSettings ?? {
+        organizationApproved: true,
+        organizationCreated: true,
+        organizationDeclined: true,
+        organizationRequestCreated: false,
+        organizationStatusChanged: true,
+      },
+    }
+  })
+}
+
 const B2BSettings = {
   getB2BSettings: async (_: void, __: void, ctx: Context) => {
-    const {
-      clients: { vbase },
-      ip,
-    } = ctx
+    const { ip } = ctx
 
     ensureConfigForQuery(ctx)
 
     try {
-      const settings = await getCachedB2BSettings(ctx, async () => {
-        const raw = await vbase.getJSON<B2BSettingsInput | null>(
-          B2B_SETTINGS_DATA_ENTITY,
-          'settings',
-          true
-        )
-
-        return {
-          ...raw,
-          costCenterCustomFields: raw?.costCenterCustomFields ?? [],
-          organizationCustomFields: raw?.organizationCustomFields ?? [],
-          transactionEmailSettings: raw?.transactionEmailSettings ?? {
-            organizationApproved: true,
-            organizationCreated: true,
-            organizationDeclined: true,
-            organizationRequestCreated: false,
-            organizationStatusChanged: true,
-          },
-        }
-      })
+      const settings = await loadB2BSettings(ctx)
 
       auditQueryEvent(ctx, {
         subjectId: 'get-b2b-settings-event',
@@ -57,6 +62,41 @@ const B2BSettings = {
       ctx.vtex.logger.error({
         error: describeClientError(e),
         message: 'getB2BSettings-error',
+      })
+
+      if (e.message) {
+        throw new GraphQLError(e.message)
+      } else if (e.response?.data?.message) {
+        throw new GraphQLError(e.response.data.message)
+      } else {
+        throw new GraphQLError(e)
+      }
+    }
+  },
+  getOrganizationCustomFields: async (_: void, __: void, ctx: Context) => {
+    const { ip } = ctx
+
+    ensureConfigForQuery(ctx)
+
+    try {
+      const settings = await loadB2BSettings(ctx)
+
+      auditQueryEvent(ctx, {
+        subjectId: 'get-organization-custom-fields-event',
+        operation: 'GET_ORGANIZATION_CUSTOM_FIELDS',
+        meta: {
+          entityName: 'B2BSettings',
+          remoteIpAddress: ip,
+          entityBeforeAction: JSON.stringify({}),
+          entityAfterAction: JSON.stringify({}),
+        },
+      })
+
+      return settings.organizationCustomFields
+    } catch (e) {
+      ctx.vtex.logger.error({
+        error: describeClientError(e),
+        message: 'getOrganizationCustomFields-error',
       })
 
       if (e.message) {
