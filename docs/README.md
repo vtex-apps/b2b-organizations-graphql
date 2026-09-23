@@ -4,6 +4,103 @@ GraphQL backend for [B2B Organizations](https://github.com/vtex-apps/b2b-organiz
 
 This app exposes admin and storefront GraphQL APIs to create and manage B2B organizations, cost centers, users, and related settings.
 
+## Searching organizations by custom field (admin)
+
+Organizations persist custom field values on the Master Data entity `organizations` as an EAV array: each entry is `{ name, type, value }`. **Definitions** for those fields (type, dropdown options, registration flags) are stored in VBase `b2b_settings` as `organizationCustomFields`.
+
+### Master Data schema
+
+The `organizations` schema is defined in `node/mdSchema.ts` (`ORGANIZATION_SCHEMA_VERSION`, currently `v0.0.8`) and published through `checkConfig` when GraphQL queries run (`masterdata.createOrUpdateSchema`).
+
+For custom-field search, the schema:
+
+| Piece | Detail |
+| --- | --- |
+| `customFields` items | Typed object properties: `name`, `type`, `value` |
+| `v-indexed` | Includes `customFields` so Master Data `_where` can use `customFields.name` and `customFields.value` together (AND) |
+
+Dynamic paths such as `customFields.sapeccid=…` are **not** supported — `sapeccid` is not a top-level schema property. Use `getOrganizations` with `customFieldName` and `search` instead.
+
+### Operations after deploy
+
+> ℹ️ After deploy, existing organization documents need a **real** Master Data update (not a no-op). Allow about **five minutes** for reindexing before custom-field search returns results.
+
+### Custom field definitions (admin dropdown)
+
+| Query | Use |
+| --- | --- |
+| `getOrganizationCustomFields` | Returns `[SettingsCustomField]` — definitions only, for populating a search dropdown |
+| `getB2BSettings.organizationCustomFields` | Same definitions, as part of full B2B settings |
+
+For the dropdown, use field definition **`name`** as both the label and the value sent to `getOrganizations.customFieldName` (it matches `customFields.name` on organization documents).
+
+```graphql
+query OrganizationCustomFieldDefinitions {
+  getOrganizationCustomFields {
+    name
+    type
+    dropdownValues {
+      value
+      label
+    }
+  }
+}
+```
+
+### `getOrganizations` search
+
+| Argument | Behavior |
+| --- | --- |
+| `search` | Search term |
+| `customFieldName` | Optional. When set **with** `search`, filters where `customFields.name` = `customFieldName` **and** `customFields.value` = `search`. When omitted, `search` matches organization **name** and **trade name** (unchanged). |
+
+Search by custom field:
+
+```graphql
+query SearchOrganizationsByCustomField(
+  $search: String!
+  $customFieldName: String!
+) {
+  getOrganizations(
+    search: $search
+    customFieldName: $customFieldName
+    page: 1
+    pageSize: 25
+  ) {
+    data {
+      id
+      name
+      customFields {
+        name
+        value
+      }
+    }
+    pagination {
+      total
+    }
+  }
+}
+```
+
+Search by name or trade name (default):
+
+```graphql
+query SearchOrganizationsByName($search: String!) {
+  getOrganizations(search: $search, page: 1, pageSize: 25) {
+    data {
+      id
+      name
+      tradeName
+    }
+    pagination {
+      total
+    }
+  }
+}
+```
+
+Related Jira: **B2BTEAM-3594**.
+
 ## Creating organizations with cost centers
 
 Two mutations can create an organization together with one or more cost centers. They share `DefaultCostCenterInput`, but behave differently regarding custom IDs and admin user setup.
