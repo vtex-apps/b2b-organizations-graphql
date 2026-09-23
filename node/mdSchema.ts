@@ -170,6 +170,20 @@ export const schemas = [
         customFields: {
           type: 'array',
           title: 'Custom Fields',
+          items: {
+            type: 'object',
+            properties: {
+              name: {
+                type: 'string',
+              },
+              type: {
+                type: 'string',
+              },
+              value: {
+                type: 'string',
+              },
+            },
+          },
         },
         permissions: {
           type: 'object',
@@ -181,7 +195,13 @@ export const schemas = [
           },
         },
       },
-      'v-indexed': ['name', 'status', 'tradeName', 'created'],
+      'v-indexed': [
+        'name',
+        'status',
+        'tradeName',
+        'created',
+        'customFields',
+      ],
       'v-immediate-indexing': true,
       'v-cache': false,
     },

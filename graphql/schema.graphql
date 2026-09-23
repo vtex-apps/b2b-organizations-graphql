@@ -18,6 +18,12 @@ type Query {
   getOrganizations(
     status: [String]
     search: String
+    """
+    When set together with `search`, filters organizations by this custom field
+    definition name (`customFields.name`) and the search term as `customFields.value`.
+    When omitted, `search` matches organization name and trade name as today.
+    """
+    customFieldName: String
     page: Int = 1
     pageSize: Int = 25
     sortOrder: String = "ASC"
@@ -124,6 +130,13 @@ type Query {
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
   getB2BSettings: B2BSettings
+    @cacheControl(scope: PUBLIC, maxAge: SHORT)
+    @auditAccess
+  """
+  Organization custom field definitions for admin UI (same as
+  `getB2BSettings.organizationCustomFields`). Dropdown: label and value = `name`.
+  """
+  getOrganizationCustomFields: [SettingsCustomField]
     @cacheControl(scope: PUBLIC, maxAge: SHORT)
     @auditAccess
   getSellers: [Seller] @validateAdminUserAccess @cacheControl(scope: PRIVATE)
