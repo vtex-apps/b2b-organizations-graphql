@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.8.1] - 2026-10-01
+
+### Fixed
+
+- **[B2BTEAM-4223]** `deleteOrganization` (and cost-center delete / org or cost-center updates) now invalidate the in-memory and VBase caches used by `getOrganizationById` and `getCostCenterById`, so deleted organizations no longer appear as ghost records in admin or GraphQL reads. Stale-while-revalidate background refresh also removes the VBase entry when revalidation reports a permanent document miss (`organizationNotFound` / `costCenterNotFound`) instead of serving the stale document indefinitely.
+
 ## [2.8.0] - 2026-09-23
 
 ### Added

@@ -1,7 +1,10 @@
 import { LRUCache } from '@vtex/api'
 
 import { VBASE_CACHE_BUCKET } from '../utils/constants'
-import { staleFromVBaseWhileRevalidate } from '../utils/staleFromVBaseWhileRevalidate'
+import {
+  deleteVBaseCacheEntry,
+  staleFromVBaseWhileRevalidate,
+} from '../utils/staleFromVBaseWhileRevalidate'
 
 const DEFAULT_MAX_ENTRIES = 1000
 
@@ -57,6 +60,26 @@ export interface CachedResourceOptions {
   vbaseTtlMinutes?: number
 }
 
+export type CachedResourceReader<T> = ((
+  ctx: Context,
+  key: string,
+  fetcher: () => Promise<T>,
+  overrides?: { memoryTtlMs?: number }
+) => Promise<T | undefined>) & {
+  invalidate: (ctx: Context, key: string) => Promise<void>
+}
+
+const memoryCacheKey = (ctx: Context, key: string) =>
+  `${ctx.vtex.account}:${ctx.vtex.workspace}:${key}`
+
+const deleteMemoryCacheEntry = <T>(cache: LRUCache<string, T>, key: string) => {
+  const storage = (
+    cache as unknown as { storage?: { del: (cacheKey: string) => void } }
+  ).storage
+
+  storage?.del(key)
+}
+
 /**
  * Builds a cached view of a resource with up to two layers:
  *
@@ -73,7 +96,7 @@ export interface CachedResourceOptions {
 export const createCachedResource = <T>(
   name: string,
   options: CachedResourceOptions
-) => {
+): CachedResourceReader<T> => {
   // With a `length` function, lru-cache treats `max` as a total size budget
   // rather than an entry count.
   const cache = new LRUCache<string, T>(
@@ -87,7 +110,20 @@ export const createCachedResource = <T>(
 
   registeredCaches.set(name, cache as LRUCache<string, any>)
 
-  return async (
+  const invalidate = async (ctx: Context, key: string): Promise<void> => {
+    deleteMemoryCacheEntry(cache, memoryCacheKey(ctx, key))
+
+    if (options.vbaseTtlMinutes) {
+      await deleteVBaseCacheEntry(
+        ctx.clients.vbase,
+        VBASE_CACHE_BUCKET,
+        `${name}-${key}`,
+        ctx.vtex.logger
+      )
+    }
+  }
+
+  const read = async (
     ctx: Context,
     key: string,
     fetcher: () => Promise<T>,
@@ -117,15 +153,13 @@ export const createCachedResource = <T>(
       return fetcher()
     }
 
-    const { account, workspace } = ctx.vtex
-
     // `:` rather than `-`, because the resource keys are Master Data ids and
     // those contain hyphens: joining on `-` makes the composed key ambiguous
     // (account=a/workspace=b-c/key=d and account=a/workspace=b/key=c-d both
     // collapse to `a-b-c-d`). Only VTEX naming rules keep that from being a
     // cross-tenant hit today, and tenant isolation should not rest on them.
     // getOrSet is typed as `V | void`, so normalize it for callers.
-    const cached = await cache.getOrSet(`${account}:${workspace}:${key}`, () =>
+    const cached = await cache.getOrSet(memoryCacheKey(ctx, key), () =>
       readThrough().then((value) => ({
         maxAge: memoryTtlMs,
         value,
@@ -134,4 +168,8 @@ export const createCachedResource = <T>(
 
     return cached as unknown as T | undefined
   }
+
+  read.invalidate = invalidate
+
+  return read
 }

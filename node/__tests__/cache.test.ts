@@ -87,6 +87,16 @@ jest.mock('@vtex/api', () => {
 
       return stats
     }
+
+    public del(key: string) {
+      this.store.delete(key)
+    }
+
+    public storage = {
+      del: (key: string) => {
+        this.store.delete(key)
+      },
+    }
   }
 
   return { LRUCache: MockLRUCache }
@@ -104,6 +114,7 @@ const makeCtx = (account: string, vbaseStored: unknown = null) =>
   ({
     clients: {
       vbase: {
+        deleteFile: jest.fn().mockResolvedValue(undefined),
         getJSON: jest.fn().mockResolvedValue(vbaseStored),
         saveJSON: jest.fn().mockResolvedValue(undefined),
       },
@@ -262,6 +273,24 @@ describe('createCachedResource', () => {
 
     expect(second.permissions).toBeUndefined()
     expect(fetcher).toHaveBeenCalledTimes(1)
+  })
+
+  it('invalidate evicts memory and VBase so the next read refetches', async () => {
+    const cached = makeResource({ memoryTtlMs: 60000, vbaseTtlMinutes: 5 })
+    const future = new Date(Date.now() + 60000)
+    const ctx = makeCtx('acc-inv', { data: { stale: true }, ttl: future })
+    const fetcher = jest.fn().mockResolvedValue({ fresh: true })
+
+    await cached(ctx, 'org-1', fetcher)
+    expect(fetcher).not.toHaveBeenCalled()
+
+    await cached.invalidate(ctx, 'org-1')
+
+    ;(ctx.clients.vbase.getJSON as jest.Mock).mockResolvedValue(null)
+
+    expect(await cached(ctx, 'org-1', fetcher)).toEqual({ fresh: true })
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    expect(ctx.clients.vbase.deleteFile).toHaveBeenCalledTimes(1)
   })
 
   it('registers itself for stats collection', async () => {

@@ -38,8 +38,35 @@ const getTTL = (expirationInMinutes?: number) => {
  * logical keys can carry identifiers, and error logs must not. The hash is
  * deterministic, so a known logical key can still be located by hashing it.
  */
-const normalizedJSONFile = (filePath: string) =>
+export const normalizedJSONFile = (filePath: string) =>
   `${createHash('md5').update(filePath).digest('hex')}.json`
+
+const isPermanentDocumentMiss = (error: unknown) => {
+  const err = error as {
+    organizationNotFound?: boolean
+    costCenterNotFound?: boolean
+  }
+
+  return Boolean(err?.organizationNotFound || err?.costCenterNotFound)
+}
+
+export const deleteVBaseCacheEntry = async (
+  vbase: VBase,
+  bucket: string,
+  logicalFilePath: string,
+  logger?: Logger
+): Promise<void> => {
+  const normalizedFilePath = normalizedJSONFile(logicalFilePath)
+
+  await vbase.deleteFile(bucket, normalizedFilePath).catch((error) => {
+    logger?.warn({
+      bucket,
+      error: describeClientError(error),
+      key: normalizedFilePath,
+      message: 'staleFromVBase.deleteError',
+    })
+  })
+}
 
 const inFlightRevalidates = new Map<string, Promise<unknown>>()
 
@@ -182,11 +209,22 @@ export const staleFromVBaseWhileRevalidate = async <T>(
     validateFunction,
     params,
     logger
-  ).catch((error) => {
+  ).catch(async (error) => {
     // Intentional cache-probe miss (e.g. hydrateSummaryBatch throws
     // summaryCacheMiss to ask "is this key already cached?"). Not an origin
     // failure — logging it as error floods VictoriaLogs and hides real signal.
     if (error?.summaryCacheMiss || error?.message === 'summaryCacheMiss') {
+      return
+    }
+
+    if (isPermanentDocumentMiss(error)) {
+      await deleteVBaseCacheEntry(
+        vbase,
+        bucket,
+        filePath,
+        logger
+      )
+
       return
     }
 

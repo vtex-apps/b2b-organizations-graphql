@@ -97,3 +97,23 @@ export const getCachedB2BSettings = async (
   ctx: Context,
   fetcher: () => Promise<any>
 ): Promise<any> => cachedB2BSettings(ctx, 'settings', fetcher)
+
+export const invalidateOrganizationCache = async (
+  ctx: Context,
+  orgId: string
+): Promise<void> => {
+  await Promise.all([
+    cachedOrganization.invalidate(ctx, orgId),
+    cachedOrganizationSummary.invalidate(ctx, orgId),
+  ])
+}
+
+export const invalidateCostCenterCache = async (
+  ctx: Context,
+  costId: string
+): Promise<void> => {
+  await Promise.all([
+    cachedCostCenter.invalidate(ctx, costId),
+    cachedCostCenterSummary.invalidate(ctx, costId),
+  ])
+}
