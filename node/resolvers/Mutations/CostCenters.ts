@@ -8,6 +8,10 @@ import type {
   CostCenterInputWithId,
 } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import {
+  invalidateCostCenterCache,
+  invalidateOrganizationCache,
+} from '../../services/organizationsCache'
 import Organizations from '../Queries/Organizations'
 import costCenters from '../Queries/CostCenters'
 import checkConfig from '../config'
@@ -237,6 +241,8 @@ const CostCenters = {
         id: costCenterId,
       })
 
+      await invalidateCostCenterCache(ctx, costCenterId)
+
       await audit.sendEvent({
         subjectId: 'create-cost-center-address-event',
         operation: 'CREATE_COST_CENTER_ADDRESS',
@@ -279,6 +285,8 @@ const CostCenters = {
         id,
       })
 
+      await invalidateCostCenterCache(ctx, id)
+
       await audit.sendEvent({
         subjectId: 'delete-cost-center-event',
         operation: 'DELETE_COST_CENTER',
@@ -313,6 +321,8 @@ const CostCenters = {
         dataEntity: ORGANIZATION_DATA_ENTITY,
         id,
       })
+
+      await invalidateOrganizationCache(ctx, id)
 
       await audit.sendEvent({
         subjectId: 'delete-organization-event',
@@ -391,6 +401,8 @@ const CostCenters = {
         id,
       })
 
+      await invalidateCostCenterCache(ctx, id)
+
       await audit.sendEvent({
         subjectId: 'update-cost-center-event',
         operation: 'UPDATE_COST_CENTER',
@@ -459,6 +471,8 @@ const CostCenters = {
         },
         id: costCenterId,
       })
+
+      await invalidateCostCenterCache(ctx, costCenterId)
 
       await audit.sendEvent({
         subjectId: 'update-cost-center-address-event',

@@ -216,6 +216,40 @@ describe('staleFromVBaseWhileRevalidate', () => {
     expect(vbase.saveJSON).toHaveBeenCalledTimes(1)
   })
 
+  it('drops the VBase entry when background revalidation finds the document gone', async () => {
+    const past = new Date(Date.now() - 60 * 1000)
+    const vbase = {
+      getJSON: jest
+        .fn()
+        .mockResolvedValueOnce({ data: { cached: 'stale' }, ttl: past })
+        .mockResolvedValue(null),
+      saveJSON: jest.fn().mockResolvedValue(undefined),
+      deleteFile: jest.fn().mockResolvedValue(undefined),
+    } as any
+    const logger = { error: jest.fn(), warn: jest.fn() } as any
+    const notFound: any = new Error('organizationNotFound')
+
+    notFound.organizationNotFound = true
+
+    const fetcher = jest.fn().mockRejectedValue(notFound)
+
+    const result = await staleFromVBaseWhileRevalidate(
+      vbase,
+      'bucket',
+      'organization-key',
+      fetcher,
+      undefined,
+      { logger }
+    )
+
+    expect(result).toEqual({ cached: 'stale' })
+
+    await flush()
+
+    expect(vbase.deleteFile).toHaveBeenCalledTimes(1)
+    expect(logger.error).not.toHaveBeenCalled()
+  })
+
   it('logs a warning when the VBase read fails and the origin is used', async () => {
     const vbase = {
       getJSON: jest.fn().mockRejectedValue(new Error('vbase down')),

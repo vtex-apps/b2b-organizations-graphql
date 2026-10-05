@@ -24,6 +24,7 @@ import {
   ORGANIZATION_STATUSES,
 } from '../../utils/constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import { invalidateOrganizationCache } from '../../services/organizationsCache'
 import {
   sendOrganizationStatusMetric,
   sendUpdateOrganizationMetric,
@@ -865,6 +866,8 @@ const Organizations = {
         fields,
         id,
       })
+
+      await invalidateOrganizationCache(ctx, id)
 
       await audit.sendEvent({
         subjectId: 'update-organization-event',

@@ -43,6 +43,9 @@ jest.mock('@vtex/api')
 jest.mock('@vtex/diagnostics-nodejs', () => ({}))
 jest.mock('../config')
 jest.mock('../Queries/Settings')
+jest.mock('../../services/organizationsCache', () => ({
+  invalidateOrganizationCache: jest.fn().mockResolvedValue(undefined),
+}))
 
 const mockGetDocument = jest.fn().mockResolvedValue({
   b2bCustomerAdmin: {
