@@ -24,7 +24,10 @@ import type {
   OrganizationInput,
   OrganizationRequest,
 } from '../../typings'
-import { ORGANIZATION_REQUEST_STATUSES, ORGANIZATION_STATUSES } from '../../utils/constants'
+import {
+  ORGANIZATION_REQUEST_STATUSES,
+  ORGANIZATION_STATUSES,
+} from '../../utils/constants'
 import Organizations from './Organizations'
 
 const withNormalizedAddressFields = (address?: AddressInput) => {
@@ -72,6 +75,7 @@ const mockContext = (
       },
       audit: {
         sendEvent: jest.fn().mockResolvedValue(undefined),
+        sendEventStrict: jest.fn().mockResolvedValue(undefined),
       },
       catalog: {
         collectionsAvailable: jest.fn().mockResolvedValue({ items: [] }),
@@ -604,55 +608,54 @@ describe('given an Organization Mutation', () => {
         })
       })
 
-    describe('with partial address fields', () => {
-      const roleId = randUuid()
-      const costId = randUuid()
+      describe('with partial address fields', () => {
+        it('should normalize optional address fields before persisting', async () => {
+          const addressWithoutComplement = {
+            addressType: 'BillingAddress',
+            city: 'Kohler',
+            state: 'WI',
+            street: '444 Highland Drive',
+          } as AddressInput
 
-      it('should normalize optional address fields before persisting', async () => {
-        const addressWithoutComplement = {
-          addressType: 'BillingAddress',
-          city: 'Kohler',
-          state: 'WI',
-          street: '444 Highland Drive',
-        } as AddressInput
-
-        const inputWithPartialAddress = {
-          b2bCustomerAdmin: {
-            email: randEmail(),
-            firstName: randFirstName(),
-          },
-          costCenters: [
-            {
-              name: randLastName(),
-              addresses: [addressWithoutComplement],
+          const inputWithPartialAddress = {
+            b2bCustomerAdmin: {
+              email: randEmail(),
+              firstName: randFirstName(),
             },
-          ],
-          id: orgId,
-          name: randCompanyName(),
-        } as NormalizedOrganizationInput
+            costCenters: [
+              {
+                name: randLastName(),
+                addresses: [addressWithoutComplement],
+              },
+            ],
+            id: orgId,
+            name: randCompanyName(),
+          } as NormalizedOrganizationInput
 
-        const mockedContext = mockContext(orgId, roleId, costId)
+          const partialAddressContext = mockContext(orgId, roleId, costId)
 
-        await Organizations.createOrganizationAndCostCentersWithId(
-          jest.fn() as never,
-          { input: inputWithPartialAddress },
-          mockedContext
-        )
+          await Organizations.createOrganizationAndCostCentersWithId(
+            jest.fn() as never,
+            { input: inputWithPartialAddress },
+            partialAddressContext
+          )
 
-        expect(
-          mockedContext.clients.masterdata.createDocument
-        ).toHaveBeenNthCalledWith(2, {
-          dataEntity: COST_CENTER_DATA_ENTITY,
-          fields: {
-            addresses: [withNormalizedAddressFields(addressWithoutComplement)],
-            id: undefined,
-            name: inputWithPartialAddress.costCenters?.[0].name,
-            organization: orgId,
-          },
-          schema: COST_CENTER_SCHEMA_VERSION,
+          expect(
+            partialAddressContext.clients.masterdata.createDocument
+          ).toHaveBeenNthCalledWith(2, {
+            dataEntity: COST_CENTER_DATA_ENTITY,
+            fields: {
+              addresses: [
+                withNormalizedAddressFields(addressWithoutComplement),
+              ],
+              id: undefined,
+              name: inputWithPartialAddress.costCenters?.[0].name,
+              organization: orgId,
+            },
+            schema: COST_CENTER_SCHEMA_VERSION,
+          })
         })
       })
-    })
     })
 
     describe('when both address and addresses are provided', () => {
@@ -744,6 +747,7 @@ describe('given an Organization Mutation', () => {
           },
           audit: {
             sendEvent: jest.fn().mockResolvedValue(undefined),
+            sendEventStrict: jest.fn().mockResolvedValue(undefined),
           },
           catalog: {
             collectionsAvailable: collectionsAvailableSpy,
@@ -779,10 +783,14 @@ describe('given an Organization Mutation', () => {
           items: [{ id: 42, name: 'VIP Shelf' }],
         })
 
-        await Organizations.updateOrganization(jest.fn() as never, {
-          ...minimalUpdateArgs,
-          collections: [{ name: 'VIP Shelf' }],
-        } as never, mockedContext)
+        await Organizations.updateOrganization(
+          jest.fn() as never,
+          {
+            ...minimalUpdateArgs,
+            collections: [{ name: 'VIP Shelf' }],
+          } as never,
+          mockedContext
+        )
 
         expect(getPersistedCollections()).toEqual([
           { id: '42', name: 'VIP Shelf' },
@@ -791,10 +799,14 @@ describe('given an Organization Mutation', () => {
       })
 
       it('does not resolve via Catalog when id is supplied', async () => {
-        await Organizations.updateOrganization(jest.fn() as never, {
-          ...minimalUpdateArgs,
-          collections: [{ id: '77', name: 'Direct Attach' }],
-        } as never, mockedContext)
+        await Organizations.updateOrganization(
+          jest.fn() as never,
+          {
+            ...minimalUpdateArgs,
+            collections: [{ id: '77', name: 'Direct Attach' }],
+          } as never,
+          mockedContext
+        )
 
         expect(collectionsAvailableSpy).not.toHaveBeenCalled()
 
@@ -808,13 +820,17 @@ describe('given an Organization Mutation', () => {
           items: [{ id: 200, name: 'LateBound' }],
         })
 
-        await Organizations.updateOrganization(jest.fn() as never, {
-          ...minimalUpdateArgs,
-          collections: [
-            { id: '5', name: 'FirstDirect' },
-            { name: 'LateBound' },
-          ],
-        } as never, mockedContext)
+        await Organizations.updateOrganization(
+          jest.fn() as never,
+          {
+            ...minimalUpdateArgs,
+            collections: [
+              { id: '5', name: 'FirstDirect' },
+              { name: 'LateBound' },
+            ],
+          } as never,
+          mockedContext
+        )
 
         expect(getPersistedCollections()).toEqual([
           { id: '5', name: 'FirstDirect' },
@@ -828,21 +844,31 @@ describe('given an Organization Mutation', () => {
       it('drops unresolved collection names aligned with normalized create semantics', async () => {
         collectionsAvailableSpy.mockResolvedValue({ items: [] })
 
-        await Organizations.updateOrganization(jest.fn() as never, {
-          ...minimalUpdateArgs,
-          collections: [{ name: 'Unknown Collection' }],
-        } as never, mockedContext)
+        await Organizations.updateOrganization(
+          jest.fn() as never,
+          {
+            ...minimalUpdateArgs,
+            collections: [{ name: 'Unknown Collection' }],
+          } as never,
+          mockedContext
+        )
 
         expect(getPersistedCollections()).toEqual([])
       })
 
       it('persists explicit empty arrays to clear collections', async () => {
-        await Organizations.updateOrganization(jest.fn() as never, {
-          ...minimalUpdateArgs,
-          collections: [],
-        } as never, mockedContext)
+        await Organizations.updateOrganization(
+          jest.fn() as never,
+          {
+            ...minimalUpdateArgs,
+            collections: [],
+          } as never,
+          mockedContext
+        )
 
-        expect(mockedContext.clients.masterdata.updatePartialDocument).toHaveBeenCalled()
+        expect(
+          mockedContext.clients.masterdata.updatePartialDocument
+        ).toHaveBeenCalled()
 
         expect(collectionsAvailableSpy).not.toHaveBeenCalled()
 
@@ -856,9 +882,9 @@ describe('given an Organization Mutation', () => {
           mockedContext
         )
 
-        const fields =
-          (mockedContext.clients.masterdata.updatePartialDocument as jest.Mock)
-            .mock.calls[0]?.[0].fields
+        const fields = (
+          mockedContext.clients.masterdata.updatePartialDocument as jest.Mock
+        ).mock.calls[0]?.[0].fields
 
         expect(fields).not.toHaveProperty('collections')
       })

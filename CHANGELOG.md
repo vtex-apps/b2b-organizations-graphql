@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **[B2BTEAM-3982]** `createCostCenterWithId` no longer treats Master Data lookup failures (5xx/429/timeout) as "does not exist". Only HTTP 404 / missing document proceeds to create; other errors log `createCostCenterWithId.lookupError` and fail the mutation without creating.
+- **[B2BTEAM-3982]** `getCostCenterById` logs 404 as `warn` `getCostCenterById.notFound` and attaches `extensions.status` on the GraphQL error; real failures use `getCostCenterById.error`.
+
+### Changed
+
+- **[B2BTEAM-3982]** Mutation write failures use stable `<mutation>.*` message keys with `describeClientError` payloads (no raw error objects). Deletes log `warn` `<op>.notFound` on 404. Mutation audit uses `sendEventStrict` so an audit failure after a successful write fails the mutation (`audit.sendEventError`). Query/login audit remains fire-and-forget (B2BTEAM-3729).
+
 ## [2.8.1] - 2026-10-05
 
 ## [2.8.1] - 2026-10-01

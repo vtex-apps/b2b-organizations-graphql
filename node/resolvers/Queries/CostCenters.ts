@@ -6,6 +6,7 @@ import {
 import type { Address, CostCenter } from '../../typings'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import { describeClientError } from '../../utils/clientError'
+import { getHttpStatus, isNotFoundError } from '../../utils/httpError'
 import {
   auditQueryEvent,
   ensureConfigForQuery,
@@ -128,11 +129,26 @@ const costCenters = {
 
           return result
         } catch (error) {
-          logger.error({
-            error: describeClientError(error),
-            message: 'getCostCenterById-error',
-          })
-          throw new GraphQLError(getErrorMessage(error))
+          const status =
+            getHttpStatus(error) ??
+            (error?.costCenterNotFound ? 404 : undefined)
+
+          if (isNotFoundError(error) || status === 404) {
+            logger.warn({
+              costId: id,
+              message: 'getCostCenterById.notFound',
+              operation: 'getCostCenterById',
+            })
+          } else {
+            logger.error({
+              costId: id,
+              error: describeClientError(error),
+              message: 'getCostCenterById.error',
+              operation: 'getCostCenterById',
+            })
+          }
+
+          throw new GraphQLError(getErrorMessage(error), { status })
         }
       },
     })
