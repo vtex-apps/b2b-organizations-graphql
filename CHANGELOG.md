@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 - **[B2BTEAM-3982]** Mutation write failures use stable `<mutation>.*` message keys with `describeClientError` payloads (no raw error objects). Deletes log `warn` `<op>.notFound` on 404. Mutation audit uses `sendEventStrict` so an audit failure after a successful write fails the mutation (`audit.sendEventError`). Query/login audit remains fire-and-forget (B2BTEAM-3729).
+- **[B2BTEAM-3982]** `storefront-permissions` client calls now log `storefrontPermissions.queryError` (`operation`, `describeClientError`, `graphQLErrors` messages) before rethrowing unchanged. Client-side GraphQL validation errors (e.g. `Variable "$email" ... was not provided`) log as `warn`; real failures as `error`. Previously these only surfaced as the generic `storefront-permissions` error logged by `@vtex/api`.
 
 ## [2.8.1] - 2026-10-05
 
