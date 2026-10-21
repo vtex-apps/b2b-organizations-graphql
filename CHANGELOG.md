@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- **[B2BTEAM-3985]** Access denials log one `warn` `auth.denied` (`operation`, `reason`: `organization-data-not-found` / `not-permitted` / `inactive-organization`, plus `orgId` / `targetUserId` when known) and the thrown error is marked `level: 'warn'`, so the `@vtex/api` GraphQL error middleware re-logs it as `warn` instead of `error`. Covers `checkUserIsAllowed` (`addUser`, `updateUser`, `saveUser`), `impersonateB2BUser`, `impersonateUser`, `removeUser`, `createCostCenter` without organization, `getOrganizationByIdStorefront`, `getCostCenterByIdStorefront`, `getCostCentersByOrganizationIdStorefront` (including `This organization is not active`), `getUsers`, `getUsersPaginated` and `getOrganizationsWithoutSalesManager`. Messages (`organization-data-not-found`, `operation-not-permitted`, `This organization is not active`) and error classes are unchanged; the response only gains `extensions.exception.level: "warn"`.
+- **[B2BTEAM-3985]** `addUser`, `updateUser` and `saveUser` no longer log `addUser-checkUserIsAllowedError` at `error` for a deny; any other failure while checking access logs `error` `<op>.checkUserIsAllowedError` with `describeClientError`. `getCostCenterByIdStorefront` no longer logs `getCostCenterByIdStorefront-error` for a cross-organization deny.
+- **[B2BTEAM-3985]** `impersonateB2BUser` / `impersonateUser` client failures log `impersonateB2BUser.error` / `impersonateUser.error` (`targetUserId`, `describeClientError`) instead of `impersonateUser-impersonateUserError` with the raw error.
+
+### Fixed
+
+- **[B2BTEAM-3985]** `@withSession` no longer swallows session read failures silently: it logs `warn` `withSession.getSessionError` (`operation`, `describeClientError`) and still continues with no session (fail-closed). Always `warn`, including 5xx (SDD Q3).
+- **[B2BTEAM-3985]** `getOrganizationById` logs a missing organization as `warn` `getOrganizationById.notFound` (was `error` `getOrganizationById-error`) and marks the `organizationNotFound` error `level: 'warn'`; this is also the source of `organizationNotFound` in `getCostCenterByIdStorefront` / `getCostCentersByOrganizationIdStorefront` when the session has no organization. Other failures still log `getOrganizationById-error`.
+
 ## [2.8.1] - 2026-10-05
 
 ## [2.8.1] - 2026-10-01

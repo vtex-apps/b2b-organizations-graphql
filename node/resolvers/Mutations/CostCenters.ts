@@ -16,6 +16,7 @@ import Organizations from '../Queries/Organizations'
 import costCenters from '../Queries/CostCenters'
 import checkConfig from '../config'
 import CostCenterRepository from '../repository/CostCenterRepository'
+import { authDenied } from '../../utils/authDenied'
 
 const CostCenters = {
   createCostCenter: async (
@@ -52,7 +53,10 @@ const CostCenters = {
       const { sessionData } = vtex as any
 
       if (!sessionData?.namespaces?.['storefront-permissions']) {
-        throw new GraphQLError('organization-data-not-found')
+        throw authDenied(logger, {
+          operation: 'createCostCenter',
+          reason: 'organization-data-not-found',
+        })
       }
 
       const {

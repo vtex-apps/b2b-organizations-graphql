@@ -11,6 +11,11 @@ import {
   sendUpdateUserMetric,
 } from '../../utils/metrics/user'
 import type { UserArgs } from '../../typings'
+import {
+  authDenied,
+  isAuthDenied,
+  logAccessError,
+} from '../../utils/authDenied'
 
 export const getUserRoleSlug: (
   id: string,
@@ -102,6 +107,7 @@ const checkUserIsAllowed = async ({
   clId,
   ctx,
   logger,
+  operation,
   orgId,
   roleId,
   sessionData,
@@ -110,7 +116,11 @@ const checkUserIsAllowed = async ({
 }: any) => {
   if (!adminUserAuthToken) {
     if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-      throw new GraphQLError('organization-data-not-found')
+      throw authDenied(logger, {
+        operation,
+        orgId,
+        reason: 'organization-data-not-found',
+      })
     }
 
     const roleSlug = await getRoleSlug({
@@ -129,7 +139,11 @@ const checkUserIsAllowed = async ({
     })
 
     if (!permitted) {
-      throw new GraphQLError('operation-not-permitted')
+      throw authDenied(logger, {
+        operation,
+        orgId,
+        reason: 'not-permitted',
+      })
     }
   }
 }
@@ -160,13 +174,10 @@ const getUserFromStorefrontPermissions = ({
 const Users = {
   impersonateB2BUser: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { 
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as Context | any
 
     const getB2BUserFromStorefrontPermissions = ({
@@ -182,7 +193,11 @@ const Users = {
 
     if (!adminUserAuthToken) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
+        throw authDenied(logger, {
+          operation: 'impersonateB2BUser',
+          reason: 'organization-data-not-found',
+          targetUserId: id,
+        })
       }
 
       const canImpersonateUsersWithCostCenterPermission =
@@ -207,17 +222,24 @@ const Users = {
         !canImpersonateUsersWithOrganizationPermission &&
         !canImpersonateUsersWithAllPermission
       ) {
-        throw new GraphQLError('operation-not-permitted')
+        throw authDenied(logger, {
+          operation: 'impersonateB2BUser',
+          orgId: user?.orgId,
+          reason: 'not-permitted',
+          targetUserId: id,
+        })
       }
     }
 
     const impersonation = await storefrontPermissionsClient
       .impersonateUser({ userId: id })
       .catch((error: any) => {
-        logger.error({
-          error,
-          message: 'impersonateUser-impersonateUserError',
-        })
+        logAccessError(
+          logger,
+          'impersonateB2BUser.error',
+          { operation: 'impersonateB2BUser', targetUserId: id },
+          error
+        )
 
         return { status: 'error', message: error }
       })
@@ -283,19 +305,23 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
+      clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
       },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as Context | any
 
     if (!adminUserAuthToken && clId) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
+        throw authDenied(logger, {
+          operation: 'impersonateUser',
+          reason: 'organization-data-not-found',
+          targetUserId: clId,
+        })
       }
 
       const userInfo = await getUserFromStorefrontPermissions({
@@ -326,7 +352,12 @@ const Users = {
         !canImpersonateUsersWithOrganizationPermission &&
         !canImpersonateUsersWithAllPermission
       ) {
-        throw new GraphQLError('operation-not-permitted')
+        throw authDenied(logger, {
+          operation: 'impersonateUser',
+          orgId: userInfo?.orgId,
+          reason: 'not-permitted',
+          targetUserId: clId,
+        })
       }
     }
 
@@ -402,13 +433,13 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        events, 
+      clients: {
+        events,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
       },
       vtex: { logger },
-      ip
+      ip,
     } = ctx as any
 
     return storefrontPermissionsClient
@@ -444,7 +475,7 @@ const Users = {
                   orgId,
                   costId,
                   email,
-                  user
+                  user,
                 }),
                 entityAfterAction: JSON.stringify(null),
               },
@@ -493,13 +524,13 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        events, 
+      clients: {
+        events,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as Context | any
 
     if (!id || !clId || !email) {
@@ -508,7 +539,11 @@ const Users = {
 
     if (!adminUserAuthToken) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
+        throw authDenied(logger, {
+          operation: 'removeUser',
+          reason: 'organization-data-not-found',
+          targetUserId: id,
+        })
       }
 
       const roleSlug = await getUserRoleSlug(clId, ctx)
@@ -521,7 +556,11 @@ const Users = {
         storefrontPermissions?.permissions?.includes('remove-sales-users-all')
 
       if (!permitted) {
-        throw new GraphQLError('operation-not-permitted')
+        throw authDenied(logger, {
+          operation: 'removeUser',
+          reason: 'not-permitted',
+          targetUserId: id,
+        })
       }
     }
 
@@ -544,7 +583,7 @@ const Users = {
               id,
               userId,
               email,
-              clId
+              clId,
             }),
             entityAfterAction: JSON.stringify(null),
           },
@@ -575,12 +614,9 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as any
 
     try {
@@ -589,6 +625,7 @@ const Users = {
         clId,
         ctx,
         logger,
+        operation: 'addUser',
         orgId,
         roleId,
         sessionData,
@@ -596,10 +633,15 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      logger.error({
-        error,
-        message: 'addUser-checkUserIsAllowedError',
-      })
+      if (!isAuthDenied(error)) {
+        logAccessError(
+          logger,
+          'addUser.checkUserIsAllowedError',
+          { operation: 'addUser' },
+          error
+        )
+      }
+
       throw error
     }
 
@@ -631,7 +673,7 @@ const Users = {
               clId,
               name,
               email,
-              roleId
+              roleId,
             }),
           },
         })
@@ -669,12 +711,9 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx as any
 
     try {
@@ -702,7 +741,7 @@ const Users = {
             roleId,
             name,
             email,
-            canImpersonate
+            canImpersonate,
           }),
         },
       })
@@ -752,7 +791,7 @@ const Users = {
         audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as any
 
     try {
@@ -761,6 +800,7 @@ const Users = {
         clId,
         ctx,
         logger,
+        operation: 'updateUser',
         orgId,
         roleId,
         sessionData,
@@ -768,10 +808,15 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      logger.error({
-        error,
-        message: 'addUser-checkUserIsAllowedError',
-      })
+      if (!isAuthDenied(error)) {
+        logAccessError(
+          logger,
+          'updateUser.checkUserIsAllowedError',
+          { operation: 'updateUser' },
+          error
+        )
+      }
+
       throw error
     }
 
@@ -799,11 +844,14 @@ const Users = {
     return storefrontPermissionsClient
       .updateUser(fields)
       .then(async (result: any) => {
-        let currentUserData = null;
+        let currentUserData = null
+
         try {
-          currentUserData = await storefrontPermissionsClient.getUser({ userId });
+          currentUserData = await storefrontPermissionsClient.getUser({
+            userId,
+          })
         } catch (error) {
-          currentUserData = null;
+          currentUserData = null
         }
 
         await audit.sendEvent({
@@ -860,7 +908,7 @@ const Users = {
         audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as any
 
     try {
@@ -869,6 +917,7 @@ const Users = {
         clId,
         ctx,
         logger,
+        operation: 'saveUser',
         orgId,
         roleId,
         sessionData,
@@ -876,10 +925,15 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      logger.error({
-        error,
-        message: 'addUser-checkUserIsAllowedError',
-      })
+      if (!isAuthDenied(error)) {
+        logAccessError(
+          logger,
+          'saveUser.checkUserIsAllowedError',
+          { operation: 'saveUser' },
+          error
+        )
+      }
+
       throw error
     }
 
@@ -967,10 +1021,12 @@ async function impersonateUser(
       sendImpersonateUserMetric(ctx, metricParams)
     })
     .catch((error: any) => {
-      logger.error({
-        error,
-        message: 'impersonateUser-impersonateUserError',
-      })
+      logAccessError(
+        logger,
+        'impersonateUser.error',
+        { operation: 'impersonateUser', targetUserId: userId },
+        error
+      )
 
       return { status: 'error', message: error }
     })
