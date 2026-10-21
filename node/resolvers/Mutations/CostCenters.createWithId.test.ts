@@ -1,3 +1,4 @@
+import { loadOrganization } from '../../services/organizationDocuments'
 import Organizations from '../Queries/Organizations'
 import CostCenterRepository from '../repository/CostCenterRepository'
 import CostCenters from './CostCenters'
@@ -19,6 +20,9 @@ jest.mock('../repository/CostCenterRepository', () => ({
   default: {
     createCostCenter: jest.fn(),
   },
+}))
+jest.mock('../../services/organizationDocuments', () => ({
+  loadOrganization: jest.fn(),
 }))
 jest.mock('../../services/organizationsCache', () => ({
   invalidateCostCenterCache: jest.fn().mockResolvedValue(undefined),
@@ -73,6 +77,10 @@ const mockContext = () => {
 describe('createCostCenterWithId (B2BTEAM-3982)', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    ;(loadOrganization as jest.Mock).mockResolvedValue({
+      id: orgId,
+      status: 'active',
+    })
     ;(Organizations.getOrganizationById as jest.Mock).mockResolvedValue({
       id: orgId,
       status: 'active',
@@ -154,6 +162,62 @@ describe('createCostCenterWithId (B2BTEAM-3982)', () => {
     expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'createCostCenterWithId.lookupError' })
     )
+  })
+
+  it('warns organizationNotFound and rejects with the same error when the org is missing', async () => {
+    const ctx = mockContext()
+    const notFound: any = new Error('organizationNotFound')
+
+    notFound.organizationNotFound = true
+    ;(loadOrganization as jest.Mock).mockRejectedValue(notFound)
+
+    const promise = CostCenters.createCostCenterWithId(
+      undefined as never,
+      { organizationId: 'missing-org', input: baseInput as any },
+      ctx
+    )
+
+    await expect(promise).rejects.toThrow('organizationNotFound')
+    await expect(promise).rejects.toMatchObject({
+      extensions: { message: 'organizationNotFound' },
+    })
+
+    expect(ctx.vtex.logger.warn).toHaveBeenCalledWith({
+      message: 'createCostCenterWithId.organizationNotFound',
+      operation: 'createCostCenterWithId',
+      organizationId: 'missing-org',
+    })
+    expect(ctx.vtex.logger.error).not.toHaveBeenCalled()
+    expect(Organizations.getOrganizationById).not.toHaveBeenCalled()
+    expect(ctx.clients.masterdata.getDocument).not.toHaveBeenCalled()
+    expect(CostCenterRepository.createCostCenter).not.toHaveBeenCalled()
+  })
+
+  it('delegates non-not-found org lookup failures to getOrganizationById', async () => {
+    const ctx = mockContext()
+    const serverError: any = new Error('Request failed with status code 500')
+
+    serverError.response = { status: 500 }
+    ;(loadOrganization as jest.Mock).mockRejectedValue(serverError)
+    ;(Organizations.getOrganizationById as jest.Mock).mockRejectedValue(
+      new Error('Request failed with status code 500')
+    )
+
+    await expect(
+      CostCenters.createCostCenterWithId(
+        undefined as never,
+        { organizationId: orgId, input: baseInput as any },
+        ctx
+      )
+    ).rejects.toThrow('Request failed with status code 500')
+
+    expect(Organizations.getOrganizationById).toHaveBeenCalled()
+    expect(ctx.vtex.logger.warn).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'createCostCenterWithId.organizationNotFound',
+      })
+    )
+    expect(CostCenterRepository.createCostCenter).not.toHaveBeenCalled()
   })
 
   it('warns alreadyExists and does not create when document is found', async () => {

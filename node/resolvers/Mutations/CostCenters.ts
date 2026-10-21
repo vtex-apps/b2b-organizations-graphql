@@ -15,6 +15,7 @@ import {
   invalidateCostCenterCache,
   invalidateOrganizationCache,
 } from '../../services/organizationsCache'
+import { loadOrganization } from '../../services/organizationDocuments'
 import Organizations from '../Queries/Organizations'
 import checkConfig from '../config'
 import CostCenterRepository from '../repository/CostCenterRepository'
@@ -140,23 +141,26 @@ const CostCenters = {
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    // check if organization exists
-    const organization = (await Organizations.getOrganizationById(
-      _,
-      { id: organizationId },
-      ctx
-    )) as {
-      status: string
+    // check if organization exists. getOrganizationById throws (it never
+    // resolves null) when the document is missing, so detect not-found here
+    // to log it as an expected warn. The request-scoped cache in
+    // loadOrganization makes the getOrganizationById call below free.
+    try {
+      await loadOrganization(ctx, organizationId)
+    } catch (error) {
+      if (error?.organizationNotFound) {
+        logger.warn({
+          message: 'createCostCenterWithId.organizationNotFound',
+          operation: 'createCostCenterWithId',
+          organizationId,
+        })
+        // Same error getOrganizationById would surface to the caller.
+        throw new GraphQLError(getErrorMessage(error))
+      }
+      // Any other failure: let getOrganizationById log and surface it as before.
     }
 
-    if (!organization) {
-      logger.warn({
-        message: 'createCostCenterWithId.organizationNotFound',
-        operation: 'createCostCenterWithId',
-        organizationId,
-      })
-      throw new Error('Organization not found')
-    }
+    await Organizations.getOrganizationById(_, { id: organizationId }, ctx)
 
     // Lookup by id without going through getCostCenterById (preserves HTTP status).
     let costCenter = null

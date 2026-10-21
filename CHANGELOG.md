@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **[B2BTEAM-3982]** `createCostCenterWithId` no longer treats Master Data lookup failures (5xx/429/timeout) as "does not exist". Only HTTP 404 / missing document proceeds to create; other errors log `createCostCenterWithId.lookupError` and fail the mutation without creating.
 - **[B2BTEAM-3982]** `getCostCenterById` logs 404 as `warn` `getCostCenterById.notFound` and attaches `extensions.status` on the GraphQL error; real failures use `getCostCenterById.error`.
+- **[B2BTEAM-3982]** `createCostCenterWithId` with a nonexistent organization now logs `warn` `createCostCenterWithId.organizationNotFound` (previously unreachable: `getOrganizationById` throws instead of returning null, so only `getOrganizationById-error` was logged at `error`). The mutation response (`organizationNotFound`) is unchanged.
 
 ### Changed
 
