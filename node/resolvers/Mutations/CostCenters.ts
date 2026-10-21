@@ -201,7 +201,9 @@ const CostCenters = {
         operation: 'createCostCenterWithId',
         organizationId,
       })
-      throw new Error('Cost Center already exists')
+      // Expected outcome, already logged as warn above: mark it so the GraphQL
+      // error middleware does not re-log it as error. Message unchanged.
+      throw withLogLevel(new Error('Cost Center already exists'), 'warn')
     }
 
     const newCostCenter: CostCenterInput = {

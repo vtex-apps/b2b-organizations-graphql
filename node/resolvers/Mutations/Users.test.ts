@@ -295,3 +295,43 @@ describe('given an Users Mutation', () => {
     })
   })
 })
+
+describe('saveUser logging (B2BTEAM-3982)', () => {
+  it('logs saveUser.error with its own operation when storefront-permissions fails', async () => {
+    const logger = { error: jest.fn(), info: jest.fn(), warn: jest.fn() }
+    const ctx = {
+      clients: {
+        masterdata: {},
+        storefrontPermissions: {
+          saveUser: jest.fn().mockRejectedValue(new Error('boom')),
+        },
+      },
+      ip: '127.0.0.1',
+      vtex: { adminUserAuthToken: 'token', logger },
+    } as unknown as Context
+
+    const result = await Users.saveUser(
+      undefined as never,
+      {
+        costId: randUuid(),
+        email: randEmail(),
+        name: 'QA',
+        orgId: randUuid(),
+        roleId: randUuid(),
+      } as UserArgs,
+      ctx
+    )
+
+    expect(result).toEqual(expect.objectContaining({ status: 'error' }))
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'User',
+        message: 'saveUser.error',
+        operation: 'saveUser',
+      })
+    )
+    expect(logger.error).not.toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'addUser.error' })
+    )
+  })
+})

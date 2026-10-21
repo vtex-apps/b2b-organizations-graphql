@@ -1,5 +1,7 @@
 import {
   getOperationName,
+  getStorefrontPermissionsLogLevel,
+  isAuthDeniedError,
   isClientValidationError,
   logStorefrontPermissionsError,
 } from './storefrontPermissionsError'
@@ -81,5 +83,91 @@ describe('storefrontPermissions.queryError (B2BTEAM-3982)', () => {
       gqlError(['user a@b.com not found'])
     )
     expect(JSON.stringify(l.error.mock.calls[0][0])).not.toContain('a@b.com')
+  })
+
+  describe('upstream level and authentication errors', () => {
+    const withExtensions = (message: string, extensions: any) =>
+      Object.assign(new Error('storefront-permissions'), {
+        graphQLErrors: [{ message, extensions }],
+      })
+
+    it('logs warn for checkUserPermission "User not authenticated" (upstream warn)', () => {
+      const l = logger()
+      const err = withExtensions(
+        'User not authenticated, make sure the query is private',
+        { exception: { level: 'warn' }, logLevel: 'warn' }
+      )
+
+      logStorefrontPermissionsError(l, 'checkUserPermission', err)
+      expect(l.warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'storefrontPermissions.queryError',
+          operation: 'checkUserPermission',
+        })
+      )
+      expect(l.error).not.toHaveBeenCalled()
+    })
+
+    it('logs warn for authentication messages even without upstream level', () => {
+      const l = logger()
+      const err = gqlError([
+        'User not authenticated, make sure the query is private',
+      ])
+
+      expect(isAuthDeniedError(err)).toBe(true)
+      logStorefrontPermissionsError(l, 'checkUserPermission', err)
+      expect(l.warn).toHaveBeenCalledTimes(1)
+      expect(l.error).not.toHaveBeenCalled()
+      expect(
+        getStorefrontPermissionsLogLevel(gqlError(['Access denied']))
+      ).toBe('warn')
+      expect(
+        getStorefrontPermissionsLogLevel(gqlError(['operation-not-permitted']))
+      ).toBe('warn')
+    })
+
+    it('honors upstream warn for any message', () => {
+      expect(
+        getStorefrontPermissionsLogLevel(
+          withExtensions('Something expected', { exception: { level: 'warn' } })
+        )
+      ).toBe('warn')
+      expect(
+        getStorefrontPermissionsLogLevel(
+          withExtensions('Something expected', { logLevel: 'warn' })
+        )
+      ).toBe('warn')
+    })
+
+    it('an explicit upstream error wins over message patterns', () => {
+      const l = logger()
+
+      logStorefrontPermissionsError(
+        l,
+        'checkUserPermission',
+        withExtensions(
+          'User not authenticated, make sure the query is private',
+          {
+            exception: { level: 'error' },
+          }
+        )
+      )
+      expect(l.error).toHaveBeenCalledTimes(1)
+      expect(l.warn).not.toHaveBeenCalled()
+    })
+
+    it('logs error when any error is not expected', () => {
+      const err = Object.assign(new Error('storefront-permissions'), {
+        graphQLErrors: [
+          { message: 'User not authenticated, make sure the query is private' },
+          { message: 'boom' },
+        ],
+      })
+
+      expect(getStorefrontPermissionsLogLevel(err)).toBe('error')
+      expect(
+        getStorefrontPermissionsLogLevel(new Error('socket hang up'))
+      ).toBe('error')
+    })
   })
 })

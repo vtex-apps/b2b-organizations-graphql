@@ -924,9 +924,9 @@ const Users = {
       })
       .catch((error: any) => {
         logger.error({
-          message: 'addUser.error',
+          message: 'saveUser.error',
           error: describeClientError(error),
-          operation: 'addUser',
+          operation: 'saveUser',
           entity: 'User',
         })
 

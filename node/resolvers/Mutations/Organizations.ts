@@ -73,9 +73,9 @@ const createUserAndAttachToOrganization = async ({
     })
     .catch((error: any) => {
       logger.error({
-        message: 'addUser.error',
+        message: 'createUserAndAttachToOrganization.saveUserError',
         error: describeClientError(error),
-        operation: 'addUser',
+        operation: 'createUserAndAttachToOrganization',
         entity: 'User',
       })
     })

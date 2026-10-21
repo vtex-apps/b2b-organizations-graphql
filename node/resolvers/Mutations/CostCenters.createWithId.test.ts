@@ -235,7 +235,10 @@ describe('createCostCenterWithId (B2BTEAM-3982)', () => {
         { organizationId: orgId, input: baseInput as any },
         ctx
       )
-    ).rejects.toThrow('Cost Center already exists')
+    ).rejects.toMatchObject({
+      level: 'warn',
+      message: 'Cost Center already exists',
+    })
 
     expect(CostCenterRepository.createCostCenter).not.toHaveBeenCalled()
     expect(ctx.vtex.logger.warn).toHaveBeenCalledWith(

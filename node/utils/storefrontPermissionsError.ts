@@ -13,6 +13,21 @@ const CLIENT_VALIDATION_PATTERNS = [
   /^Field "[^"]+" argument "[^"]+" of type .* is required/,
 ]
 
+/**
+ * Authentication/permission outcomes: the caller has no session or lacks the
+ * permission (e.g. checkUserPermission from an admin token without storefront
+ * session). storefront-permissions itself logs these as warn.
+ */
+const AUTH_DENIED_PATTERNS = [
+  /^User not authenticated/i,
+  /^(Access|Permission) denied/i,
+  /^Forbidden\b/i,
+  /operation-not-permitted/i,
+  /^(User|Operation) not (allowed|authorized|permitted)/i,
+]
+
+type LogLevel = 'warn' | 'error'
+
 const redactEmails = (value: string) =>
   value.replace(
     /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g,
@@ -32,13 +47,69 @@ export const getGraphQLErrorMessages = (error: any): string[] => {
     .map(redactEmails)
 }
 
+const getRawGraphQLErrors = (error: any): any[] => {
+  const errors = error?.graphQLErrors ?? error?.response?.data?.errors
+
+  return Array.isArray(errors) ? errors : []
+}
+
+const asLevel = (value: unknown): LogLevel | null =>
+  value === 'warn' || value === 'error' ? value : null
+
+/**
+ * Level storefront-permissions attached to its own GraphQL error. Its
+ * GraphQLError sets `extensions.exception.level` (the field @vtex/api honors)
+ * from `extensions.logLevel`; accept either.
+ */
+export const getUpstreamLevel = (graphQLError: any): LogLevel | null =>
+  asLevel(graphQLError?.extensions?.exception?.level) ??
+  asLevel(graphQLError?.extensions?.logLevel) ??
+  asLevel(graphQLError?.extensions?.level)
+
+const isAuthDeniedMessage = (message: string) =>
+  AUTH_DENIED_PATTERNS.some((p) => p.test(message))
+
+const isClientValidationMessage = (message: string) =>
+  CLIENT_VALIDATION_PATTERNS.some((p) => p.test(message))
+
+export const isAuthDeniedError = (error: any): boolean => {
+  const messages = getGraphQLErrorMessages(error)
+
+  return messages.length > 0 && messages.every(isAuthDeniedMessage)
+}
+
+/**
+ * warn when every GraphQL error is an expected outcome: the upstream marked
+ * it as warn, or it is a client validation / authentication error. An
+ * explicit upstream 'error' always wins. Anything else (HTTP failures,
+ * resolver errors) is error.
+ */
+export const getStorefrontPermissionsLogLevel = (error: any): LogLevel => {
+  const errors = getRawGraphQLErrors(error)
+
+  if (errors.length === 0) {
+    return 'error'
+  }
+
+  const isExpected = (e: any) => {
+    const upstream = getUpstreamLevel(e)
+
+    if (upstream) {
+      return upstream === 'warn'
+    }
+
+    const message = typeof e?.message === 'string' ? e.message : ''
+
+    return isClientValidationMessage(message) || isAuthDeniedMessage(message)
+  }
+
+  return errors.every(isExpected) ? 'warn' : 'error'
+}
+
 export const isClientValidationError = (error: any): boolean => {
   const messages = getGraphQLErrorMessages(error)
 
-  return (
-    messages.length > 0 &&
-    messages.every((m) => CLIENT_VALIDATION_PATTERNS.some((p) => p.test(m)))
-  )
+  return messages.length > 0 && messages.every(isClientValidationMessage)
 }
 
 /** First selected field of a GraphQL document, used as the operation name. */
@@ -60,7 +131,7 @@ export const logStorefrontPermissionsError = (
     operation,
   }
 
-  if (isClientValidationError(error)) {
+  if (getStorefrontPermissionsLogLevel(error) === 'warn') {
     logger.warn(payload)
   } else {
     logger.error(payload)
