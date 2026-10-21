@@ -179,6 +179,8 @@ describe('createCostCenterWithId (B2BTEAM-3982)', () => {
 
     await expect(promise).rejects.toThrow('organizationNotFound')
     await expect(promise).rejects.toMatchObject({
+      message: 'organizationNotFound',
+      level: 'warn',
       extensions: { message: 'organizationNotFound' },
     })
 
@@ -256,10 +258,78 @@ describe('deleteCostCenter logging (B2BTEAM-3982)', () => {
 
     await expect(
       CostCenters.deleteCostCenter(undefined as never, { id: costId }, ctx)
-    ).rejects.toBeTruthy()
+    ).rejects.toMatchObject({
+      message: 'not found',
+      level: 'warn',
+      extensions: { message: 'not found' },
+    })
 
     expect(ctx.vtex.logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'deleteCostCenter.notFound' })
     )
+  })
+
+  it('keeps default (error) level on non-404 failures', async () => {
+    const ctx = mockContext()
+    const serverError: any = new Error('boom')
+
+    serverError.response = { status: 500 }
+    ;(ctx.clients.masterdata.getDocument as jest.Mock).mockRejectedValue(
+      serverError
+    )
+
+    const error = await CostCenters.deleteCostCenter(
+      undefined as never,
+      { id: costId },
+      ctx
+    ).catch((e: any) => e)
+
+    expect(error.message).toBe('boom')
+    expect(error.level).toBeUndefined()
+    expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'deleteCostCenter.error' })
+    )
+  })
+})
+
+describe('deleteOrganization logging (B2BTEAM-3982)', () => {
+  it('logs warn notFound and marks the error as warn on 404', async () => {
+    const ctx = mockContext()
+    const notFound: any = new Error('not found')
+
+    notFound.response = { status: 404 }
+    ;(ctx.clients.masterdata.getDocument as jest.Mock).mockRejectedValue(
+      notFound
+    )
+
+    await expect(
+      CostCenters.deleteOrganization(undefined as never, { id: orgId }, ctx)
+    ).rejects.toMatchObject({
+      message: 'not found',
+      level: 'warn',
+      extensions: { message: 'not found' },
+    })
+
+    expect(ctx.vtex.logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'deleteOrganization.notFound' })
+    )
+  })
+
+  it('keeps default (error) level on non-404 failures', async () => {
+    const ctx = mockContext()
+    const serverError: any = new Error('boom')
+
+    serverError.response = { status: 500 }
+    ;(ctx.clients.masterdata.getDocument as jest.Mock).mockRejectedValue(
+      serverError
+    )
+
+    const error = await CostCenters.deleteOrganization(
+      undefined as never,
+      { id: orgId },
+      ctx
+    ).catch((e: any) => e)
+
+    expect(error.level).toBeUndefined()
   })
 })

@@ -39,7 +39,9 @@ describe('getCostCenterById (B2BTEAM-3982)', () => {
     await expect(
       costCenters.getCostCenterById(undefined as never, { id: 'cc-1' }, ctx)
     ).rejects.toMatchObject({
-      extensions: expect.objectContaining({ status: 404 }),
+      message: 'costCenterNotFound',
+      level: 'warn',
+      extensions: { message: 'costCenterNotFound', status: 404 },
     })
 
     expect(ctx.vtex.logger.warn).toHaveBeenCalledWith(
@@ -64,5 +66,19 @@ describe('getCostCenterById (B2BTEAM-3982)', () => {
     expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'getCostCenterById.error' })
     )
+  })
+
+  it('does not downgrade the log level of non-404 failures', async () => {
+    const ctx = mockContext()
+    const serverError: any = new Error('boom')
+
+    serverError.response = { status: 500 }
+    ;(loadCostCenter as jest.Mock).mockRejectedValue(serverError)
+
+    const error = await costCenters
+      .getCostCenterById(undefined as never, { id: 'cc-1' }, ctx)
+      .catch((e: any) => e)
+
+    expect(error.level).toBeUndefined()
   })
 })

@@ -7,7 +7,10 @@ import type {
   CostCenterInput,
   CostCenterInputWithId,
 } from '../../typings'
-import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import GraphQLError, {
+  getErrorMessage,
+  withLogLevel,
+} from '../../utils/GraphQLError'
 import { describeClientError } from '../../utils/clientError'
 import { getHttpStatus, isNotFoundError } from '../../utils/httpError'
 import { sendMutationAudit } from '../../utils/sendMutationAudit'
@@ -154,8 +157,9 @@ const CostCenters = {
           operation: 'createCostCenterWithId',
           organizationId,
         })
-        // Same error getOrganizationById would surface to the caller.
-        throw new GraphQLError(getErrorMessage(error))
+        // Same error getOrganizationById would surface to the caller, marked
+        // as warn so the GraphQL error middleware does not re-log it as error.
+        throw withLogLevel(new GraphQLError(getErrorMessage(error)), 'warn')
       }
       // Any other failure: let getOrganizationById log and surface it as before.
     }
@@ -378,7 +382,11 @@ const CostCenters = {
         })
       }
 
-      throw new GraphQLError(getErrorMessage(e))
+      const graphQLError = new GraphQLError(getErrorMessage(e))
+
+      throw isNotFoundError(e)
+        ? withLogLevel(graphQLError, 'warn')
+        : graphQLError
     }
   },
 
@@ -433,7 +441,11 @@ const CostCenters = {
         })
       }
 
-      throw new GraphQLError(getErrorMessage(e))
+      const graphQLError = new GraphQLError(getErrorMessage(e))
+
+      throw isNotFoundError(e)
+        ? withLogLevel(graphQLError, 'warn')
+        : graphQLError
     }
   },
 

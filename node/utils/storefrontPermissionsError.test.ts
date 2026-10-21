@@ -43,6 +43,23 @@ describe('storefrontPermissions.queryError (B2BTEAM-3982)', () => {
     expect(l.error).not.toHaveBeenCalled()
   })
 
+  it('logs warn when a required variable is sent as null (e.g. user without roleId)', () => {
+    const l = logger()
+    const err = gqlError([
+      'Variable "$id" of non-null type "ID!" must not be null.',
+    ])
+
+    expect(isClientValidationError(err)).toBe(true)
+    logStorefrontPermissionsError(l, 'getRole', err)
+    expect(l.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'storefrontPermissions.queryError',
+        operation: 'getRole',
+      })
+    )
+    expect(l.error).not.toHaveBeenCalled()
+  })
+
   it('logs error for real failures (HTTP or resolver errors)', () => {
     const l = logger()
     const httpErr: any = new Error('Request failed with status code 500')

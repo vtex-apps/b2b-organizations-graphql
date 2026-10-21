@@ -12,11 +12,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **[B2BTEAM-3982]** `createCostCenterWithId` no longer treats Master Data lookup failures (5xx/429/timeout) as "does not exist". Only HTTP 404 / missing document proceeds to create; other errors log `createCostCenterWithId.lookupError` and fail the mutation without creating.
 - **[B2BTEAM-3982]** `getCostCenterById` logs 404 as `warn` `getCostCenterById.notFound` and attaches `extensions.status` on the GraphQL error; real failures use `getCostCenterById.error`.
 - **[B2BTEAM-3982]** `createCostCenterWithId` with a nonexistent organization now logs `warn` `createCostCenterWithId.organizationNotFound` (previously unreachable: `getOrganizationById` throws instead of returning null, so only `getOrganizationById-error` was logged at `error`). The mutation response (`organizationNotFound`) is unchanged.
+- **[B2BTEAM-3982]** Not-found GraphQL errors (`createCostCenterWithId` organization not found, `getCostCenterById`, `deleteCostCenter`, `deleteOrganization`, `deleteOrganizationRequest` on 404) are marked `level: 'warn'`, so the `@vtex/api` GraphQL error middleware re-logs them as `warn` instead of `error`. Message and code are unchanged; the response only gains `extensions.exception.level: "warn"`.
 
 ### Changed
 
 - **[B2BTEAM-3982]** Mutation write failures use stable `<mutation>.*` message keys with `describeClientError` payloads (no raw error objects). Deletes log `warn` `<op>.notFound` on 404. Mutation audit uses `sendEventStrict` so an audit failure after a successful write fails the mutation (`audit.sendEventError`). Query/login audit remains fire-and-forget (B2BTEAM-3729).
-- **[B2BTEAM-3982]** `storefront-permissions` client calls now log `storefrontPermissions.queryError` (`operation`, `describeClientError`, `graphQLErrors` messages) before rethrowing unchanged. Client-side GraphQL validation errors (e.g. `Variable "$email" ... was not provided`) log as `warn`; real failures as `error`. Previously these only surfaced as the generic `storefront-permissions` error logged by `@vtex/api`.
+- **[B2BTEAM-3982]** `storefront-permissions` client calls now log `storefrontPermissions.queryError` (`operation`, `describeClientError`, `graphQLErrors` messages) before rethrowing unchanged. Client-side GraphQL validation errors (e.g. `Variable "$email" ... was not provided`, or `Variable "$id" ... must not be null` for a user without `roleId`) log as `warn`; real failures as `error`. Previously these only surfaced as the generic `storefront-permissions` error logged by `@vtex/api`.
 
 ## [2.8.1] - 2026-10-05
 

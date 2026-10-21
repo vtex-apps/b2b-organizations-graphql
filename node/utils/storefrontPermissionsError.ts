@@ -6,7 +6,7 @@ import { describeClientError } from './clientError'
  * required variable missing), not by storefront-permissions being unhealthy.
  */
 const CLIENT_VALIDATION_PATTERNS = [
-  /^Variable "\$[^"]+" .*(was not provided|got invalid value)/,
+  /^Variable "\$[^"]+" .*(was not provided|got invalid value|must not be null)/,
   /^Cannot query field/,
   /^Unknown argument/,
   /^Syntax Error/,

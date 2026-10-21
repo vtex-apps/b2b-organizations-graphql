@@ -23,7 +23,10 @@ import {
   ORGANIZATION_REQUEST_STATUSES,
   ORGANIZATION_STATUSES,
 } from '../../utils/constants'
-import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import GraphQLError, {
+  getErrorMessage,
+  withLogLevel,
+} from '../../utils/GraphQLError'
 import { describeClientError } from '../../utils/clientError'
 import { isNotFoundError } from '../../utils/httpError'
 import { sendMutationAudit } from '../../utils/sendMutationAudit'
@@ -795,7 +798,11 @@ const Organizations = {
         })
       }
 
-      throw new GraphQLError(getErrorMessage(e))
+      const graphQLError = new GraphQLError(getErrorMessage(e))
+
+      throw isNotFoundError(e)
+        ? withLogLevel(graphQLError, 'warn')
+        : graphQLError
     }
   },
   updateOrganization: async (

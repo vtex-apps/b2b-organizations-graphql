@@ -891,3 +891,52 @@ describe('given an Organization Mutation', () => {
     })
   })
 })
+
+describe('deleteOrganizationRequest logging (B2BTEAM-3982)', () => {
+  it('logs warn notFound and marks the error as warn on 404', async () => {
+    const ctx = mockContext()
+    const notFound: any = new Error('not found')
+
+    notFound.response = { status: 404 }
+    ;(ctx.clients.masterdata.getDocument as jest.Mock).mockRejectedValue(
+      notFound
+    )
+
+    await expect(
+      Organizations.deleteOrganizationRequest(
+        undefined as never,
+        { id: 'req-1' },
+        ctx
+      )
+    ).rejects.toMatchObject({
+      message: 'not found',
+      level: 'warn',
+      extensions: { message: 'not found' },
+    })
+
+    expect(ctx.vtex.logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'deleteOrganizationRequest.notFound' })
+    )
+  })
+
+  it('keeps default (error) level on non-404 failures', async () => {
+    const ctx = mockContext()
+    const serverError: any = new Error('boom')
+
+    serverError.response = { status: 500 }
+    ;(ctx.clients.masterdata.getDocument as jest.Mock).mockRejectedValue(
+      serverError
+    )
+
+    const error = await Organizations.deleteOrganizationRequest(
+      undefined as never,
+      { id: 'req-1' },
+      ctx
+    ).catch((e: any) => e)
+
+    expect(error.level).toBeUndefined()
+    expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'deleteOrganizationRequest.error' })
+    )
+  })
+})
