@@ -573,6 +573,22 @@ describe('updateUser audit lookup', () => {
     )
   })
 
+  it('looks the user up before the update (pre-update entityBeforeAction)', async () => {
+    const getUser = jest
+      .fn()
+      .mockResolvedValue({ data: { getUser: { clId: 'cl-1', roleId: 'old' } } })
+
+    const ctx = makeCtx(getUser)
+
+    await Users.updateUser(undefined as never, args as never, ctx)
+
+    const { updateUser } = ctx.clients.storefrontPermissions as any
+
+    expect(getUser.mock.invocationCallOrder[0]).toBeLessThan(
+      updateUser.mock.invocationCallOrder[0]
+    )
+  })
+
   it('skips the lookup when there is no clId', async () => {
     const getUser = jest.fn()
     const ctx = makeCtx(getUser)
@@ -584,5 +600,110 @@ describe('updateUser audit lookup', () => {
     )
 
     expect(getUser).not.toHaveBeenCalled()
+  })
+})
+
+describe('role lookup failure while checking access', () => {
+  const orgId = 'org-1'
+
+  const makeCtx = (
+    logger: ReturnType<typeof makeLogger>,
+    permissions = ['add-sales-users-all']
+  ) =>
+    ({
+      clients: {
+        audit: { sendEvent: jest.fn().mockResolvedValue(undefined) },
+        events: { sendEvent: jest.fn() },
+        masterdata: { getDocument: jest.fn().mockResolvedValue({}) },
+        storefrontPermissions: {
+          addUser: jest.fn(),
+          deleteUser: jest.fn(),
+          getRole: jest.fn().mockRejectedValue(
+            Object.assign(new Error('getRole failed'), {
+              response: { headers: {}, status: 503 },
+            })
+          ),
+          getUser: jest.fn().mockRejectedValue(
+            Object.assign(new Error('getUser failed'), {
+              response: { headers: {}, status: 500 },
+            })
+          ),
+          saveUser: jest.fn(),
+          updateUser: jest.fn(),
+        },
+      },
+      ip: '127.0.0.1',
+      vtex: {
+        account: 'b2bstoreqa',
+        logger,
+        sessionData: {
+          namespaces: {
+            'storefront-permissions': { organization: { value: orgId } },
+          },
+        },
+        storefrontPermissions: { permissions },
+      },
+    } as unknown as Context)
+
+  const roleErrors = (logger: ReturnType<typeof makeLogger>, op: string) =>
+    logger.error.mock.calls
+      .map(([payload]) => payload)
+      .filter((payload) => payload?.message === `${op}.checkUserIsAllowedError`)
+
+  // Only add-sales-users-all: the '' fallback slug is not a sales role, so
+  // access is denied exactly as before; only the log changes.
+  it.each([
+    ['addUser', { clId: 'cl-1', orgId, roleId: 'r1' }, 500],
+    ['updateUser', { clId: 'cl-1', orgId, roleId: 'r1' }, 500],
+    ['saveUser', { clId: 'cl-1', orgId, roleId: 'r1' }, 500],
+    ['saveUser', { orgId, roleId: 'r1' }, 503],
+  ])(
+    '%s: logs error <op>.checkUserIsAllowedError and still answers operation-not-permitted',
+    async (op, args, status) => {
+      const logger = makeLogger()
+      const ctx = makeCtx(logger)
+
+      await expect((Users as any)[op](undefined, args, ctx)).rejects.toThrow(
+        'operation-not-permitted'
+      )
+
+      expect(roleErrors(logger, op)).toEqual([
+        expect.objectContaining({
+          entity: 'User',
+          error: expect.objectContaining({ status }),
+          operation: op,
+          reason: 'role-lookup-failed',
+        }),
+      ])
+      expect(
+        logger.warn.mock.calls.filter(([p]) =>
+          /getUserRoleSlug-error|getRoleError/.test(p?.message)
+        )
+      ).toHaveLength(0)
+      expect(
+        ctx.clients.storefrontPermissions.updateUser
+      ).not.toHaveBeenCalled()
+    }
+  )
+
+  it('removeUser: logs error removeUser.checkUserIsAllowedError, response unchanged', async () => {
+    const logger = makeLogger()
+    const ctx = makeCtx(logger, ['remove-users-organization'])
+
+    // remove-users-organization with an empty role slug is still permitted,
+    // exactly as before; only the log changes.
+    await Users.removeUser(
+      undefined as never,
+      { clId: 'cl-1', email: EMAIL, id: 'b2b-1', userId: 'user-1' } as never,
+      ctx
+    ).catch(() => undefined)
+
+    expect(roleErrors(logger, 'removeUser')).toEqual([
+      expect.objectContaining({
+        operation: 'removeUser',
+        reason: 'role-lookup-failed',
+      }),
+    ])
+    expect(allLoggedText(logger)).not.toContain(EMAIL)
   })
 })

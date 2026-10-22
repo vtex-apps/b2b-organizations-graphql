@@ -13,10 +13,28 @@ import {
 } from '../../utils/metrics/user'
 import type { UserArgs } from '../../typings'
 
+/**
+ * The role lookup that decides access failed (storefront-permissions
+ * getUser/getRole). This is an infrastructure failure, not a deny, so it is
+ * logged as `error` `<op>.checkUserIsAllowedError` (SDD §4.2/§5). Logging
+ * only: the role slug still falls back to '' and the permission decision and
+ * response are unchanged.
+ */
+const logRoleLookupError = (logger: any, operation: string, error: any) => {
+  logger.error({
+    entity: 'User',
+    error: describeClientError(error),
+    message: `${operation}.checkUserIsAllowedError`,
+    operation,
+    reason: 'role-lookup-failed',
+  })
+}
+
 export const getUserRoleSlug: (
   id: string,
-  ctx: Context
-) => Promise<string> = async (id, ctx) => {
+  ctx: Context,
+  operation: string
+) => Promise<string> = async (id, ctx, operation) => {
   const {
     clients: { storefrontPermissions },
     vtex: { logger },
@@ -34,10 +52,7 @@ export const getUserRoleSlug: (
       return result?.data?.getRole?.slug ?? ''
     })
     .catch((error: any) => {
-      logger.warn({
-        error,
-        message: 'getUserRoleSlug-error',
-      })
+      logRoleLookupError(logger, operation, error)
 
       return ''
     })
@@ -60,21 +75,19 @@ const getRoleSlug = async ({
   clId,
   ctx,
   logger,
+  operation,
   roleId,
   storefrontPermissionsClient,
 }: any) =>
   clId
-    ? getUserRoleSlug(clId, ctx)
+    ? getUserRoleSlug(clId, ctx, operation)
     : storefrontPermissionsClient
         .getRole(roleId)
         .then((result: any) => {
           return result?.data?.getRole?.slug ?? ''
         })
         .catch((error: any) => {
-          logger.warn({
-            error,
-            message: 'saveUser-getRoleError',
-          })
+          logRoleLookupError(logger, operation, error)
 
           return ''
         })
@@ -103,6 +116,7 @@ const checkUserIsAllowed = async ({
   clId,
   ctx,
   logger,
+  operation,
   orgId,
   roleId,
   sessionData,
@@ -118,6 +132,7 @@ const checkUserIsAllowed = async ({
       clId,
       ctx,
       logger,
+      operation,
       roleId,
       storefrontPermissionsClient,
     })
@@ -509,7 +524,7 @@ const Users = {
         throw new GraphQLError('organization-data-not-found')
       }
 
-      const roleSlug = await getUserRoleSlug(clId, ctx)
+      const roleSlug = await getUserRoleSlug(clId, ctx, 'removeUser')
 
       const permitted =
         (storefrontPermissions?.permissions?.includes(
@@ -584,6 +599,7 @@ const Users = {
         clId,
         ctx,
         logger,
+        operation: 'addUser',
         orgId,
         roleId,
         sessionData,
@@ -753,6 +769,7 @@ const Users = {
         clId,
         ctx,
         logger,
+        operation: 'updateUser',
         orgId,
         roleId,
         sessionData,
@@ -788,31 +805,32 @@ const Users = {
       userId,
     }
 
+    let currentUserData: unknown = null
+
+    // Audit-only lookup, before the update so `entityBeforeAction` holds the
+    // pre-update user. storefront-permissions' getUser takes the CL id (it
+    // used to receive `{ userId }`, so it always failed silently). A failure
+    // never blocks the update (SDD §5).
+    if (clId) {
+      try {
+        currentUserData =
+          (await storefrontPermissionsClient.getUser(clId))?.data?.getUser ??
+          null
+      } catch (error) {
+        logger.warn({
+          entity: 'User',
+          error: describeClientError(error),
+          message: 'updateUser.auditLookupError',
+          operation: 'updateUser',
+          userId,
+        })
+        currentUserData = null
+      }
+    }
+
     return storefrontPermissionsClient
       .updateUser(fields)
       .then(async (result: any) => {
-        let currentUserData = null
-
-        // Audit-only lookup: storefront-permissions' getUser takes the CL id
-        // (it used to receive `{ userId }`, so it always failed silently).
-        // A failure never blocks the update (SDD §5).
-        if (clId) {
-          try {
-            currentUserData =
-              (await storefrontPermissionsClient.getUser(clId))?.data
-                ?.getUser ?? null
-          } catch (error) {
-            logger.warn({
-              entity: 'User',
-              error: describeClientError(error),
-              message: 'updateUser.auditLookupError',
-              operation: 'updateUser',
-              userId,
-            })
-            currentUserData = null
-          }
-        }
-
         await audit.sendEvent({
           subjectId: 'update-user-event',
           operation: 'UPDATE_USER',
@@ -876,6 +894,7 @@ const Users = {
         clId,
         ctx,
         logger,
+        operation: 'saveUser',
         orgId,
         roleId,
         sessionData,
