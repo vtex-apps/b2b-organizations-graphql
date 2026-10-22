@@ -1,6 +1,7 @@
 import { isUserPartOfBuyerOrg } from '../Queries/Users'
 import { LICENSE_MANAGER_ROLES, B2B_LM_PRODUCT_CODE } from '../../constants'
 import { setValidatedStoreUserEmail } from '../../utils/actingUserEmail'
+import { describeClientError } from '../../utils/clientError'
 
 export const validateAdminToken = async (
   context: Context,
@@ -52,8 +53,8 @@ export const validateAdminToken = async (
     } catch (err) {
       // noop so we leave hasValidAdminToken as false
       logger.warn({
-        message: 'Error validating admin token',
-        err,
+        error: describeClientError(err),
+        message: 'validateAdminToken.error',
       })
     }
   }
@@ -126,8 +127,8 @@ export const validateApiToken = async (
     } catch (err) {
       // noop so we leave hasValidApiToken as false
       logger.warn({
-        message: 'Error validating API token',
-        err,
+        error: describeClientError(err),
+        message: 'validateApiToken.error',
       })
     }
   }
@@ -182,7 +183,7 @@ export const validateStoreToken = async (
         logger.info({
           hasCurrentValidStoreToken,
           message: 'validateStoreToken.buyerOrgCheck',
-          user: authUser.user,
+          userId: authUser.userId,
           userIsPartOfBuyerOrg,
         })
 
@@ -193,23 +194,26 @@ export const validateStoreToken = async (
         // adding log to better understand invalid store token use cases
         // in the future we should remove this log
         if (hasCurrentValidStoreToken && !hasValidStoreToken) {
+          // Not an `auth.denied`: another token may still grant access, and
+          // the directive logs the deny itself. No `authUser` (it carries the
+          // shopper's email); `userId` is enough to correlate.
           logger.warn({
-            message: 'Invalid store token:',
+            message: 'validateStoreToken.notInBuyerOrg',
             operation: context?.request?.url,
             userAgent: context?.request?.headers['user-agent'] as string,
             caller: context?.request?.headers['x-vtex-caller'] as string,
             forwardedHost: context?.request?.headers[
               'x-forwarded-host'
             ] as string,
-            authUser,
+            userId: authUser?.userId,
           })
         }
       }
     } catch (err) {
       // noop so we leave hasValidStoreToken as false
       logger.warn({
-        message: 'Error validating store token:',
-        err,
+        error: describeClientError(err),
+        message: 'validateStoreToken.error',
       })
     }
   }

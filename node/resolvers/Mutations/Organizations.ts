@@ -33,6 +33,7 @@ import checkConfig from '../config'
 import message from '../message'
 import B2BSettings from '../Queries/Settings'
 import CostCenterRepository from '../repository/CostCenterRepository'
+import { logUnmatchedNames } from '../../utils/unmatchedNames'
 
 const createUserAndAttachToOrganization = async ({
   storefrontPermissions,
@@ -123,9 +124,11 @@ const createOrganization = async (
 const findPaymentTerms = async (paymentTermNames: string[], ctx: Context) => {
   const {
     clients: { payments },
+    vtex: { logger },
   } = ctx
 
   const paymentRules = await payments.getPaymentTerms()
+  const unmatchedNames: string[] = []
   const paymentTerms = paymentTermNames
     ?.map((paymentTermName: string) => {
       const paymentTerm = paymentRules.find(
@@ -139,9 +142,17 @@ const findPaymentTerms = async (paymentTermNames: string[], ctx: Context) => {
         } as PaymentTerm
       }
 
+      unmatchedNames.push(paymentTermName)
+
       return null
     })
     .filter((paymentTerm: any) => paymentTerm !== null)
+
+  logUnmatchedNames(logger, 'findPaymentTerms.unmatched', {
+    entity: 'PaymentTerm',
+    operation: 'createOrganizationAndCostCenterWithAdminUser',
+    unmatchedNames,
+  })
 
   return paymentTerms
 }
@@ -149,9 +160,11 @@ const findPaymentTerms = async (paymentTermNames: string[], ctx: Context) => {
 const findSellers = async (sellerNames: string[], ctx: Context) => {
   const {
     clients: { sellers },
+    vtex: { logger },
   } = ctx
 
   const availableSellers = (await sellers.getSellers())?.items
+  const unmatchedNames: string[] = []
   const sellersFound = sellerNames
     ?.map((sellerName: string) => {
       const seller = availableSellers.find((s: any) => s.name === sellerName)
@@ -163,9 +176,17 @@ const findSellers = async (sellerNames: string[], ctx: Context) => {
         } as Seller
       }
 
+      unmatchedNames.push(sellerName)
+
       return null
     })
     .filter((seller: any) => seller !== null)
+
+  logUnmatchedNames(logger, 'findSellers.unmatched', {
+    entity: 'Seller',
+    operation: 'createOrganizationAndCostCenterWithAdminUser',
+    unmatchedNames,
+  })
 
   return sellersFound
 }
@@ -210,6 +231,14 @@ const findCollections = async (collectionsNames: string[], ctx: Context) => {
     )
   )
 
+  logUnmatchedNames(ctx.vtex.logger, 'findCollections.unmatched', {
+    entity: 'Collection',
+    operation: 'createOrganizationAndCostCenterWithAdminUser',
+    unmatchedNames: collectionsNames
+      .filter((_, index) => resolved[index] === null)
+      .map((name) => name.trim()),
+  })
+
   return resolved.filter((item): item is Collection => item !== null)
 }
 
@@ -220,6 +249,7 @@ const resolveCollectionInputsForMutation = async (
   collectionInputs: Array<{ id?: string | null; name?: string | null }>,
   ctx: Context
 ): Promise<Collection[]> => {
+  const unmatchedNames: string[] = []
   const resolved = await Promise.all(
     collectionInputs.map(async (item) => {
       const trimmedId = trimmedNonEmptyString(item?.id)
@@ -236,12 +266,27 @@ const resolveCollectionInputsForMutation = async (
       const trimmedNameOnly = trimmedNonEmptyString(item?.name)
 
       if (trimmedNameOnly) {
-        return lookupCollectionByExactName(trimmedNameOnly, ctx)
+        const collection = await lookupCollectionByExactName(
+          trimmedNameOnly,
+          ctx
+        )
+
+        if (!collection) {
+          unmatchedNames.push(trimmedNameOnly)
+        }
+
+        return collection
       }
 
       return null
     })
   )
+
+  logUnmatchedNames(ctx.vtex.logger, 'findCollections.unmatched', {
+    entity: 'Collection',
+    operation: 'updateOrganization',
+    unmatchedNames,
+  })
 
   return resolved.filter((item): item is Collection => item !== null)
 }
@@ -260,8 +305,8 @@ const resolveCostCenterAddresses = (
   const addresses = costCenter.addresses?.length
     ? costCenter.addresses
     : costCenter.address
-      ? [costCenter.address]
-      : []
+    ? [costCenter.address]
+    : []
 
   return addresses.map(normalizeAddressInput)
 }
@@ -428,7 +473,7 @@ const Organizations = {
     const {
       clients: { storefrontPermissions, mail, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -565,7 +610,7 @@ const Organizations = {
     const {
       clients: { masterdata, storefrontPermissions, mail, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -689,7 +734,7 @@ const Organizations = {
     const {
       vtex: { logger },
       clients: { audit },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -710,7 +755,7 @@ const Organizations = {
           entityName: 'OrganizationAndCostCenters',
           remoteIpAddress: ip,
           entityBeforeAction: JSON.stringify(null),
-          entityAfterAction: "redacted",
+          entityAfterAction: 'redacted',
         },
       })
 
@@ -734,7 +779,7 @@ const Organizations = {
   ) => {
     const {
       clients: { masterdata, audit },
-      ip
+      ip,
     } = ctx
 
     try {
@@ -743,6 +788,7 @@ const Organizations = {
         id,
         fields: ['_all'],
       })
+
       await masterdata.deleteDocument({
         dataEntity: ORGANIZATION_REQUEST_DATA_ENTITY,
         id,
@@ -798,7 +844,7 @@ const Organizations = {
     const {
       clients: { storefrontPermissions, mail, masterdata, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -912,7 +958,7 @@ const Organizations = {
     const {
       clients: { masterdata, mail, storefrontPermissions, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     const settings = (await B2BSettings.getB2BSettings(

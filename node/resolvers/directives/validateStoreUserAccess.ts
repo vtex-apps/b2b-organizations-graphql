@@ -14,6 +14,10 @@ import {
 } from './helper'
 import audit from '../../utils/audit'
 import { attachTimer, createTimer } from '../../utils/requestTimings'
+import {
+  getDirectiveDeniedReason,
+  logDirectiveDenied,
+} from '../../utils/directiveDenied'
 
 export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -192,20 +196,26 @@ export class ValidateStoreUserAccess extends SchemaDirectiveVisitor {
       // deny access if no tokens were provided
       if (!hasAdminToken && !hasApiToken && !hasStoreToken) {
         await audit(context, operation, 401)
-        logger.warn({
-          message: 'ValidateStoreUserAccess: No token provided',
-          ...metricFields,
-        })
+        logDirectiveDenied(
+          logger,
+          'validateStoreUserAccess',
+          'no-token',
+          metricFields,
+          { requiredPermission }
+        )
         throw new AuthenticationError('No token was provided')
       }
 
       // deny access if no valid tokens were provided
       await audit(context, operation, 403)
 
-      logger.warn({
-        message: `ValidateStoreUserAccess: Invalid token or insufficient role permissions`,
-        ...metricFields,
-      })
+      logDirectiveDenied(
+        logger,
+        'validateStoreUserAccess',
+        getDirectiveDeniedReason(metricFields),
+        metricFields,
+        { requiredPermission }
+      )
       throw new ForbiddenError('Unauthorized Access')
     }
   }

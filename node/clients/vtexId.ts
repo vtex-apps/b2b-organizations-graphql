@@ -3,6 +3,7 @@ import { JanusClient } from '@vtex/api'
 
 interface AuthenticatedUser {
   user: string
+  userId?: string
 }
 
 export default class VtexId extends JanusClient {

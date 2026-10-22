@@ -1,5 +1,6 @@
 import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import { describeClientError } from '../../utils/clientError'
 import type { ImpersonateMetricParams } from '../../utils/metrics/impersonate'
 import {
   sendImpersonateB2BUserMetric,
@@ -160,13 +161,10 @@ const getUserFromStorefrontPermissions = ({
 const Users = {
   impersonateB2BUser: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { 
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as Context | any
 
     const getB2BUserFromStorefrontPermissions = ({
@@ -283,14 +281,14 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
+      clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
       },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as Context | any
 
     if (!adminUserAuthToken && clId) {
@@ -402,13 +400,13 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        events, 
+      clients: {
+        events,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
       },
       vtex: { logger },
-      ip
+      ip,
     } = ctx as any
 
     return storefrontPermissionsClient
@@ -444,7 +442,7 @@ const Users = {
                   orgId,
                   costId,
                   email,
-                  user
+                  user,
                 }),
                 entityAfterAction: JSON.stringify(null),
               },
@@ -493,13 +491,13 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        events, 
+      clients: {
+        events,
         storefrontPermissions: storefrontPermissionsClient,
         audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as Context | any
 
     if (!id || !clId || !email) {
@@ -544,7 +542,7 @@ const Users = {
               id,
               userId,
               email,
-              clId
+              clId,
             }),
             entityAfterAction: JSON.stringify(null),
           },
@@ -575,12 +573,9 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as any
 
     try {
@@ -631,7 +626,7 @@ const Users = {
               clId,
               name,
               email,
-              roleId
+              roleId,
             }),
           },
         })
@@ -669,12 +664,9 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { 
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
       vtex: { logger },
-      ip
+      ip,
     } = ctx as any
 
     try {
@@ -702,7 +694,7 @@ const Users = {
             roleId,
             name,
             email,
-            canImpersonate
+            canImpersonate,
           }),
         },
       })
@@ -752,7 +744,7 @@ const Users = {
         audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as any
 
     try {
@@ -799,11 +791,26 @@ const Users = {
     return storefrontPermissionsClient
       .updateUser(fields)
       .then(async (result: any) => {
-        let currentUserData = null;
-        try {
-          currentUserData = await storefrontPermissionsClient.getUser({ userId });
-        } catch (error) {
-          currentUserData = null;
+        let currentUserData = null
+
+        // Audit-only lookup: storefront-permissions' getUser takes the CL id
+        // (it used to receive `{ userId }`, so it always failed silently).
+        // A failure never blocks the update (SDD §5).
+        if (clId) {
+          try {
+            currentUserData =
+              (await storefrontPermissionsClient.getUser(clId))?.data
+                ?.getUser ?? null
+          } catch (error) {
+            logger.warn({
+              entity: 'User',
+              error: describeClientError(error),
+              message: 'updateUser.auditLookupError',
+              operation: 'updateUser',
+              userId,
+            })
+            currentUserData = null
+          }
         }
 
         await audit.sendEvent({
@@ -860,7 +867,7 @@ const Users = {
         audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
-      ip
+      ip,
     } = ctx as any
 
     try {
