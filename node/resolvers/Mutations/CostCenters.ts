@@ -7,13 +7,19 @@ import type {
   CostCenterInput,
   CostCenterInputWithId,
 } from '../../typings'
-import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import GraphQLError, {
+  getErrorMessage,
+  withLogLevel,
+} from '../../utils/GraphQLError'
+import { describeClientError } from '../../utils/clientError'
+import { getHttpStatus, isNotFoundError } from '../../utils/httpError'
+import { sendMutationAudit } from '../../utils/sendMutationAudit'
 import {
   invalidateCostCenterCache,
   invalidateOrganizationCache,
 } from '../../services/organizationsCache'
+import { loadOrganization } from '../../services/organizationDocuments'
 import Organizations from '../Queries/Organizations'
-import costCenters from '../Queries/CostCenters'
 import checkConfig from '../config'
 import CostCenterRepository from '../repository/CostCenterRepository'
 
@@ -40,7 +46,6 @@ const CostCenters = {
     const {
       vtex,
       vtex: { logger },
-      clients: { audit },
       ip,
     } = ctx
 
@@ -87,7 +92,7 @@ const CostCenters = {
         ctx
       )
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'create-cost-center-event',
         operation: 'CREATE_COST_CENTER',
         meta: {
@@ -101,8 +106,11 @@ const CostCenters = {
       return result
     } catch (error) {
       logger.error({
-        error,
-        message: 'createCostCenter-error',
+        entity: 'CostCenter',
+        entityId: id,
+        error: describeClientError(error),
+        message: 'createCostCenter.error',
+        operation: 'createCostCenter',
       })
       throw new GraphQLError(getErrorMessage(error))
     }
@@ -128,40 +136,76 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { audit },
+      clients: { masterdata },
+      vtex: { logger },
       ip,
     } = ctx
 
     // create schema if it doesn't exist
     await checkConfig(ctx)
 
-    // check if organization exists
-    const organization = (await Organizations.getOrganizationById(
-      _,
-      { id: organizationId },
-      ctx
-    )) as {
-      status: string
+    // check if organization exists. getOrganizationById throws (it never
+    // resolves null) when the document is missing, so detect not-found here
+    // to log it as an expected warn. The request-scoped cache in
+    // loadOrganization makes the getOrganizationById call below free.
+    try {
+      await loadOrganization(ctx, organizationId)
+    } catch (error) {
+      if (error?.organizationNotFound) {
+        logger.warn({
+          message: 'createCostCenterWithId.organizationNotFound',
+          operation: 'createCostCenterWithId',
+          organizationId,
+        })
+        // Same error getOrganizationById would surface to the caller, marked
+        // as warn so the GraphQL error middleware does not re-log it as error.
+        throw withLogLevel(new GraphQLError(getErrorMessage(error)), 'warn')
+      }
+      // Any other failure: let getOrganizationById log and surface it as before.
     }
 
-    if (!organization) {
-      throw new Error('Organization not found')
-    }
+    await Organizations.getOrganizationById(_, { id: organizationId }, ctx)
 
-    // check if cost center id already exists
+    // Lookup by id without going through getCostCenterById (preserves HTTP status).
     let costCenter = null
 
     try {
-      costCenter = await costCenters.getCostCenterById(_, { id }, ctx)
+      costCenter = await masterdata.getDocument({
+        dataEntity: COST_CENTER_DATA_ENTITY,
+        fields: ['id'],
+        id,
+      })
     } catch (error) {
-      costCenter = null // cost center does not exist so we don't need to do anything
+      if (isNotFoundError(error)) {
+        costCenter = null
+      } else {
+        logger.error({
+          costId: id,
+          entity: 'CostCenter',
+          entityId: id,
+          error: describeClientError(error),
+          message: 'createCostCenterWithId.lookupError',
+          operation: 'createCostCenterWithId',
+          organizationId,
+        })
+        throw new GraphQLError(getErrorMessage(error), {
+          status: getHttpStatus(error),
+        })
+      }
     }
 
     if (costCenter) {
-      throw new Error('Cost Center already exists')
+      logger.warn({
+        costId: id,
+        message: 'createCostCenterWithId.alreadyExists',
+        operation: 'createCostCenterWithId',
+        organizationId,
+      })
+      // Expected outcome, already logged as warn above: mark it so the GraphQL
+      // error middleware does not re-log it as error. Message unchanged.
+      throw withLogLevel(new Error('Cost Center already exists'), 'warn')
     }
 
-    // create cost center
     const newCostCenter: CostCenterInput = {
       addresses,
       businessDocument,
@@ -175,14 +219,33 @@ const CostCenters = {
       paymentTerms,
     }
 
-    const { id: costCenterId } = await CostCenterRepository.createCostCenter(
-      _,
-      organizationId,
-      newCostCenter,
-      ctx
-    )
+    let costCenterId: string
 
-    await audit.sendEvent({
+    try {
+      const created = await CostCenterRepository.createCostCenter(
+        _,
+        organizationId,
+        newCostCenter,
+        ctx
+      )
+
+      costCenterId = created.id
+    } catch (error) {
+      logger.error({
+        costId: id,
+        entity: 'CostCenter',
+        entityId: id,
+        error: describeClientError(error),
+        message: 'createCostCenterWithId.error',
+        operation: 'createCostCenterWithId',
+        organizationId,
+      })
+      throw new GraphQLError(getErrorMessage(error), {
+        status: getHttpStatus(error),
+      })
+    }
+
+    await sendMutationAudit(ctx, {
       subjectId: 'create-cost-center-with-id-event',
       operation: 'CREATE_COST_CENTER_WITH_ID',
       meta: {
@@ -214,7 +277,7 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit },
+      clients: { masterdata },
       vtex: { logger },
       ip,
     } = ctx
@@ -243,7 +306,7 @@ const CostCenters = {
 
       await invalidateCostCenterCache(ctx, costCenterId)
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'create-cost-center-address-event',
         operation: 'CREATE_COST_CENTER_ADDRESS',
         meta: {
@@ -260,8 +323,11 @@ const CostCenters = {
       return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
-        error,
-        message: 'createCostCenterAddress-error',
+        entity: 'CostCenter',
+        entityId: costCenterId,
+        error: describeClientError(error),
+        message: 'createCostCenterAddress.error',
+        operation: 'createCostCenterAddress',
       })
       throw new GraphQLError(getErrorMessage(error))
     }
@@ -269,7 +335,8 @@ const CostCenters = {
 
   deleteCostCenter: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { masterdata, audit },
+      clients: { masterdata },
+      vtex: { logger },
       ip,
     } = ctx
 
@@ -287,7 +354,7 @@ const CostCenters = {
 
       await invalidateCostCenterCache(ctx, id)
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'delete-cost-center-event',
         operation: 'DELETE_COST_CENTER',
         meta: {
@@ -300,13 +367,35 @@ const CostCenters = {
 
       return { status: 'success', message: '' }
     } catch (e) {
-      throw new GraphQLError(getErrorMessage(e))
+      if (isNotFoundError(e)) {
+        logger.warn({
+          entity: 'CostCenter',
+          entityId: id,
+          message: 'deleteCostCenter.notFound',
+          operation: 'deleteCostCenter',
+        })
+      } else {
+        logger.error({
+          entity: 'CostCenter',
+          entityId: id,
+          error: describeClientError(e),
+          message: 'deleteCostCenter.error',
+          operation: 'deleteCostCenter',
+        })
+      }
+
+      const graphQLError = new GraphQLError(getErrorMessage(e))
+
+      throw isNotFoundError(e)
+        ? withLogLevel(graphQLError, 'warn')
+        : graphQLError
     }
   },
 
   deleteOrganization: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { masterdata, audit },
+      clients: { masterdata },
+      vtex: { logger },
       ip,
     } = ctx
 
@@ -324,7 +413,7 @@ const CostCenters = {
 
       await invalidateOrganizationCache(ctx, id)
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'delete-organization-event',
         operation: 'DELETE_ORGANIZATION',
         meta: {
@@ -337,7 +426,28 @@ const CostCenters = {
 
       return { status: 'success', message: '' }
     } catch (e) {
-      throw new GraphQLError(getErrorMessage(e))
+      if (isNotFoundError(e)) {
+        logger.warn({
+          entity: 'Organization',
+          entityId: id,
+          message: 'deleteOrganization.notFound',
+          operation: 'deleteOrganization',
+        })
+      } else {
+        logger.error({
+          entity: 'Organization',
+          entityId: id,
+          error: describeClientError(e),
+          message: 'deleteOrganization.error',
+          operation: 'deleteOrganization',
+        })
+      }
+
+      const graphQLError = new GraphQLError(getErrorMessage(e))
+
+      throw isNotFoundError(e)
+        ? withLogLevel(graphQLError, 'warn')
+        : graphQLError
     }
   },
 
@@ -358,7 +468,7 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit },
+      clients: { masterdata },
       vtex: { logger },
       ip,
     } = ctx
@@ -403,7 +513,7 @@ const CostCenters = {
 
       await invalidateCostCenterCache(ctx, id)
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'update-cost-center-event',
         operation: 'UPDATE_COST_CENTER',
         meta: {
@@ -426,8 +536,11 @@ const CostCenters = {
       return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
-        error,
-        message: 'updateCostCenter-error',
+        entity: 'CostCenter',
+        entityId: id,
+        error: describeClientError(error),
+        message: 'updateCostCenter.error',
+        operation: 'updateCostCenter',
       })
       throw new GraphQLError(getErrorMessage(error))
     }
@@ -439,7 +552,7 @@ const CostCenters = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit },
+      clients: { masterdata },
       vtex: { logger },
       ip,
     } = ctx
@@ -474,7 +587,7 @@ const CostCenters = {
 
       await invalidateCostCenterCache(ctx, costCenterId)
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'update-cost-center-address-event',
         operation: 'UPDATE_COST_CENTER_ADDRESS',
         meta: {
@@ -494,8 +607,11 @@ const CostCenters = {
       return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
-        error,
-        message: 'updateCostCenterAddress-error',
+        entity: 'CostCenter',
+        entityId: costCenterId,
+        error: describeClientError(error),
+        message: 'updateCostCenterAddress.error',
+        operation: 'updateCostCenterAddress',
       })
       throw new GraphQLError(getErrorMessage(error))
     }
