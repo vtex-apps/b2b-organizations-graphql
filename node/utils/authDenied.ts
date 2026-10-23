@@ -22,10 +22,12 @@ export type AuthDeniedReason =
   | 'organization-data-not-found'
   | 'not-permitted'
   | 'inactive-organization'
+  | 'no-session'
 
 // The front reads these strings; they must not change.
 const DENY_MESSAGE: Record<AuthDeniedReason, string> = {
   'inactive-organization': 'This organization is not active',
+  'no-session': 'No session data for this current user',
   'not-permitted': 'operation-not-permitted',
   'organization-data-not-found': 'organization-data-not-found',
 }
@@ -54,10 +56,11 @@ export const authDenied = (
     ...(targetUserId ? { targetUserId } : {}),
   })
 
-  // `This organization is not active` was always thrown as a plain Error;
-  // keep it that way so its response shape does not change.
+  // `This organization is not active` and `No session data for this current
+  // user` were always thrown as a plain Error; keep it that way so their
+  // response shape does not change.
   const error =
-    reason === 'inactive-organization'
+    reason === 'inactive-organization' || reason === 'no-session'
       ? new Error(DENY_MESSAGE[reason])
       : new GraphQLError(DENY_MESSAGE[reason])
 
@@ -68,6 +71,62 @@ export const authDenied = (
 
 export const isAuthDenied = (error: unknown): boolean =>
   typeof error === 'object' && error !== null && deniedErrors.has(error)
+
+// Errors already logged as `error` where they were raised, so the callers
+// that catch and re-log do not log them twice.
+const loggedAccessErrors = new WeakSet()
+
+export type AccessLookupFailure = 'role-lookup-failed' | 'user-lookup-failed'
+
+interface AccessLookupFailedParams {
+  entity?: string
+  operation: string
+  reason: AccessLookupFailure
+  orgId?: string | null
+  targetUserId?: string | null
+}
+
+/**
+ * The lookup that decides access (storefront-permissions getUser/getRole)
+ * failed. That is an infrastructure failure, not a deny, so it is logged as
+ * `error` `<op>.checkUserIsAllowedError` with the real cause and never as
+ * `auth.denied` (review on #240).
+ */
+export const logAccessLookupFailed = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  logger: any,
+  { entity, operation, reason, orgId, targetUserId }: AccessLookupFailedParams,
+  error: unknown
+) => {
+  logger.error({
+    ...(entity ? { entity } : {}),
+    message: `${operation}.checkUserIsAllowedError`,
+    operation,
+    reason,
+    ...(orgId ? { orgId } : {}),
+    ...(targetUserId ? { targetUserId } : {}),
+    error: describeClientError(error),
+  })
+}
+
+/**
+ * What the client gets when the access decision could not be made because
+ * the lookup failed: the same `operation-not-permitted` it always got, left
+ * at the default (error) level. Call it after `logAccessLookupFailed`.
+ */
+export const accessLookupFailedError = () => {
+  const error = new GraphQLError(DENY_MESSAGE['not-permitted'])
+
+  loggedAccessErrors.add(error)
+
+  return error
+}
+
+/** A deny or a lookup failure already logged: callers must not re-log it. */
+export const isAccessErrorLogged = (error: unknown): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  (deniedErrors.has(error) || loggedAccessErrors.has(error))
 
 /**
  * `error` for a real failure while deciding access or right after it

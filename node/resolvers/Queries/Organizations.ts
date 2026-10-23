@@ -234,8 +234,13 @@ const Organizations = {
           return null
         }))
 
+    // No session is a deny, not an error (review on #240): one warn
+    // `auth.denied`, same plain Error and message as before, marked warn.
     if (!sessionData) {
-      throw new Error('No session data for this current user')
+      throw authDenied(logger, {
+        operation: 'checkOrganizationIsActive',
+        reason: 'no-session',
+      })
     }
 
     let orgId =
@@ -647,6 +652,19 @@ const Organizations = {
         permissions: organization.permissions ?? { createQuote: true },
       }
     } catch (error) {
+      // Same as getOrganizationById (SDD Q6): a missing organization is an
+      // expected outcome, so warn and mark the throw warn. Same response.
+      if (error?.organizationNotFound) {
+        logger.warn({
+          entity: 'Organization',
+          entityId: id,
+          message: 'getOrganizationByIdStorefront.notFound',
+          operation: 'getOrganizationByIdStorefront',
+        })
+
+        throw withLogLevel(new GraphQLError(getErrorMessage(error)), 'warn')
+      }
+
       logger.error({
         error: describeClientError(error),
         message: 'getOrganizationByIdStorefront-error',

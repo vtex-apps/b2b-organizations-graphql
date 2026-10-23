@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **[B2BTEAM-3985]** `@withSession` no longer swallows session read failures silently: it logs `warn` `withSession.getSessionError` (`operation`, `describeClientError`) and still continues with no session (fail-closed). Always `warn`, including 5xx (SDD Q3).
 - **[B2BTEAM-3985]** `getOrganizationById` logs a missing organization as `warn` `getOrganizationById.notFound` (was `error` `getOrganizationById-error`) and marks the `organizationNotFound` error `level: 'warn'`; this is also the source of `organizationNotFound` in `getCostCenterByIdStorefront` / `getCostCentersByOrganizationIdStorefront` when the session has no organization. Other failures still log `getOrganizationById-error`.
+- **[B2BTEAM-3985]** `getOrganizationByIdStorefront` logs a missing organization as `warn` `getOrganizationByIdStorefront.notFound` (was `error` `getOrganizationByIdStorefront-error`) and marks the `organizationNotFound` error `level: 'warn'`; other failures still log `getOrganizationByIdStorefront-error`.
+- **[B2BTEAM-3985]** A missing session in `checkOrganizationIsActive` (and so in `getCostCenterByIdStorefront` / `getCostCentersByOrganizationIdStorefront`) is a deny: one `warn` `auth.denied` (`reason: no-session`) and the same plain `Error` `No session data for this current user`, marked `level: 'warn'`.
+- **[B2BTEAM-3985]** A failed role / user lookup while checking access (`addUser`, `updateUser`, `saveUser`, `removeUser`, `impersonateUser`) is no longer logged as `auth.denied`: it logs `error` `<op>.checkUserIsAllowedError` (`reason: role-lookup-failed` / `user-lookup-failed`, `describeClientError`) instead of the raw `getUserRoleSlug-error` / `saveUser-getRoleError` warn. The response is unchanged (`operation-not-permitted`, no `warn` level).
 
 ## [2.8.1] - 2026-10-05
 

@@ -12,18 +12,29 @@ import {
 } from '../../utils/metrics/user'
 import type { UserArgs } from '../../typings'
 import {
+  accessLookupFailedError,
   authDenied,
-  isAuthDenied,
+  isAccessErrorLogged,
   logAccessError,
+  logAccessLookupFailed,
 } from '../../utils/authDenied'
+
+/**
+ * The role slug that decides access. A failed lookup still falls back to ''
+ * (so the permission decision is the same as before), but the failure is
+ * returned to the caller: it is an infrastructure error, not a deny.
+ */
+interface RoleLookup {
+  roleSlug: string
+  lookupError?: unknown
+}
 
 export const getUserRoleSlug: (
   id: string,
   ctx: Context
-) => Promise<string> = async (id, ctx) => {
+) => Promise<RoleLookup> = async (id, ctx) => {
   const {
     clients: { storefrontPermissions },
-    vtex: { logger },
   } = ctx
 
   return storefrontPermissions
@@ -35,16 +46,9 @@ export const getUserRoleSlug: (
       return storefrontPermissions.getRole(userData.roleId)
     })
     .then((result: any) => {
-      return result?.data?.getRole?.slug ?? ''
+      return { roleSlug: result?.data?.getRole?.slug ?? '' }
     })
-    .catch((error: any) => {
-      logger.warn({
-        error,
-        message: 'getUserRoleSlug-error',
-      })
-
-      return ''
-    })
+    .catch((lookupError: any) => ({ lookupError, roleSlug: '' }))
 }
 
 const isUserPermitted = ({
@@ -63,25 +67,17 @@ const isUserPermitted = ({
 const getRoleSlug = async ({
   clId,
   ctx,
-  logger,
   roleId,
   storefrontPermissionsClient,
-}: any) =>
+}: any): Promise<RoleLookup> =>
   clId
     ? getUserRoleSlug(clId, ctx)
     : storefrontPermissionsClient
         .getRole(roleId)
         .then((result: any) => {
-          return result?.data?.getRole?.slug ?? ''
+          return { roleSlug: result?.data?.getRole?.slug ?? '' }
         })
-        .catch((error: any) => {
-          logger.warn({
-            error,
-            message: 'saveUser-getRoleError',
-          })
-
-          return ''
-        })
+        .catch((lookupError: any) => ({ lookupError, roleSlug: '' }))
 
 const getUser = async ({ masterdata, logger, userId, clId }: any) =>
   (await masterdata
@@ -123,13 +119,20 @@ const checkUserIsAllowed = async ({
       })
     }
 
-    const roleSlug = await getRoleSlug({
+    const { roleSlug, lookupError } = await getRoleSlug({
       clId,
       ctx,
-      logger,
       roleId,
       storefrontPermissionsClient,
     })
+
+    if (lookupError) {
+      logAccessLookupFailed(
+        logger,
+        { entity: 'User', operation, orgId, reason: 'role-lookup-failed' },
+        lookupError
+      )
+    }
 
     const permitted = isUserPermitted({
       orgId,
@@ -139,6 +142,11 @@ const checkUserIsAllowed = async ({
     })
 
     if (!permitted) {
+      // Without the role there was no real decision: not a deny.
+      if (lookupError) {
+        throw accessLookupFailedError()
+      }
+
       throw authDenied(logger, {
         operation,
         orgId,
@@ -324,11 +332,25 @@ const Users = {
         })
       }
 
-      const userInfo = await getUserFromStorefrontPermissions({
-        clId,
-        logger,
-        storefrontPermissionsClient,
-      })
+      // Own lookup (not getUserFromStorefrontPermissions, which hands the
+      // error back as the user): a failure here is not a deny.
+      const { userInfo, lookupError } = await storefrontPermissionsClient
+        .getUser(clId)
+        .then((result: any) => ({ userInfo: result?.data?.getUser ?? {} }))
+        .catch((error: any) => ({ lookupError: error, userInfo: {} }))
+
+      if (lookupError) {
+        logAccessLookupFailed(
+          logger,
+          {
+            entity: 'User',
+            operation: 'impersonateUser',
+            reason: 'user-lookup-failed',
+            targetUserId: clId,
+          },
+          lookupError
+        )
+      }
 
       const canImpersonateUsersWithCostCenterPermission =
         storefrontPermissions?.permissions?.includes(
@@ -352,6 +374,10 @@ const Users = {
         !canImpersonateUsersWithOrganizationPermission &&
         !canImpersonateUsersWithAllPermission
       ) {
+        if (lookupError) {
+          throw accessLookupFailedError()
+        }
+
         throw authDenied(logger, {
           operation: 'impersonateUser',
           orgId: userInfo?.orgId,
@@ -546,7 +572,20 @@ const Users = {
         })
       }
 
-      const roleSlug = await getUserRoleSlug(clId, ctx)
+      const { roleSlug, lookupError } = await getUserRoleSlug(clId, ctx)
+
+      if (lookupError) {
+        logAccessLookupFailed(
+          logger,
+          {
+            entity: 'User',
+            operation: 'removeUser',
+            reason: 'role-lookup-failed',
+            targetUserId: id,
+          },
+          lookupError
+        )
+      }
 
       const permitted =
         (storefrontPermissions?.permissions?.includes(
@@ -556,6 +595,10 @@ const Users = {
         storefrontPermissions?.permissions?.includes('remove-sales-users-all')
 
       if (!permitted) {
+        if (lookupError) {
+          throw accessLookupFailedError()
+        }
+
         throw authDenied(logger, {
           operation: 'removeUser',
           reason: 'not-permitted',
@@ -633,7 +676,7 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      if (!isAuthDenied(error)) {
+      if (!isAccessErrorLogged(error)) {
         logAccessError(
           logger,
           'addUser.checkUserIsAllowedError',
@@ -808,7 +851,7 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      if (!isAuthDenied(error)) {
+      if (!isAccessErrorLogged(error)) {
         logAccessError(
           logger,
           'updateUser.checkUserIsAllowedError',
@@ -925,7 +968,7 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      if (!isAuthDenied(error)) {
+      if (!isAccessErrorLogged(error)) {
         logAccessError(
           logger,
           'saveUser.checkUserIsAllowedError',

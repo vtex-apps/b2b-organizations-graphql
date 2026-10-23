@@ -767,3 +767,201 @@ describe('getOrganizationById not found (SDD Q6)', () => {
     )
   })
 })
+
+describe('review on #240', () => {
+  describe.each([
+    ['getCostCenterByIdStorefront', { id: 'cc' }],
+    ['getCostCentersByOrganizationIdStorefront', { id: 'org-session' }],
+  ] as const)(
+    '%s without session (real checkOrganizationIsActive)',
+    (op, args) => {
+      it('denies with one auth.denied warn, same plain Error and message', async () => {
+        const ctx = makeCtx({ sessionData: null })
+
+        ctx.clients.session.getSession.mockResolvedValue({ sessionData: null })
+
+        const error = await expectDenied(
+          (CostCenters as any)[op](undefined, args, ctx),
+          ctx,
+          'No session data for this current user',
+          { operation: 'checkOrganizationIsActive', reason: 'no-session' }
+        )
+
+        expect(error).toBeInstanceOf(Error)
+        expect(error).not.toBeInstanceOf(GraphQLError)
+        expect(Object.keys(error)).toEqual(['level'])
+        expect(loadCostCenterMock).not.toHaveBeenCalled()
+      })
+    }
+  )
+
+  describe.each(['addUser', 'updateUser', 'saveUser'] as const)(
+    '%s role lookup failure',
+    (operation) => {
+      const args = { email: 'qa@example.com', orgId: 'org-1', roleId: 'r1' }
+
+      it('logs error <op>.checkUserIsAllowedError (role-lookup-failed), not auth.denied; same response', async () => {
+        const ctx = makeCtx()
+
+        ctx.clients.storefrontPermissions.getRole.mockRejectedValue(
+          new Error('sfp down')
+        )
+
+        const error: any = await (Users as any)
+          [operation](undefined, args, ctx)
+          .catch((e: any) => e)
+
+        expect(error).toBeInstanceOf(GraphQLError)
+        expect(error.message).toBe('operation-not-permitted')
+        expect(error.level).toBeUndefined()
+        expect(ctx.vtex.logger.error).toHaveBeenCalledTimes(1)
+        expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
+          expect.objectContaining({
+            error: expect.objectContaining({ message: 'sfp down' }),
+            entity: 'User',
+            message: `${operation}.checkUserIsAllowedError`,
+            operation,
+            orgId: 'org-1',
+            reason: 'role-lookup-failed',
+          })
+        )
+        expect(ctx.vtex.logger.warn).not.toHaveBeenCalledWith(
+          expect.objectContaining({ message: 'auth.denied' })
+        )
+      })
+
+      it('still logs the failure when the fallback role is permitted', async () => {
+        const ctx = makeCtx({ permissions: ['add-users-organization'] })
+
+        ctx.clients.storefrontPermissions.getRole.mockRejectedValue(
+          new Error('sfp down')
+        )
+        Object.assign(ctx.clients.storefrontPermissions, {
+          addUser: jest.fn().mockResolvedValue({ data: {} }),
+          saveUser: jest.fn().mockResolvedValue({ data: {} }),
+          updateUser: jest.fn().mockResolvedValue({ data: {} }),
+        })
+
+        await (Users as any)
+          [operation](undefined, { ...args, orgId: SESSION_ORG }, ctx)
+          .catch(() => undefined)
+
+        expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: `${operation}.checkUserIsAllowedError`,
+            reason: 'role-lookup-failed',
+          })
+        )
+        expect(ctx.vtex.logger.warn).not.toHaveBeenCalledWith(
+          expect.objectContaining({ message: 'auth.denied' })
+        )
+      })
+    }
+  )
+
+  it('removeUser role lookup failure: error, not auth.denied, same response', async () => {
+    const ctx = makeCtx()
+
+    ctx.clients.storefrontPermissions.getUser.mockRejectedValue(
+      new Error('sfp down')
+    )
+
+    const error: any = await Users.removeUser(
+      undefined as never,
+      { clId: 'cl-1', email: 'qa@example.com', id: 'u-1' } as any,
+      ctx
+    ).catch((e: any) => e)
+
+    expect(error).toBeInstanceOf(GraphQLError)
+    expect(error.message).toBe('operation-not-permitted')
+    expect(error.level).toBeUndefined()
+    expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({ message: 'sfp down' }),
+        entity: 'User',
+        message: 'removeUser.checkUserIsAllowedError',
+        operation: 'removeUser',
+        reason: 'role-lookup-failed',
+        targetUserId: 'u-1',
+      })
+    )
+    expect(ctx.vtex.logger.warn).not.toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'auth.denied' })
+    )
+  })
+
+  it('impersonateUser user lookup failure: error, not auth.denied, same response', async () => {
+    const ctx = makeCtx()
+
+    ctx.clients.storefrontPermissions.getUser.mockRejectedValue(
+      new Error('sfp down')
+    )
+
+    const error: any = await Users.impersonateUser(
+      undefined as never,
+      { clId: 'cl-1' } as any,
+      ctx
+    ).catch((e: any) => e)
+
+    expect(error).toBeInstanceOf(GraphQLError)
+    expect(error.message).toBe('operation-not-permitted')
+    expect(error.level).toBeUndefined()
+    expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'impersonateUser.checkUserIsAllowedError',
+        operation: 'impersonateUser',
+        reason: 'user-lookup-failed',
+        targetUserId: 'cl-1',
+      })
+    )
+    expect(ctx.vtex.logger.warn).not.toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'auth.denied' })
+    )
+  })
+
+  it('getOrganizationByIdStorefront not found: warn and throw marked warn', async () => {
+    const notFound: any = new Error('organizationNotFound')
+
+    notFound.organizationNotFound = true
+    loadOrganizationMock.mockRejectedValue(notFound)
+    const ctx = makeCtx()
+
+    const error: any = await Organizations.getOrganizationByIdStorefront(
+      undefined as never,
+      { id: SESSION_ORG },
+      ctx
+    ).catch((e: any) => e)
+
+    expect(error).toBeInstanceOf(GraphQLError)
+    expect(error.message).toBe('organizationNotFound')
+    expect(error.level).toBe('warn')
+    expect(ctx.vtex.logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'Organization',
+        entityId: SESSION_ORG,
+        message: 'getOrganizationByIdStorefront.notFound',
+        operation: 'getOrganizationByIdStorefront',
+      })
+    )
+    expect(ctx.vtex.logger.error).not.toHaveBeenCalled()
+  })
+
+  it('getOrganizationByIdStorefront real failure stays error', async () => {
+    loadOrganizationMock.mockRejectedValue(new Error('md down'))
+    const ctx = makeCtx()
+
+    const error: any = await Organizations.getOrganizationByIdStorefront(
+      undefined as never,
+      { id: SESSION_ORG },
+      ctx
+    ).catch((e: any) => e)
+
+    expect(error.message).toBe('md down')
+    expect(error.level).toBeUndefined()
+    expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'getOrganizationByIdStorefront-error',
+      })
+    )
+  })
+})
