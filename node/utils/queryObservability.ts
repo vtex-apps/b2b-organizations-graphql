@@ -9,7 +9,7 @@ import {
   logRequestTimings,
 } from './requestTimings'
 import type { Timer } from './requestTimings'
-import checkConfig from '../resolvers/config'
+import checkConfig, { CheckConfigIncompleteError } from '../resolvers/config'
 import { getCachedCheckConfig } from '../services/organizationsCache'
 
 // Start a full interval after boot, so freshly started pods do not emit an
@@ -47,6 +47,9 @@ export const maybeEmitCacheStats = (ctx: Context) => {
  * full TTL and suppresses every retry in that window, on the pod where the
  * sync is broken.
  *
+ * `throwOnIncomplete` makes checkConfig reject when the sync did not finish
+ * (it does not throw for mutations), for the same reason.
+ *
  * Not awaiting is safe for reads because the hot read path does not reference
  * the schema - `MasterDataExtended.getDocumentById` sends `_fields` only, no
  * `_schema` - so a Query does not depend on this having run. What is left is an
@@ -55,7 +58,15 @@ export const maybeEmitCacheStats = (ctx: Context) => {
  * creates it.
  */
 export const ensureConfigForQuery = (ctx: Context) => {
-  getCachedCheckConfig(ctx, () => checkConfig(ctx)).catch((error) => {
+  getCachedCheckConfig(ctx, () =>
+    checkConfig(ctx, { throwOnIncomplete: true })
+  ).catch((error) => {
+    // An incomplete sync was already logged by checkConfig with its own key;
+    // it only rejects here so the cache does not pin "synced".
+    if (error instanceof CheckConfigIncompleteError) {
+      return
+    }
+
     ctx.vtex.logger.error({
       error: describeClientError(error),
       message: 'ensureConfigForQuery-error',

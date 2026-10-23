@@ -100,8 +100,10 @@ const Settings = {
         // when run for the first time on the project - returns 404. ignore in that case
       } else {
         logger.error({
-          message: 'saveB2BSettings-currentB2BSettings-error',
-          error: e,
+          entity: 'Settings',
+          error: describeClientError(e),
+          message: 'saveB2BSettings.readSettingsError',
+          operation: 'saveB2BSettings',
         })
         if (e.message) {
           throw new GraphQLError(e.message)
@@ -155,8 +157,10 @@ const Settings = {
       }
     } catch (e) {
       logger.error({
-        error: e,
-        message: 'saveB2BSettings-error',
+        entity: 'Settings',
+        error: describeClientError(e),
+        message: 'saveB2BSettings.error',
+        operation: 'saveB2BSettings',
       })
       if (e.message) {
         throw new GraphQLError(e.message)
@@ -200,11 +204,13 @@ const Settings = {
       return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
-        error,
-        message: 'saveSalesChannels-Error',
+        entity: 'Settings',
+        error: describeClientError(error),
+        message: 'saveSalesChannels.error',
+        operation: 'saveSalesChannels',
       })
 
-      return { status: 'error', message: error }
+      return { status: 'error', message: getErrorMessage(error) }
     }
   },
 }
