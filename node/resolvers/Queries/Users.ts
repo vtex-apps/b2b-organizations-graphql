@@ -7,6 +7,8 @@ import {
 import { toHash } from '../../utils'
 import { authDenied } from '../../utils/authDenied'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import { describeClientError } from '../../utils/clientError'
+import { getHttpStatus } from '../../utils/httpError'
 import { getAppId, getAppMajorVersion } from '../config'
 
 const SCROLL_AWAIT_TIME = 100
@@ -213,14 +215,25 @@ const Users = {
     } = ctx
 
     const app: string = getAppId()
-    const settings: any = await vbase.getJSON('b2borg', app).catch((error) => {
-      logger.error({
-        error,
-        message: 'b2borg.getAppSettings-Error',
+    let readFailed = false
+    const stored: any = await vbase
+      .getJSON('b2borg', app)
+      .catch((error: any) => {
+        // 404: first run on this account, start from empty settings.
+        if (getHttpStatus(error) !== 404) {
+          readFailed = true
+          logger.error({
+            entity: 'Settings',
+            error: describeClientError(error),
+            message: 'getAppSettings.readSettingsError',
+            operation: 'getAppSettings',
+          })
+        }
+
+        return {}
       })
 
-      return {}
-    })
+    const settings: any = stored ?? {}
 
     if (!settings.adminSetup) {
       settings.adminSetup = {}
@@ -235,37 +248,46 @@ const Users = {
 
     const storedSchemaHash = settings.adminSetup.schemaHashes[majorVersion]
 
-    if (!storedSchemaHash || storedSchemaHash !== currHash) {
-      const updates: any = []
-
-      schemas.forEach((schema) => {
-        updates.push(
+    // When the stored settings could not be read we do not know what is
+    // synced: skip the schema update and never overwrite them blindly.
+    if (!readFailed && (!storedSchemaHash || storedSchemaHash !== currHash)) {
+      const results = await Promise.all(
+        schemas.map((schema) =>
           masterdata
             .createOrUpdateSchema({
               dataEntity: schema.name,
               schemaBody: schema.body,
               schemaName: schema.version,
             })
-            .then(() => true)
-            .catch((e: any) => {
-              if (e.response.status !== 304) {
-                throw e
+            .then(() => ({ error: null }))
+            .catch((error: any) => {
+              // 304: schema already up to date, that is a success.
+              if (getHttpStatus(error) === 304) {
+                return { error: null }
               }
 
-              return true
+              logger.error({
+                dataEntity: schema.name,
+                entity: 'Settings',
+                error: describeClientError(error),
+                message: 'getAppSettings.schemaUpdateError',
+                operation: 'getAppSettings',
+              })
+
+              return { error }
             })
         )
-      })
+      )
 
-      await Promise.all(updates)
-        .then(() => {
-          settings.adminSetup.schemaHashes[majorVersion] = currHash
-        })
-        .catch((e) => {
-          if (e.response.status !== 304) {
-            throw new Error(e)
-          }
-        })
+      const failed = results.find((result) => result.error)
+
+      if (failed) {
+        // Same outcome as before (the query fails, the hash is not saved),
+        // without the TypeError on errors that carry no response.
+        throw failed.error
+      }
+
+      settings.adminSetup.schemaHashes[majorVersion] = currHash
 
       await vbase.saveJSON('b2borg', app, settings)
     }
