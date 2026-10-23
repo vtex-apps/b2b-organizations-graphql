@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.8.5] - 2026-10-23
+
 ### Changed
 
 - **[B2BTEAM-3986]** `@validateAdminUserAccess` / `@validateStoreUserAccess` denials log `warn` `auth.denied` (`directive`, `reason`: `no-token` / `invalid-token` / `insufficient-role`, `requiredPermission`, plus every metric field they already logged) instead of the free-text `ValidateAdminUserAccess: ...` / `ValidateStoreUserAccess: ...` messages. The thrown `AuthenticationError` / `ForbiddenError` is unchanged.
