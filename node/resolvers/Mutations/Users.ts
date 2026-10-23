@@ -13,14 +13,30 @@ import {
   sendUpdateUserMetric,
 } from '../../utils/metrics/user'
 import type { UserArgs } from '../../typings'
+import {
+  accessLookupFailedError,
+  authDenied,
+  isAccessErrorLogged,
+  logAccessError,
+  logAccessLookupFailed,
+} from '../../utils/authDenied'
+
+/**
+ * The role slug that decides access. A failed lookup still falls back to ''
+ * (so the permission decision is the same as before), but the failure is
+ * returned to the caller: it is an infrastructure error, not a deny.
+ */
+interface RoleLookup {
+  roleSlug: string
+  lookupError?: unknown
+}
 
 export const getUserRoleSlug: (
   id: string,
   ctx: Context
-) => Promise<string> = async (id, ctx) => {
+) => Promise<RoleLookup> = async (id, ctx) => {
   const {
     clients: { storefrontPermissions },
-    vtex: { logger },
   } = ctx
 
   return storefrontPermissions
@@ -32,16 +48,9 @@ export const getUserRoleSlug: (
       return storefrontPermissions.getRole(userData.roleId)
     })
     .then((result: any) => {
-      return result?.data?.getRole?.slug ?? ''
+      return { roleSlug: result?.data?.getRole?.slug ?? '' }
     })
-    .catch((error: any) => {
-      logger.warn({
-        error,
-        message: 'getUserRoleSlug-error',
-      })
-
-      return ''
-    })
+    .catch((lookupError: any) => ({ lookupError, roleSlug: '' }))
 }
 
 const isUserPermitted = ({
@@ -60,27 +69,17 @@ const isUserPermitted = ({
 const getRoleSlug = async ({
   clId,
   ctx,
-  logger,
   roleId,
   storefrontPermissionsClient,
-}: any) =>
+}: any): Promise<RoleLookup> =>
   clId
     ? getUserRoleSlug(clId, ctx)
     : storefrontPermissionsClient
         .getRole(roleId)
         .then((result: any) => {
-          return result?.data?.getRole?.slug ?? ''
+          return { roleSlug: result?.data?.getRole?.slug ?? '' }
         })
-        .catch((error: any) => {
-          logger.warn({
-            message: 'saveUser.getRoleError',
-            error: describeClientError(error),
-            operation: 'saveUser',
-            entity: 'User',
-          })
-
-          return ''
-        })
+        .catch((lookupError: any) => ({ lookupError, roleSlug: '' }))
 
 const getUser = async ({ masterdata, logger, userId, clId }: any) =>
   (await masterdata
@@ -108,6 +107,7 @@ const checkUserIsAllowed = async ({
   clId,
   ctx,
   logger,
+  operation,
   orgId,
   roleId,
   sessionData,
@@ -116,16 +116,27 @@ const checkUserIsAllowed = async ({
 }: any) => {
   if (!adminUserAuthToken) {
     if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-      throw new GraphQLError('organization-data-not-found')
+      throw authDenied(logger, {
+        operation,
+        orgId,
+        reason: 'organization-data-not-found',
+      })
     }
 
-    const roleSlug = await getRoleSlug({
+    const { roleSlug, lookupError } = await getRoleSlug({
       clId,
       ctx,
-      logger,
       roleId,
       storefrontPermissionsClient,
     })
+
+    if (lookupError) {
+      logAccessLookupFailed(
+        logger,
+        { entity: 'User', operation, orgId, reason: 'role-lookup-failed' },
+        lookupError
+      )
+    }
 
     const permitted = isUserPermitted({
       orgId,
@@ -135,7 +146,16 @@ const checkUserIsAllowed = async ({
     })
 
     if (!permitted) {
-      throw new GraphQLError('operation-not-permitted')
+      // Without the role there was no real decision: not a deny.
+      if (lookupError) {
+        throw accessLookupFailedError()
+      }
+
+      throw authDenied(logger, {
+        operation,
+        orgId,
+        reason: 'not-permitted',
+      })
     }
   }
 }
@@ -185,7 +205,11 @@ const Users = {
 
     if (!adminUserAuthToken) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
+        throw authDenied(logger, {
+          operation: 'impersonateB2BUser',
+          reason: 'organization-data-not-found',
+          targetUserId: id,
+        })
       }
 
       const canImpersonateUsersWithCostCenterPermission =
@@ -210,17 +234,24 @@ const Users = {
         !canImpersonateUsersWithOrganizationPermission &&
         !canImpersonateUsersWithAllPermission
       ) {
-        throw new GraphQLError('operation-not-permitted')
+        throw authDenied(logger, {
+          operation: 'impersonateB2BUser',
+          orgId: user?.orgId,
+          reason: 'not-permitted',
+          targetUserId: id,
+        })
       }
     }
 
     const impersonation = await storefrontPermissionsClient
       .impersonateUser({ userId: id })
       .catch((error: any) => {
-        logger.error({
-          error,
-          message: 'impersonateUser-impersonateUserError',
-        })
+        logAccessError(
+          logger,
+          'impersonateB2BUser.error',
+          { operation: 'impersonateB2BUser', targetUserId: id },
+          error
+        )
 
         return { status: 'error', message: error }
       })
@@ -297,14 +328,32 @@ const Users = {
 
     if (!adminUserAuthToken && clId) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
+        throw authDenied(logger, {
+          operation: 'impersonateUser',
+          reason: 'organization-data-not-found',
+          targetUserId: clId,
+        })
       }
 
-      const userInfo = await getUserFromStorefrontPermissions({
-        clId,
-        logger,
-        storefrontPermissionsClient,
-      })
+      // Own lookup (not getUserFromStorefrontPermissions, which hands the
+      // error back as the user): a failure here is not a deny.
+      const { userInfo, lookupError } = await storefrontPermissionsClient
+        .getUser(clId)
+        .then((result: any) => ({ userInfo: result?.data?.getUser ?? {} }))
+        .catch((error: any) => ({ lookupError: error, userInfo: {} }))
+
+      if (lookupError) {
+        logAccessLookupFailed(
+          logger,
+          {
+            entity: 'User',
+            operation: 'impersonateUser',
+            reason: 'user-lookup-failed',
+            targetUserId: clId,
+          },
+          lookupError
+        )
+      }
 
       const canImpersonateUsersWithCostCenterPermission =
         storefrontPermissions?.permissions?.includes(
@@ -328,7 +377,16 @@ const Users = {
         !canImpersonateUsersWithOrganizationPermission &&
         !canImpersonateUsersWithAllPermission
       ) {
-        throw new GraphQLError('operation-not-permitted')
+        if (lookupError) {
+          throw accessLookupFailedError()
+        }
+
+        throw authDenied(logger, {
+          operation: 'impersonateUser',
+          orgId: userInfo?.orgId,
+          reason: 'not-permitted',
+          targetUserId: clId,
+        })
       }
     }
 
@@ -510,10 +568,27 @@ const Users = {
 
     if (!adminUserAuthToken) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
+        throw authDenied(logger, {
+          operation: 'removeUser',
+          reason: 'organization-data-not-found',
+          targetUserId: id,
+        })
       }
 
-      const roleSlug = await getUserRoleSlug(clId, ctx)
+      const { roleSlug, lookupError } = await getUserRoleSlug(clId, ctx)
+
+      if (lookupError) {
+        logAccessLookupFailed(
+          logger,
+          {
+            entity: 'User',
+            operation: 'removeUser',
+            reason: 'role-lookup-failed',
+            targetUserId: id,
+          },
+          lookupError
+        )
+      }
 
       const permitted =
         (storefrontPermissions?.permissions?.includes(
@@ -523,7 +598,15 @@ const Users = {
         storefrontPermissions?.permissions?.includes('remove-sales-users-all')
 
       if (!permitted) {
-        throw new GraphQLError('operation-not-permitted')
+        if (lookupError) {
+          throw accessLookupFailedError()
+        }
+
+        throw authDenied(logger, {
+          operation: 'removeUser',
+          reason: 'not-permitted',
+          targetUserId: id,
+        })
       }
     }
 
@@ -590,6 +673,7 @@ const Users = {
         clId,
         ctx,
         logger,
+        operation: 'addUser',
         orgId,
         roleId,
         sessionData,
@@ -597,10 +681,15 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      logger.error({
-        error,
-        message: 'addUser-checkUserIsAllowedError',
-      })
+      if (!isAccessErrorLogged(error)) {
+        logAccessError(
+          logger,
+          'addUser.checkUserIsAllowedError',
+          { operation: 'addUser' },
+          error
+        )
+      }
+
       throw error
     }
 
@@ -762,6 +851,7 @@ const Users = {
         clId,
         ctx,
         logger,
+        operation: 'updateUser',
         orgId,
         roleId,
         sessionData,
@@ -769,10 +859,15 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      logger.error({
-        error,
-        message: 'addUser-checkUserIsAllowedError',
-      })
+      if (!isAccessErrorLogged(error)) {
+        logAccessError(
+          logger,
+          'updateUser.checkUserIsAllowedError',
+          { operation: 'updateUser' },
+          error
+        )
+      }
+
       throw error
     }
 
@@ -874,6 +969,7 @@ const Users = {
         clId,
         ctx,
         logger,
+        operation: 'saveUser',
         orgId,
         roleId,
         sessionData,
@@ -881,10 +977,15 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      logger.error({
-        error,
-        message: 'addUser-checkUserIsAllowedError',
-      })
+      if (!isAccessErrorLogged(error)) {
+        logAccessError(
+          logger,
+          'saveUser.checkUserIsAllowedError',
+          { operation: 'saveUser' },
+          error
+        )
+      }
+
       throw error
     }
 
@@ -974,10 +1075,12 @@ async function impersonateUser(
       sendImpersonateUserMetric(ctx, metricParams)
     })
     .catch((error: any) => {
-      logger.error({
-        error,
-        message: 'impersonateUser-impersonateUserError',
-      })
+      logAccessError(
+        logger,
+        'impersonateUser.error',
+        { operation: 'impersonateUser', targetUserId: userId },
+        error
+      )
 
       return { status: 'error', message: error }
     })

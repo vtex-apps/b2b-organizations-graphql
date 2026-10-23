@@ -46,7 +46,7 @@ const mockContext = (
       },
     },
     vtex: {
-      logger: jest.fn(),
+      logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn() },
       sessionData: {
         namespaces: {
           'storefront-permissions': {

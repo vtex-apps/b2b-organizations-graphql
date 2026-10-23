@@ -12,9 +12,13 @@ import type {
   GetOrganizationsByEmailWithStatus,
   Organization,
 } from '../../typings'
-import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import GraphQLError, {
+  getErrorMessage,
+  withLogLevel,
+} from '../../utils/GraphQLError'
 import type { ActingUserEmailSource } from '../../utils/actingUserEmail'
 import { resolveActingUserEmail } from '../../utils/actingUserEmail'
+import { authDenied } from '../../utils/authDenied'
 import { describeClientError } from '../../utils/clientError'
 import type { Timer } from '../../utils/requestTimings'
 import {
@@ -230,8 +234,13 @@ const Organizations = {
           return null
         }))
 
+    // No session is a deny, not an error (review on #240): one warn
+    // `auth.denied`, same plain Error and message as before, marked warn.
     if (!sessionData) {
-      throw new Error('No session data for this current user')
+      throw authDenied(logger, {
+        operation: 'checkOrganizationIsActive',
+        reason: 'no-session',
+      })
     }
 
     let orgId =
@@ -304,6 +313,19 @@ const Organizations = {
 
           return result
         } catch (error) {
+          // Missing organization is an expected outcome (SDD Q6): warn, and
+          // keep the middleware re-log at warn too. Same response otherwise.
+          if (error?.organizationNotFound) {
+            ctx.vtex.logger.warn({
+              entity: 'Organization',
+              entityId: id,
+              message: 'getOrganizationById.notFound',
+              operation: 'getOrganizationById',
+            })
+
+            throw withLogLevel(new GraphQLError(getErrorMessage(error)), 'warn')
+          }
+
           ctx.vtex.logger.error({
             error: describeClientError(error),
             message: 'getOrganizationById-error',
@@ -585,7 +607,10 @@ const Organizations = {
     ensureConfigForQuery(ctx)
 
     if (!sessionData?.namespaces?.['storefront-permissions']) {
-      throw new GraphQLError('organization-data-not-found')
+      throw authDenied(logger, {
+        operation: 'getOrganizationByIdStorefront',
+        reason: 'organization-data-not-found',
+      })
     }
 
     const {
@@ -601,7 +626,11 @@ const Organizations = {
     }
 
     if (id !== userOrganizationId) {
-      throw new GraphQLError('operation-not-permitted')
+      throw authDenied(logger, {
+        operation: 'getOrganizationByIdStorefront',
+        orgId: userOrganizationId,
+        reason: 'not-permitted',
+      })
     }
 
     try {
@@ -623,6 +652,19 @@ const Organizations = {
         permissions: organization.permissions ?? { createQuote: true },
       }
     } catch (error) {
+      // Same as getOrganizationById (SDD Q6): a missing organization is an
+      // expected outcome, so warn and mark the throw warn. Same response.
+      if (error?.organizationNotFound) {
+        logger.warn({
+          entity: 'Organization',
+          entityId: id,
+          message: 'getOrganizationByIdStorefront.notFound',
+          operation: 'getOrganizationByIdStorefront',
+        })
+
+        throw withLogLevel(new GraphQLError(getErrorMessage(error)), 'warn')
+      }
+
       logger.error({
         error: describeClientError(error),
         message: 'getOrganizationByIdStorefront-error',

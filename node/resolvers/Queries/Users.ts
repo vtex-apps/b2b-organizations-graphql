@@ -5,6 +5,7 @@ import {
   schemas,
 } from '../../mdSchema'
 import { toHash } from '../../utils'
+import { authDenied } from '../../utils/authDenied'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import { getAppId, getAppMajorVersion } from '../config'
 
@@ -146,6 +147,7 @@ const checkUserPermissions = async ({
   adminUserAuthToken,
   organizationId,
   logger,
+  operation,
 }: any) => {
   const { sessionData } = vtex
 
@@ -164,7 +166,11 @@ const checkUserPermissions = async ({
 
   if (condition) {
     if (!sessionData?.namespaces?.['storefront-permissions']) {
-      throw new GraphQLError('organization-data-not-found')
+      throw authDenied(logger, {
+        operation,
+        orgId: organizationId,
+        reason: 'organization-data-not-found',
+      })
     }
 
     const {
@@ -181,7 +187,11 @@ const checkUserPermissions = async ({
     }
 
     if (organizationId !== userOrganizationId) {
-      throw new GraphQLError('operation-not-permitted')
+      throw authDenied(logger, {
+        operation,
+        orgId: organizationId,
+        reason: 'not-permitted',
+      })
     }
   }
 
@@ -309,7 +319,10 @@ const Users = {
     }
 
     if (!adminUserAuthToken && !isSalesAdmin(checkUserPermission)) {
-      throw new GraphQLError('operation-not-permitted')
+      throw authDenied(logger, {
+        operation: 'getOrganizationsWithoutSalesManager',
+        reason: 'not-permitted',
+      })
     }
 
     // getting all users
@@ -409,6 +422,7 @@ const Users = {
       const { organizationId: orgId } = await checkUserPermissions({
         adminUserAuthToken,
         logger,
+        operation: 'getUsers',
         organizationId,
         storefrontPermissions,
         validateUserAdmin: false,
@@ -481,6 +495,7 @@ const Users = {
       const { organizationId: orgId } = await checkUserPermissions({
         adminUserAuthToken,
         logger,
+        operation: 'getUsersPaginated',
         organizationId,
         storefrontPermissions,
         validateUserAdmin: true,
