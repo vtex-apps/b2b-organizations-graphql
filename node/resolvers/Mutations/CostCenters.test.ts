@@ -1,4 +1,12 @@
-import { ORGANIZATION_DATA_ENTITY, COST_CENTER_DATA_ENTITY } from '../../mdSchema'
+import {
+  ORGANIZATION_DATA_ENTITY,
+  COST_CENTER_DATA_ENTITY,
+} from '../../mdSchema'
+import {
+  invalidateCostCenterCache,
+  invalidateOrganizationCache,
+} from '../../services/organizationsCache'
+import CostCenters from './CostCenters'
 
 jest.mock('@vtex/api')
 jest.mock('@vtex/diagnostics-nodejs', () => ({}))
@@ -6,12 +14,6 @@ jest.mock('../../services/organizationsCache', () => ({
   invalidateCostCenterCache: jest.fn().mockResolvedValue(undefined),
   invalidateOrganizationCache: jest.fn().mockResolvedValue(undefined),
 }))
-
-import {
-  invalidateCostCenterCache,
-  invalidateOrganizationCache,
-} from '../../services/organizationsCache'
-import CostCenters from './CostCenters'
 
 const orgId = 'org-123'
 const costId = 'cost-456'
@@ -22,6 +24,7 @@ const mockContext = () =>
     clients: {
       audit: {
         sendEvent: jest.fn().mockResolvedValue(undefined),
+        sendEventStrict: jest.fn().mockResolvedValue(undefined),
       },
       masterdata: {
         deleteDocument: jest.fn().mockResolvedValue(undefined),

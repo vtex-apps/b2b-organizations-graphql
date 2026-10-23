@@ -16,6 +16,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **[B2BTEAM-3984]** OMS, checkout and Master Data failures in the routes are now logged: `error` `route.<order|orders|requestCancellation|checkout>.error` (with `orderId` where applicable). An OMS 404 logs `warn` `route.order.notFound`, and checkout answering non-2xx to a cancellation logs `route.requestCancellation.rejected` with `status` (`warn` for 4xx, `error` for 5xx). Expected outcomes (OMS 404, checkout 4xx) are marked `level: 'warn'` so the `@vtex/api` HTTP error middleware re-logs them as `warn` instead of `error`; status and message are unchanged, the error body only gains `level: "warn"`.
 
+## [2.8.2] - 2026-10-23
+
+### Fixed
+
+- **[B2BTEAM-3982]** `createCostCenterWithId` no longer treats Master Data lookup failures (5xx/429/timeout) as "does not exist". Only HTTP 404 / missing document proceeds to create; other errors log `createCostCenterWithId.lookupError` and fail the mutation without creating.
+- **[B2BTEAM-3982]** `getCostCenterById` logs 404 as `warn` `getCostCenterById.notFound` and attaches `extensions.status` on the GraphQL error; real failures use `getCostCenterById.error`.
+- **[B2BTEAM-3982]** `createCostCenterWithId` with a nonexistent organization now logs `warn` `createCostCenterWithId.organizationNotFound` (previously unreachable: `getOrganizationById` throws instead of returning null, so only `getOrganizationById-error` was logged at `error`). The mutation response (`organizationNotFound`) is unchanged.
+- **[B2BTEAM-3982]** Not-found GraphQL errors (`createCostCenterWithId` organization not found, `getCostCenterById`, `deleteCostCenter`, `deleteOrganization`, `deleteOrganizationRequest` on 404) are marked `level: 'warn'`, so the `@vtex/api` GraphQL error middleware re-logs them as `warn` instead of `error`. Message and code are unchanged; the response only gains `extensions.exception.level: "warn"`.
+- **[B2BTEAM-3982]** `createCostCenterWithId` with an existing cost center id marks `Cost Center already exists` as `level: 'warn'`, matching the structured `createCostCenterWithId.alreadyExists` warn, so the GraphQL error middleware no longer re-logs it as `error`. Message unchanged; the response only gains `extensions.exception.level: "warn"`.
+- **[B2BTEAM-3982]** `storefrontPermissions.queryError` honors the level storefront-permissions attaches to its GraphQL errors (`extensions.exception.level` / `extensions.logLevel`) and logs authentication/permission-denied messages (e.g. `checkUserPermission` answering `User not authenticated, make sure the query is private`) as `warn`. An explicit upstream `error` and any other failure still log as `error`.
+- **[B2BTEAM-3982]** `saveUser` failures log `saveUser.error` (operation `saveUser`) instead of `addUser.error`; the org-approval helper that calls `saveUser` logs `createUserAndAttachToOrganization.saveUserError`.
+
+### Changed
+
+- **[B2BTEAM-3982]** Mutation write failures use stable `<mutation>.*` message keys with `describeClientError` payloads (no raw error objects). Deletes log `warn` `<op>.notFound` on 404. Mutation audit uses `sendEventStrict` so an audit failure after a successful write fails the mutation (`audit.sendEventError`). Query/login audit remains fire-and-forget (B2BTEAM-3729).
+- **[B2BTEAM-3982]** `storefront-permissions` client calls now log `storefrontPermissions.queryError` (`operation`, `describeClientError`, `graphQLErrors` messages) before rethrowing unchanged. Client-side GraphQL validation errors (e.g. `Variable "$email" ... was not provided`, or `Variable "$id" ... must not be null` for a user without `roleId`) log as `warn`; real failures as `error`. Previously these only surfaced as the generic `storefront-permissions` error logged by `@vtex/api`.
+
 ## [2.8.1] - 2026-10-05
 
 ## [2.8.1] - 2026-10-01

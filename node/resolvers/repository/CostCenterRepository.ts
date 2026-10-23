@@ -25,7 +25,6 @@ const CostCenterRepository = {
   ): Promise<Result> => {
     const {
       clients: { masterdata },
-      vtex: { logger },
     } = ctx
 
     const costCenter = {
@@ -52,11 +51,8 @@ const CostCenterRepository = {
         _,
         { costId: createCostCenterResult.DocumentId, tags: marketingTags },
         ctx
-      ).catch((error) => {
-        logger.error({
-          error,
-          message: 'setMarketingTags-error',
-        })
+      ).catch(() => {
+        // Logging lives in MarketingTags.setMarketingTags (SDD §4.1).
       })
     }
 
