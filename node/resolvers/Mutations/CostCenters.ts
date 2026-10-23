@@ -13,7 +13,10 @@ import GraphQLError, {
 } from '../../utils/GraphQLError'
 import { describeClientError } from '../../utils/clientError'
 import { getHttpStatus, isNotFoundError } from '../../utils/httpError'
-import { sendMutationAudit } from '../../utils/sendMutationAudit'
+import {
+  sendMutationAudit,
+  sendMutationAuditFireAndForget,
+} from '../../utils/sendMutationAudit'
 import {
   invalidateCostCenterCache,
   invalidateOrganizationCache,
@@ -96,7 +99,7 @@ const CostCenters = {
         ctx
       )
 
-      await sendMutationAudit(ctx, {
+      sendMutationAuditFireAndForget(ctx, {
         subjectId: 'create-cost-center-event',
         operation: 'CREATE_COST_CENTER',
         meta: {
@@ -198,7 +201,10 @@ const CostCenters = {
       }
     }
 
-    if (costCenter) {
+    // Master Data can answer a miss with 200 and an empty body ('' or {})
+    // instead of 404 (see MasterDataExtended.getDocumentById). Only a document
+    // carrying an id counts as an existing cost center.
+    if ((costCenter as { id?: string } | null)?.id) {
       logger.warn({
         costId: id,
         message: 'createCostCenterWithId.alreadyExists',
@@ -249,7 +255,7 @@ const CostCenters = {
       })
     }
 
-    await sendMutationAudit(ctx, {
+    sendMutationAuditFireAndForget(ctx, {
       subjectId: 'create-cost-center-with-id-event',
       operation: 'CREATE_COST_CENTER_WITH_ID',
       meta: {
@@ -310,7 +316,7 @@ const CostCenters = {
 
       await invalidateCostCenterCache(ctx, costCenterId)
 
-      await sendMutationAudit(ctx, {
+      sendMutationAuditFireAndForget(ctx, {
         subjectId: 'create-cost-center-address-event',
         operation: 'CREATE_COST_CENTER_ADDRESS',
         meta: {
