@@ -17,6 +17,10 @@ import listAllUsers from '../queries/listAllUsers'
 import listRoles from '../queries/listRoles'
 import listUsers from '../queries/listUsers'
 import listUsersPaginated from '../queries/listUsersPaginated'
+import {
+  getOperationName,
+  logStorefrontPermissionsError,
+} from '../utils/storefrontPermissionsError'
 
 export default class StorefrontPermissions extends AppGraphQLClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
@@ -182,7 +186,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     name: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate(
+    return this.mutate(
       {
         mutate: addUser,
         variables: {
@@ -223,7 +227,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     email: string
     canImpersonate?: boolean
   }): Promise<any> => {
-    return this.graphql.mutate(
+    return this.mutate(
       {
         mutate: updateUser,
         variables: {
@@ -264,7 +268,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     name: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate(
+    return this.mutate(
       {
         mutate: saveUser,
         variables: {
@@ -294,7 +298,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     userId?: string
     email: string
   }): Promise<any> => {
-    return this.graphql.mutate(
+    return this.mutate(
       {
         mutate: deleteUser,
         variables: {
@@ -314,7 +318,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }: {
     userId?: string
   }): Promise<any> => {
-    const graphqlResult = this.graphql.mutate(
+    const graphqlResult = this.mutate(
       {
         mutate: impersonateUser,
         variables: {
@@ -373,18 +377,41 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     const { query, variables, extensions } = param
 
-    return this.graphql.query(
-      {
-        extensions,
-        query,
-        variables,
-      },
-      {
-        headers: this.getTokenToHeader(),
-        params: {
-          locale: this.context.locale,
+    return this.graphql
+      .query(
+        {
+          extensions,
+          query,
+          variables,
         },
-      }
-    )
+        {
+          headers: this.getTokenToHeader(),
+          params: {
+            locale: this.context.locale,
+          },
+        }
+      )
+      .catch((error: any) => {
+        logStorefrontPermissionsError(
+          this.context.logger,
+          getOperationName(query),
+          error
+        )
+        throw error
+      })
+  }
+
+  private mutate = async (
+    param: { mutate: string; variables: any },
+    config: any
+  ): Promise<any> => {
+    return this.graphql.mutate(param, config).catch((error: any) => {
+      logStorefrontPermissionsError(
+        this.context.logger,
+        getOperationName(param.mutate),
+        error
+      )
+      throw error
+    })
   }
 }

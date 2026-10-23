@@ -1,5 +1,7 @@
 import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import { describeClientError } from '../../utils/clientError'
+import { sendMutationAudit } from '../../utils/sendMutationAudit'
 import type { ImpersonateMetricParams } from '../../utils/metrics/impersonate'
 import {
   sendImpersonateB2BUserMetric,
@@ -91,8 +93,10 @@ const getUser = async ({ masterdata, logger, userId, clId }: any) =>
     })
     .catch((error: any) => {
       logger.error({
-        error,
-        message: 'saveUser-getDocumentError',
+        message: 'saveUser.error',
+        error: describeClientError(error),
+        operation: 'saveUser',
+        entity: 'User',
       })
 
       return error
@@ -182,7 +186,7 @@ const getUserFromStorefrontPermissions = ({
 const Users = {
   impersonateB2BUser: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
+      clients: { storefrontPermissions: storefrontPermissionsClient },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip,
@@ -285,7 +289,7 @@ const Users = {
 
     const result = impersonation?.data?.impersonateUser ?? { status: 'error' }
 
-    await audit.sendEvent({
+    await sendMutationAudit(ctx, {
       subjectId: 'impersonate-b2b-user-event',
       operation: 'IMPERSONATE_B2B_USER',
       meta: {
@@ -316,7 +320,6 @@ const Users = {
       clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
-        audit,
       },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
@@ -439,7 +442,7 @@ const Users = {
       sessionData?.namespaces['storefront-permissions']
     )
 
-    await audit.sendEvent({
+    await sendMutationAudit(ctx, {
       subjectId: 'impersonate-user-event',
       operation: 'IMPERSONATE_USER',
       meta: {
@@ -459,11 +462,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: {
-        events,
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { events, storefrontPermissions: storefrontPermissionsClient },
       vtex: { logger },
       ip,
     } = ctx as any
@@ -474,7 +473,11 @@ const Users = {
         const user = result.data.getUsersByEmail[0]
 
         if (!user) {
-          logger.error({ message: 'User not found' })
+          logger.warn({
+            entity: 'User',
+            message: 'removeUserWithEmail.notFound',
+            operation: 'removeUserWithEmail',
+          })
 
           return { status: 'error', message: 'User not found' }
         }
@@ -491,7 +494,7 @@ const Users = {
         return storefrontPermissionsClient
           .deleteUser(fields)
           .then(async (response: any) => {
-            await audit.sendEvent({
+            await sendMutationAudit(ctx, {
               subjectId: 'remove-user-with-email-event',
               operation: 'REMOVE_USER_WITH_EMAIL',
               meta: {
@@ -517,8 +520,10 @@ const Users = {
           })
           .catch((error: any) => {
             logger.error({
-              error,
-              message: 'removeUser-deleteUserError',
+              message: 'removeUser.error',
+              error: describeClientError(error),
+              operation: 'removeUser',
+              entity: 'User',
             })
 
             return { status: 'error', message: error }
@@ -526,8 +531,10 @@ const Users = {
       })
       .catch((error: any) => {
         logger.error({
-          error,
-          message: 'getUsers-error',
+          message: 'removeUserWithEmail.error',
+          error: describeClientError(error),
+          operation: 'removeUserWithEmail',
+          entity: 'User',
         })
         throw new GraphQLError(getErrorMessage(error))
       })
@@ -550,11 +557,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: {
-        events,
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { events, storefrontPermissions: storefrontPermissionsClient },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip,
     } = ctx as Context | any
@@ -616,7 +619,7 @@ const Users = {
     return storefrontPermissionsClient
       .deleteUser(fields)
       .then(async (result: any) => {
-        await audit.sendEvent({
+        await sendMutationAudit(ctx, {
           subjectId: 'remove-user-event',
           operation: 'REMOVE_USER',
           meta: {
@@ -643,8 +646,10 @@ const Users = {
       })
       .catch((error: any) => {
         logger.error({
-          error,
-          message: 'removeUser-deleteUserError',
+          message: 'removeUser.error',
+          error: describeClientError(error),
+          operation: 'removeUser',
+          entity: 'User',
         })
 
         return { status: 'error', message: error }
@@ -657,7 +662,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
+      clients: { storefrontPermissions: storefrontPermissionsClient },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip,
     } = ctx as any
@@ -701,7 +706,7 @@ const Users = {
     return storefrontPermissionsClient
       .addUser(fields)
       .then(async (result: any) => {
-        await audit.sendEvent({
+        await sendMutationAudit(ctx, {
           subjectId: 'add-user-event',
           operation: 'ADD_USER',
           meta: {
@@ -727,8 +732,10 @@ const Users = {
       })
       .catch((error: any) => {
         logger.error({
-          error,
-          message: 'addUser-error',
+          message: 'addUser.error',
+          error: describeClientError(error),
+          operation: 'addUser',
+          entity: 'User',
         })
 
         const message = error.graphQLErrors[0]?.message ?? error.message
@@ -754,7 +761,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
+      clients: { storefrontPermissions: storefrontPermissionsClient },
       vtex: { logger },
       ip,
     } = ctx as any
@@ -769,7 +776,7 @@ const Users = {
         canImpersonate,
       })
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'create-user-with-email-event',
         operation: 'CREATE_USER_WITH_EMAIL',
         meta: {
@@ -792,8 +799,10 @@ const Users = {
       return result.data.addUser
     } catch (error) {
       logger.error({
-        error,
-        message: 'createUserWithEmail-error',
+        message: 'createUserWithEmail.error',
+        error: describeClientError(error),
+        operation: 'createUserWithEmail',
+        entity: 'User',
       })
       const message = error.graphQLErrors?.[0]?.message ?? error.message
       let status = ''
@@ -831,7 +840,6 @@ const Users = {
       clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
-        audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip,
@@ -897,7 +905,7 @@ const Users = {
           currentUserData = null
         }
 
-        await audit.sendEvent({
+        await sendMutationAudit(ctx, {
           subjectId: 'update-user-event',
           operation: 'UPDATE_USER',
           meta: {
@@ -914,8 +922,10 @@ const Users = {
       })
       .catch((error: any) => {
         logger.error({
-          error,
-          message: 'updateUser-error',
+          message: 'updateUser.error',
+          error: describeClientError(error),
+          operation: 'updateUser',
+          entity: 'User',
         })
 
         return { status: 'error', message: error }
@@ -948,7 +958,6 @@ const Users = {
       clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
-        audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip,
@@ -1001,7 +1010,7 @@ const Users = {
         userId,
       })
       .then(async (result: any) => {
-        await audit.sendEvent({
+        await sendMutationAudit(ctx, {
           subjectId: 'save-user-event',
           operation: 'SAVE_USER',
           meta: {
@@ -1016,8 +1025,10 @@ const Users = {
       })
       .catch((error: any) => {
         logger.error({
-          error,
-          message: 'addUser-error',
+          message: 'saveUser.error',
+          error: describeClientError(error),
+          operation: 'saveUser',
+          entity: 'User',
         })
 
         return { status: 'error', message: error }

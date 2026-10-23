@@ -4,8 +4,12 @@ import {
   COST_CENTER_SCHEMA_VERSION,
 } from '../../mdSchema'
 import type { Address, CostCenter } from '../../typings'
-import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import GraphQLError, {
+  getErrorMessage,
+  withLogLevel,
+} from '../../utils/GraphQLError'
 import { describeClientError } from '../../utils/clientError'
+import { getHttpStatus, isNotFoundError } from '../../utils/httpError'
 import {
   auditQueryEvent,
   ensureConfigForQuery,
@@ -129,11 +133,32 @@ const costCenters = {
 
           return result
         } catch (error) {
-          logger.error({
-            error: describeClientError(error),
-            message: 'getCostCenterById-error',
+          const status =
+            getHttpStatus(error) ??
+            (error?.costCenterNotFound ? 404 : undefined)
+
+          const notFound = isNotFoundError(error) || status === 404
+
+          if (notFound) {
+            logger.warn({
+              costId: id,
+              message: 'getCostCenterById.notFound',
+              operation: 'getCostCenterById',
+            })
+          } else {
+            logger.error({
+              costId: id,
+              error: describeClientError(error),
+              message: 'getCostCenterById.error',
+              operation: 'getCostCenterById',
+            })
+          }
+
+          const graphQLError = new GraphQLError(getErrorMessage(error), {
+            status,
           })
-          throw new GraphQLError(getErrorMessage(error))
+
+          throw notFound ? withLogLevel(graphQLError, 'warn') : graphQLError
         }
       },
     })

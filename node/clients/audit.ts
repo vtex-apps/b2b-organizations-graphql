@@ -59,6 +59,8 @@ export class AuditClient extends ExternalClient {
     const { logger } = this.context
 
     // Not awaited: intentionally detached from the caller's request flow.
+    // Queries (login hot path) must keep this fire-and-forget behaviour —
+    // see B2BTEAM-3729. Mutations that need fail-closed audit use sendEventStrict.
     this.dispatchEvent(auditEntry).catch((error) => {
       logger.error({
         message: 'Error sending audit event',
@@ -71,10 +73,35 @@ export class AuditClient extends ExternalClient {
     return Promise.resolve()
   }
 
-  private async dispatchEvent(auditEntry: AuditEntry): Promise<void> {
+  /**
+   * Awaits the audit HTTP call and rethrows on failure so mutations can fail
+   * closed (B2BTEAM-3982 / SDD Q5). Do not use on query/login paths.
+   */
+  public async sendEventStrict(auditEntry: AuditEntry): Promise<void> {
+    const { logger } = this.context
+
+    try {
+      await this.dispatchEvent(auditEntry, { throwOnError: true })
+    } catch (error) {
+      logger.error({
+        message: 'audit.sendEventError',
+        error: describeClientError(error),
+        auditOperation: auditEntry.operation,
+        subjectId: auditEntry.subjectId,
+      })
+      throw error
+    }
+  }
+
+  private async dispatchEvent(
+    auditEntry: AuditEntry,
+    options: { throwOnError?: boolean } = {}
+  ): Promise<void> {
     const { meta, subjectId, operation } = auditEntry
     const { account, operationId, requestId, userAgent, logger, sessionToken } =
       this.context
+
+    const throwOnError = options.throwOnError === true
 
     let authorId = 'unknown'
 
@@ -101,6 +128,10 @@ export class AuditClient extends ExternalClient {
     try {
       await this.http.post(`/api/audit/events?an=${account}`, auditEvent)
     } catch (error) {
+      if (throwOnError) {
+        throw error
+      }
+
       logger.error({
         message: 'Error sending audit event',
         error: describeClientError(error),
