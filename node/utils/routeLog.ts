@@ -103,9 +103,11 @@ const toSafeResponse = (error: any) => {
  * Cancelled requests and rate limits are left to the runtime, which answers
  * them with no body.
  */
-export const safeRoute =
-  (route: RouteName, handler: (ctx: Context) => Promise<void>) =>
-  async (ctx: Context) => {
+export const safeRoute = (
+  route: RouteName,
+  handler: (ctx: Context) => Promise<void>
+) => {
+  const wrapped = async (ctx: Context) => {
     try {
       await handler(ctx)
     } catch (error) {
@@ -133,3 +135,8 @@ export const safeRoute =
       ctx.response.body = response
     }
   }
+
+  // The runtime labels route timings with the handler's name, which a
+  // wrapped handler would otherwise lose.
+  return Object.defineProperty(wrapped, 'name', { value: route })
+}

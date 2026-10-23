@@ -643,6 +643,13 @@ describe('Routes logging (B2BTEAM-3984)', () => {
   })
 
   describe('safeRoute (B2BTEAM-3988)', () => {
+    it.each(['checkout', 'order', 'orders', 'requestCancellation'] as const)(
+      'keeps the handler name %s for route timings',
+      (route) => {
+        expect(Routes[route].name).toBe(route)
+      }
+    )
+
     it('answers a generic 500 and logs route.<route>.error once for an unexpected failure', async () => {
       const ctx = mockContext()
 
