@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.8.2] - 2026-10-23
+
 ### Fixed
 
 - **[B2BTEAM-3982]** `createCostCenterWithId` no longer treats Master Data lookup failures (5xx/429/timeout) as "does not exist". Only HTTP 404 / missing document proceeds to create; other errors log `createCostCenterWithId.lookupError` and fail the mutation without creating.
