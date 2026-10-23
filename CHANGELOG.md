@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- **[B2BTEAM-3984]** HTTP routes (`orders`, `order`, `requestCancellation`, `checkout`) log stable `route.*` message keys with `describeClientError` payloads (no raw error objects or e-mails). Session failures log `route.getSessionError` with the calling `route` (was `orders-getSession-error` for every route, and `checkout-getSession-error`); storefront-permissions failures log `route.checkUserPermissionError` (fail-closed fallback unchanged). Responses are unchanged.
+- **[B2BTEAM-3984]** Denies in the routes log `warn` `route.denied` with `route`, `reason` (`no-token` / `not-permitted`) and, for `order` / `requestCancellation`, the `orderId`, before the same `Access denied` error / 403.
+
+### Fixed
+
+- **[B2BTEAM-3984]** OMS, checkout and Master Data failures in the routes are now logged: `error` `route.<order|orders|requestCancellation|checkout>.error` (with `orderId` where applicable). An OMS 404 logs `warn` `route.order.notFound`, and checkout answering non-2xx to a cancellation logs `route.requestCancellation.rejected` with `status` (`warn` for 4xx, `error` for 5xx). Expected outcomes (OMS 404, checkout 4xx) are marked `level: 'warn'` so the `@vtex/api` HTTP error middleware re-logs them as `warn` instead of `error`; status and message are unchanged, the error body only gains `level: "warn"`.
+
 ## [2.8.2] - 2026-10-23
 
 ### Fixed

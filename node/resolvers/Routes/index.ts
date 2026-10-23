@@ -4,8 +4,15 @@ import {
   COST_CENTER_DATA_ENTITY,
   ORGANIZATION_DATA_ENTITY,
 } from '../../mdSchema'
+import { describeClientError } from '../../utils/clientError'
+import type { RouteName } from '../../utils/routeLog'
+import { getResponseStatus, withLogLevel } from '../../utils/routeLog'
 
-const getUserAndPermissions = async (ctx: Context) => {
+const getUserAndPermissions = async (
+  ctx: Context,
+  route: RouteName,
+  orderId?: string
+) => {
   const {
     vtex: { storeUserAuthToken, sessionToken, logger },
     clients: { vtexId, session, storefrontPermissions },
@@ -20,8 +27,10 @@ const getUserAndPermissions = async (ctx: Context) => {
     })
     .catch((error: any) => {
       logger.error({
-        error,
-        message: 'orders-getSession-error',
+        error: describeClientError(error),
+        message: 'route.getSessionError',
+        operation: route,
+        route,
       })
 
       return null
@@ -32,6 +41,14 @@ const getUserAndPermissions = async (ctx: Context) => {
     sessionData?.namespaces?.impersonate?.storeUserEmail?.value
 
   if (!impersonatedEmail && !token) {
+    logger.warn({
+      entity: 'Order',
+      message: 'route.denied',
+      operation: route,
+      orderId,
+      reason: 'no-token',
+      route,
+    })
     throw new ForbiddenError('Access denied')
   }
 
@@ -43,8 +60,10 @@ const getUserAndPermissions = async (ctx: Context) => {
       .checkUserPermission('vtex.b2b-orders-history@2.x')
       .catch((error: any) => {
         logger.error({
-          message: 'checkUserPermission-error',
-          error,
+          error: describeClientError(error),
+          message: 'route.checkUserPermissionError',
+          operation: route,
+          route,
         })
 
         return {
@@ -120,12 +139,16 @@ const checkPermissionAgainstOrder = ({
   return false
 }
 
-const getOrder = async (ctx: Context) => {
+const getOrder = async (
+  ctx: Context,
+  route: 'order' | 'requestCancellation'
+) => {
   const {
     vtex: {
       route: {
         params: { orderId },
       },
+      logger,
     },
     clients: { orders },
   } = ctx
@@ -134,7 +157,35 @@ const getOrder = async (ctx: Context) => {
     throw new UserInputError('Order ID is required')
   }
 
-  const order: any = await orders.order(String(orderId))
+  let order: any
+
+  try {
+    order = await orders.order(String(orderId))
+  } catch (error) {
+    if (getResponseStatus(error) === 404) {
+      logger.warn({
+        entity: 'Order',
+        message: 'route.order.notFound',
+        operation: route,
+        orderId: String(orderId),
+        reason: 'not-found',
+        route,
+      })
+      // Already logged as warn above; keeps the runtime re-log at warn too.
+      throw withLogLevel(error, 'warn')
+    }
+
+    logger.error({
+      dependency: 'orders.order',
+      entity: 'Order',
+      error: describeClientError(error),
+      message: `route.${route}.error`,
+      operation: route,
+      orderId: String(orderId),
+      route,
+    })
+    throw error
+  }
 
   // Some dependencies rely on this property not being null but an empty array instead.
   // The new orders endpoint might return null for this property instead of an empty array,
@@ -157,6 +208,36 @@ const Index = {
 
     ctx.response.status = !token ? 403 : 200
 
+    if (!token) {
+      logger.warn({
+        message: 'route.denied',
+        operation: 'checkout',
+        reason: 'no-token',
+        route: 'checkout',
+      })
+    }
+
+    const getDocument = async (
+      entity: 'Organization' | 'CostCenter',
+      args: { dataEntity: string; fields: string[]; id: string }
+    ) => {
+      try {
+        return await masterdata.getDocument(args)
+      } catch (error) {
+        logger.error({
+          dependency: 'masterdata.getDocument',
+          entity,
+          entityId: args.id,
+          error: describeClientError(error),
+          message: 'route.checkout.error',
+          operation: 'checkout',
+          route: 'checkout',
+        })
+        // No response change in this story: the runtime still answers 500.
+        throw error
+      }
+    }
+
     if (token) {
       const sd = await session
         .getSession(sessionToken as string, ['*'])
@@ -165,8 +246,10 @@ const Index = {
         })
         .catch((error: any) => {
           logger.error({
-            error,
-            message: 'checkout-getSession-error',
+            error: describeClientError(error),
+            message: 'route.getSessionError',
+            operation: 'checkout',
+            route: 'checkout',
           })
 
           return null
@@ -174,7 +257,7 @@ const Index = {
 
       if (sd?.namespaces['storefront-permissions']) {
         if (sd.namespaces['storefront-permissions']?.organization?.value) {
-          response.organization = await masterdata.getDocument({
+          response.organization = await getDocument('Organization', {
             dataEntity: ORGANIZATION_DATA_ENTITY,
             fields: ['paymentTerms'],
             id: sd.namespaces['storefront-permissions']?.organization?.value,
@@ -182,7 +265,7 @@ const Index = {
         }
 
         if (sd.namespaces['storefront-permissions']?.costcenter?.value) {
-          response.costcenter = await masterdata.getDocument({
+          response.costcenter = await getDocument('CostCenter', {
             dataEntity: COST_CENTER_DATA_ENTITY,
             fields: ['addresses'],
             id: sd.namespaces['storefront-permissions']?.costcenter?.value,
@@ -197,7 +280,16 @@ const Index = {
     ctx.response.body = response
   },
   order: async (ctx: Context) => {
-    const order = await getOrder(ctx)
+    const {
+      vtex: {
+        route: {
+          params: { orderId },
+        },
+        logger,
+      },
+    } = ctx
+
+    const order = await getOrder(ctx, 'order')
 
     const {
       permissions,
@@ -206,7 +298,7 @@ const Index = {
       profileEmail,
       organizationId,
       costCenterId,
-    } = await getUserAndPermissions(ctx)
+    } = await getUserAndPermissions(ctx, 'order', String(orderId))
 
     const permitted = checkPermissionAgainstOrder({
       permissions,
@@ -218,6 +310,14 @@ const Index = {
     })
 
     if (!permitted) {
+      logger.warn({
+        entity: 'Order',
+        message: 'route.denied',
+        operation: 'order',
+        orderId: String(orderId),
+        reason: 'not-permitted',
+        route: 'order',
+      })
       throw new ForbiddenError('Access denied')
     }
 
@@ -232,6 +332,7 @@ const Index = {
     const {
       clients: { oms },
       request: { querystring },
+      vtex: { logger },
     } = ctx
 
     const {
@@ -240,7 +341,7 @@ const Index = {
       impersonatedEmail,
       organizationId,
       costCenterId,
-    } = await getUserAndPermissions(ctx)
+    } = await getUserAndPermissions(ctx, 'orders')
 
     const filterByPermission = (userPermissions: string[]) => {
       if (userPermissions.includes('all-orders')) {
@@ -271,7 +372,21 @@ const Index = {
       query += `&clientEmail=${impersonatedEmail ?? authEmail}`
     }
 
-    const orders: any = await oms.search(query)
+    let orders: any
+
+    try {
+      orders = await oms.search(query)
+    } catch (error) {
+      logger.error({
+        dependency: 'oms.search',
+        entity: 'Order',
+        error: describeClientError(error),
+        message: 'route.orders.error',
+        operation: 'orders',
+        route: 'orders',
+      })
+      throw error
+    }
 
     ctx.set('Content-Type', 'application/json')
     ctx.set('Cache-Control', 'no-cache, no-store')
@@ -288,9 +403,10 @@ const Index = {
         },
       },
       clients: { checkout },
+      vtex: { logger },
     } = ctx
 
-    const order = await getOrder(ctx)
+    const order = await getOrder(ctx, 'requestCancellation')
 
     const {
       permissions,
@@ -299,7 +415,7 @@ const Index = {
       profileEmail,
       organizationId,
       costCenterId,
-    } = await getUserAndPermissions(ctx)
+    } = await getUserAndPermissions(ctx, 'requestCancellation', String(orderId))
 
     const permitted = checkPermissionAgainstOrder({
       permissions,
@@ -311,15 +427,70 @@ const Index = {
     })
 
     if (!permitted) {
+      logger.warn({
+        entity: 'Order',
+        message: 'route.denied',
+        operation: 'requestCancellation',
+        orderId: String(orderId),
+        reason: 'not-permitted',
+        route: 'requestCancellation',
+      })
       throw new ForbiddenError('Access denied')
     }
 
     const reason = `order canceled by user: ${authEmail}`
 
-    const requestCancellationResponse = await checkout.requestCancellation(
-      orderId as string,
-      reason
-    )
+    const logRejected = (status: number, error?: unknown) => {
+      const level = status >= 500 ? 'error' : 'warn'
+
+      logger[level]({
+        entity: 'Order',
+        ...(error ? { error: describeClientError(error) } : {}),
+        message: 'route.requestCancellation.rejected',
+        operation: 'requestCancellation',
+        orderId: String(orderId),
+        route: 'requestCancellation',
+        status,
+      })
+
+      return level
+    }
+
+    let requestCancellationResponse: any
+
+    try {
+      requestCancellationResponse = await checkout.requestCancellation(
+        orderId as string,
+        reason
+      )
+    } catch (error) {
+      const status = getResponseStatus(error)
+
+      if (status !== undefined) {
+        // Checkout answered non-2xx: a 4xx is checkout refusing the request
+        // (warn, also for the runtime re-log); a 5xx is a real failure.
+        throw withLogLevel(error, logRejected(status, error))
+      }
+
+      // No response at all (timeout, network): checkout call failed.
+      logger.error({
+        dependency: 'checkout.requestCancellation',
+        entity: 'Order',
+        error: describeClientError(error),
+        message: 'route.requestCancellation.error',
+        operation: 'requestCancellation',
+        orderId: String(orderId),
+        route: 'requestCancellation',
+      })
+      throw error
+    }
+
+    const { status } = requestCancellationResponse
+
+    if (typeof status === 'number' && (status < 200 || status > 299)) {
+      // Forwarded to the caller unchanged, as before; now it is also logged.
+      logRejected(status)
+    }
 
     ctx.set('Content-Type', 'application/json')
     ctx.set('Cache-Control', 'no-cache, no-store')
