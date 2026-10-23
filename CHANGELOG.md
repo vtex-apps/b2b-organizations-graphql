@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.8.4] - 2026-10-23
+
 ### Changed
 
 - **[B2BTEAM-3985]** Access denials log one `warn` `auth.denied` (`operation`, `reason`: `organization-data-not-found` / `not-permitted` / `inactive-organization`, plus `orgId` / `targetUserId` when known) and the thrown error is marked `level: 'warn'`, so the `@vtex/api` GraphQL error middleware re-logs it as `warn` instead of `error`. Covers `checkUserIsAllowed` (`addUser`, `updateUser`, `saveUser`), `impersonateB2BUser`, `impersonateUser`, `removeUser`, `createCostCenter` without organization, `getOrganizationByIdStorefront`, `getCostCenterByIdStorefront`, `getCostCentersByOrganizationIdStorefront` (including `This organization is not active`), `getUsers`, `getUsersPaginated` and `getOrganizationsWithoutSalesManager`. Messages (`organization-data-not-found`, `operation-not-permitted`, `This organization is not active`) and error classes are unchanged; the response only gains `extensions.exception.level: "warn"`.
