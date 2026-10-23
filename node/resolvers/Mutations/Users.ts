@@ -1,6 +1,7 @@
 import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import { describeClientError } from '../../utils/clientError'
+import { sendMutationAudit } from '../../utils/sendMutationAudit'
 import type { ImpersonateMetricParams } from '../../utils/metrics/impersonate'
 import {
   sendImpersonateB2BUserMetric,
@@ -12,32 +13,30 @@ import {
   sendUpdateUserMetric,
 } from '../../utils/metrics/user'
 import type { UserArgs } from '../../typings'
+import {
+  accessLookupFailedError,
+  authDenied,
+  isAccessErrorLogged,
+  logAccessError,
+  logAccessLookupFailed,
+} from '../../utils/authDenied'
 
 /**
- * The role lookup that decides access failed (storefront-permissions
- * getUser/getRole). This is an infrastructure failure, not a deny, so it is
- * logged as `error` `<op>.checkUserIsAllowedError` (SDD §4.2/§5). Logging
- * only: the role slug still falls back to '' and the permission decision and
- * response are unchanged.
+ * The role slug that decides access. A failed lookup still falls back to ''
+ * (so the permission decision is the same as before), but the failure is
+ * returned to the caller: it is an infrastructure error, not a deny.
  */
-const logRoleLookupError = (logger: any, operation: string, error: any) => {
-  logger.error({
-    entity: 'User',
-    error: describeClientError(error),
-    message: `${operation}.checkUserIsAllowedError`,
-    operation,
-    reason: 'role-lookup-failed',
-  })
+interface RoleLookup {
+  roleSlug: string
+  lookupError?: unknown
 }
 
 export const getUserRoleSlug: (
   id: string,
-  ctx: Context,
-  operation: string
-) => Promise<string> = async (id, ctx, operation) => {
+  ctx: Context
+) => Promise<RoleLookup> = async (id, ctx) => {
   const {
     clients: { storefrontPermissions },
-    vtex: { logger },
   } = ctx
 
   return storefrontPermissions
@@ -49,13 +48,9 @@ export const getUserRoleSlug: (
       return storefrontPermissions.getRole(userData.roleId)
     })
     .then((result: any) => {
-      return result?.data?.getRole?.slug ?? ''
+      return { roleSlug: result?.data?.getRole?.slug ?? '' }
     })
-    .catch((error: any) => {
-      logRoleLookupError(logger, operation, error)
-
-      return ''
-    })
+    .catch((lookupError: any) => ({ lookupError, roleSlug: '' }))
 }
 
 const isUserPermitted = ({
@@ -74,23 +69,17 @@ const isUserPermitted = ({
 const getRoleSlug = async ({
   clId,
   ctx,
-  logger,
-  operation,
   roleId,
   storefrontPermissionsClient,
-}: any) =>
+}: any): Promise<RoleLookup> =>
   clId
-    ? getUserRoleSlug(clId, ctx, operation)
+    ? getUserRoleSlug(clId, ctx)
     : storefrontPermissionsClient
         .getRole(roleId)
         .then((result: any) => {
-          return result?.data?.getRole?.slug ?? ''
+          return { roleSlug: result?.data?.getRole?.slug ?? '' }
         })
-        .catch((error: any) => {
-          logRoleLookupError(logger, operation, error)
-
-          return ''
-        })
+        .catch((lookupError: any) => ({ lookupError, roleSlug: '' }))
 
 const getUser = async ({ masterdata, logger, userId, clId }: any) =>
   (await masterdata
@@ -104,8 +93,10 @@ const getUser = async ({ masterdata, logger, userId, clId }: any) =>
     })
     .catch((error: any) => {
       logger.error({
-        error,
-        message: 'saveUser-getDocumentError',
+        message: 'saveUser.error',
+        error: describeClientError(error),
+        operation: 'saveUser',
+        entity: 'User',
       })
 
       return error
@@ -125,17 +116,27 @@ const checkUserIsAllowed = async ({
 }: any) => {
   if (!adminUserAuthToken) {
     if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-      throw new GraphQLError('organization-data-not-found')
+      throw authDenied(logger, {
+        operation,
+        orgId,
+        reason: 'organization-data-not-found',
+      })
     }
 
-    const roleSlug = await getRoleSlug({
+    const { roleSlug, lookupError } = await getRoleSlug({
       clId,
       ctx,
-      logger,
-      operation,
       roleId,
       storefrontPermissionsClient,
     })
+
+    if (lookupError) {
+      logAccessLookupFailed(
+        logger,
+        { entity: 'User', operation, orgId, reason: 'role-lookup-failed' },
+        lookupError
+      )
+    }
 
     const permitted = isUserPermitted({
       orgId,
@@ -145,7 +146,16 @@ const checkUserIsAllowed = async ({
     })
 
     if (!permitted) {
-      throw new GraphQLError('operation-not-permitted')
+      // Without the role there was no real decision: not a deny.
+      if (lookupError) {
+        throw accessLookupFailedError()
+      }
+
+      throw authDenied(logger, {
+        operation,
+        orgId,
+        reason: 'not-permitted',
+      })
     }
   }
 }
@@ -176,7 +186,7 @@ const getUserFromStorefrontPermissions = ({
 const Users = {
   impersonateB2BUser: async (_: void, { id }: { id: string }, ctx: Context) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
+      clients: { storefrontPermissions: storefrontPermissionsClient },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip,
@@ -195,7 +205,11 @@ const Users = {
 
     if (!adminUserAuthToken) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
+        throw authDenied(logger, {
+          operation: 'impersonateB2BUser',
+          reason: 'organization-data-not-found',
+          targetUserId: id,
+        })
       }
 
       const canImpersonateUsersWithCostCenterPermission =
@@ -220,17 +234,24 @@ const Users = {
         !canImpersonateUsersWithOrganizationPermission &&
         !canImpersonateUsersWithAllPermission
       ) {
-        throw new GraphQLError('operation-not-permitted')
+        throw authDenied(logger, {
+          operation: 'impersonateB2BUser',
+          orgId: user?.orgId,
+          reason: 'not-permitted',
+          targetUserId: id,
+        })
       }
     }
 
     const impersonation = await storefrontPermissionsClient
       .impersonateUser({ userId: id })
       .catch((error: any) => {
-        logger.error({
-          error,
-          message: 'impersonateUser-impersonateUserError',
-        })
+        logAccessError(
+          logger,
+          'impersonateB2BUser.error',
+          { operation: 'impersonateB2BUser', targetUserId: id },
+          error
+        )
 
         return { status: 'error', message: error }
       })
@@ -268,7 +289,7 @@ const Users = {
 
     const result = impersonation?.data?.impersonateUser ?? { status: 'error' }
 
-    await audit.sendEvent({
+    await sendMutationAudit(ctx, {
       subjectId: 'impersonate-b2b-user-event',
       operation: 'IMPERSONATE_B2B_USER',
       meta: {
@@ -299,7 +320,6 @@ const Users = {
       clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
-        audit,
       },
 
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
@@ -308,14 +328,32 @@ const Users = {
 
     if (!adminUserAuthToken && clId) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
+        throw authDenied(logger, {
+          operation: 'impersonateUser',
+          reason: 'organization-data-not-found',
+          targetUserId: clId,
+        })
       }
 
-      const userInfo = await getUserFromStorefrontPermissions({
-        clId,
-        logger,
-        storefrontPermissionsClient,
-      })
+      // Own lookup (not getUserFromStorefrontPermissions, which hands the
+      // error back as the user): a failure here is not a deny.
+      const { userInfo, lookupError } = await storefrontPermissionsClient
+        .getUser(clId)
+        .then((result: any) => ({ userInfo: result?.data?.getUser ?? {} }))
+        .catch((error: any) => ({ lookupError: error, userInfo: {} }))
+
+      if (lookupError) {
+        logAccessLookupFailed(
+          logger,
+          {
+            entity: 'User',
+            operation: 'impersonateUser',
+            reason: 'user-lookup-failed',
+            targetUserId: clId,
+          },
+          lookupError
+        )
+      }
 
       const canImpersonateUsersWithCostCenterPermission =
         storefrontPermissions?.permissions?.includes(
@@ -339,7 +377,16 @@ const Users = {
         !canImpersonateUsersWithOrganizationPermission &&
         !canImpersonateUsersWithAllPermission
       ) {
-        throw new GraphQLError('operation-not-permitted')
+        if (lookupError) {
+          throw accessLookupFailedError()
+        }
+
+        throw authDenied(logger, {
+          operation: 'impersonateUser',
+          orgId: userInfo?.orgId,
+          reason: 'not-permitted',
+          targetUserId: clId,
+        })
       }
     }
 
@@ -395,7 +442,7 @@ const Users = {
       sessionData?.namespaces['storefront-permissions']
     )
 
-    await audit.sendEvent({
+    await sendMutationAudit(ctx, {
       subjectId: 'impersonate-user-event',
       operation: 'IMPERSONATE_USER',
       meta: {
@@ -415,11 +462,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: {
-        events,
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { events, storefrontPermissions: storefrontPermissionsClient },
       vtex: { logger },
       ip,
     } = ctx as any
@@ -430,7 +473,11 @@ const Users = {
         const user = result.data.getUsersByEmail[0]
 
         if (!user) {
-          logger.error({ message: 'User not found' })
+          logger.warn({
+            entity: 'User',
+            message: 'removeUserWithEmail.notFound',
+            operation: 'removeUserWithEmail',
+          })
 
           return { status: 'error', message: 'User not found' }
         }
@@ -447,7 +494,7 @@ const Users = {
         return storefrontPermissionsClient
           .deleteUser(fields)
           .then(async (response: any) => {
-            await audit.sendEvent({
+            await sendMutationAudit(ctx, {
               subjectId: 'remove-user-with-email-event',
               operation: 'REMOVE_USER_WITH_EMAIL',
               meta: {
@@ -473,8 +520,10 @@ const Users = {
           })
           .catch((error: any) => {
             logger.error({
-              error,
-              message: 'removeUser-deleteUserError',
+              message: 'removeUser.error',
+              error: describeClientError(error),
+              operation: 'removeUser',
+              entity: 'User',
             })
 
             return { status: 'error', message: error }
@@ -482,8 +531,10 @@ const Users = {
       })
       .catch((error: any) => {
         logger.error({
-          error,
-          message: 'getUsers-error',
+          message: 'removeUserWithEmail.error',
+          error: describeClientError(error),
+          operation: 'removeUserWithEmail',
+          entity: 'User',
         })
         throw new GraphQLError(getErrorMessage(error))
       })
@@ -506,11 +557,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: {
-        events,
-        storefrontPermissions: storefrontPermissionsClient,
-        audit,
-      },
+      clients: { events, storefrontPermissions: storefrontPermissionsClient },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip,
     } = ctx as Context | any
@@ -521,10 +568,27 @@ const Users = {
 
     if (!adminUserAuthToken) {
       if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
+        throw authDenied(logger, {
+          operation: 'removeUser',
+          reason: 'organization-data-not-found',
+          targetUserId: id,
+        })
       }
 
-      const roleSlug = await getUserRoleSlug(clId, ctx, 'removeUser')
+      const { roleSlug, lookupError } = await getUserRoleSlug(clId, ctx)
+
+      if (lookupError) {
+        logAccessLookupFailed(
+          logger,
+          {
+            entity: 'User',
+            operation: 'removeUser',
+            reason: 'role-lookup-failed',
+            targetUserId: id,
+          },
+          lookupError
+        )
+      }
 
       const permitted =
         (storefrontPermissions?.permissions?.includes(
@@ -534,7 +598,15 @@ const Users = {
         storefrontPermissions?.permissions?.includes('remove-sales-users-all')
 
       if (!permitted) {
-        throw new GraphQLError('operation-not-permitted')
+        if (lookupError) {
+          throw accessLookupFailedError()
+        }
+
+        throw authDenied(logger, {
+          operation: 'removeUser',
+          reason: 'not-permitted',
+          targetUserId: id,
+        })
       }
     }
 
@@ -547,7 +619,7 @@ const Users = {
     return storefrontPermissionsClient
       .deleteUser(fields)
       .then(async (result: any) => {
-        await audit.sendEvent({
+        await sendMutationAudit(ctx, {
           subjectId: 'remove-user-event',
           operation: 'REMOVE_USER',
           meta: {
@@ -574,8 +646,10 @@ const Users = {
       })
       .catch((error: any) => {
         logger.error({
-          error,
-          message: 'removeUser-deleteUserError',
+          message: 'removeUser.error',
+          error: describeClientError(error),
+          operation: 'removeUser',
+          entity: 'User',
         })
 
         return { status: 'error', message: error }
@@ -588,7 +662,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
+      clients: { storefrontPermissions: storefrontPermissionsClient },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip,
     } = ctx as any
@@ -607,10 +681,15 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      logger.error({
-        error,
-        message: 'addUser-checkUserIsAllowedError',
-      })
+      if (!isAccessErrorLogged(error)) {
+        logAccessError(
+          logger,
+          'addUser.checkUserIsAllowedError',
+          { operation: 'addUser' },
+          error
+        )
+      }
+
       throw error
     }
 
@@ -627,7 +706,7 @@ const Users = {
     return storefrontPermissionsClient
       .addUser(fields)
       .then(async (result: any) => {
-        await audit.sendEvent({
+        await sendMutationAudit(ctx, {
           subjectId: 'add-user-event',
           operation: 'ADD_USER',
           meta: {
@@ -653,8 +732,10 @@ const Users = {
       })
       .catch((error: any) => {
         logger.error({
-          error,
-          message: 'addUser-error',
+          message: 'addUser.error',
+          error: describeClientError(error),
+          operation: 'addUser',
+          entity: 'User',
         })
 
         const message = error.graphQLErrors[0]?.message ?? error.message
@@ -680,7 +761,7 @@ const Users = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions: storefrontPermissionsClient, audit },
+      clients: { storefrontPermissions: storefrontPermissionsClient },
       vtex: { logger },
       ip,
     } = ctx as any
@@ -695,7 +776,7 @@ const Users = {
         canImpersonate,
       })
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'create-user-with-email-event',
         operation: 'CREATE_USER_WITH_EMAIL',
         meta: {
@@ -718,8 +799,10 @@ const Users = {
       return result.data.addUser
     } catch (error) {
       logger.error({
-        error,
-        message: 'createUserWithEmail-error',
+        message: 'createUserWithEmail.error',
+        error: describeClientError(error),
+        operation: 'createUserWithEmail',
+        entity: 'User',
       })
       const message = error.graphQLErrors?.[0]?.message ?? error.message
       let status = ''
@@ -757,7 +840,6 @@ const Users = {
       clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
-        audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip,
@@ -777,10 +859,15 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      logger.error({
-        error,
-        message: 'addUser-checkUserIsAllowedError',
-      })
+      if (!isAccessErrorLogged(error)) {
+        logAccessError(
+          logger,
+          'updateUser.checkUserIsAllowedError',
+          { operation: 'updateUser' },
+          error
+        )
+      }
+
       throw error
     }
 
@@ -831,7 +918,7 @@ const Users = {
     return storefrontPermissionsClient
       .updateUser(fields)
       .then(async (result: any) => {
-        await audit.sendEvent({
+        await sendMutationAudit(ctx, {
           subjectId: 'update-user-event',
           operation: 'UPDATE_USER',
           meta: {
@@ -848,8 +935,10 @@ const Users = {
       })
       .catch((error: any) => {
         logger.error({
-          error,
-          message: 'updateUser-error',
+          message: 'updateUser.error',
+          error: describeClientError(error),
+          operation: 'updateUser',
+          entity: 'User',
         })
 
         return { status: 'error', message: error }
@@ -882,7 +971,6 @@ const Users = {
       clients: {
         masterdata,
         storefrontPermissions: storefrontPermissionsClient,
-        audit,
       },
       vtex: { adminUserAuthToken, logger, sessionData, storefrontPermissions },
       ip,
@@ -902,10 +990,15 @@ const Users = {
         storefrontPermissionsClient,
       })
     } catch (error) {
-      logger.error({
-        error,
-        message: 'addUser-checkUserIsAllowedError',
-      })
+      if (!isAccessErrorLogged(error)) {
+        logAccessError(
+          logger,
+          'saveUser.checkUserIsAllowedError',
+          { operation: 'saveUser' },
+          error
+        )
+      }
+
       throw error
     }
 
@@ -930,7 +1023,7 @@ const Users = {
         userId,
       })
       .then(async (result: any) => {
-        await audit.sendEvent({
+        await sendMutationAudit(ctx, {
           subjectId: 'save-user-event',
           operation: 'SAVE_USER',
           meta: {
@@ -945,8 +1038,10 @@ const Users = {
       })
       .catch((error: any) => {
         logger.error({
-          error,
-          message: 'addUser-error',
+          message: 'saveUser.error',
+          error: describeClientError(error),
+          operation: 'saveUser',
+          entity: 'User',
         })
 
         return { status: 'error', message: error }
@@ -993,10 +1088,12 @@ async function impersonateUser(
       sendImpersonateUserMetric(ctx, metricParams)
     })
     .catch((error: any) => {
-      logger.error({
-        error,
-        message: 'impersonateUser-impersonateUserError',
-      })
+      logAccessError(
+        logger,
+        'impersonateUser.error',
+        { operation: 'impersonateUser', targetUserId: userId },
+        error
+      )
 
       return { status: 'error', message: error }
     })

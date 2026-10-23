@@ -499,7 +499,7 @@ describe('updateUser audit lookup', () => {
   const makeCtx = (getUser: jest.Mock, logger = makeLogger()) =>
     ({
       clients: {
-        audit: { sendEvent: jest.fn().mockResolvedValue(undefined) },
+        audit: { sendEventStrict: jest.fn().mockResolvedValue(undefined) },
         masterdata: { getDocument: jest.fn() },
         storefrontPermissions: {
           getUser,
@@ -532,7 +532,7 @@ describe('updateUser audit lookup', () => {
 
     expect(result).toEqual({ status: 'success' })
     expect(getUser).toHaveBeenCalledWith('cl-1')
-    expect(ctx.clients.audit.sendEvent).toHaveBeenCalledWith(
+    expect(ctx.clients.audit.sendEventStrict).toHaveBeenCalledWith(
       expect.objectContaining({
         meta: expect.objectContaining({
           entityBeforeAction: JSON.stringify({ clId: 'cl-1', roleId: 'r1' }),
@@ -566,7 +566,7 @@ describe('updateUser audit lookup', () => {
       }),
     ])
     expect(logger.error).not.toHaveBeenCalled()
-    expect(ctx.clients.audit.sendEvent).toHaveBeenCalledWith(
+    expect(ctx.clients.audit.sendEventStrict).toHaveBeenCalledWith(
       expect.objectContaining({
         meta: expect.objectContaining({ entityBeforeAction: 'null' }),
       })

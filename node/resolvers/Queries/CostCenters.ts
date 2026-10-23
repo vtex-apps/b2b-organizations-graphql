@@ -4,14 +4,19 @@ import {
   COST_CENTER_SCHEMA_VERSION,
 } from '../../mdSchema'
 import type { Address, CostCenter } from '../../typings'
-import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import GraphQLError, {
+  getErrorMessage,
+  withLogLevel,
+} from '../../utils/GraphQLError'
 import { describeClientError } from '../../utils/clientError'
+import { getHttpStatus, isNotFoundError } from '../../utils/httpError'
 import {
   auditQueryEvent,
   ensureConfigForQuery,
   withQueryTimings,
 } from '../../utils/queryObservability'
 import { loadCostCenter } from '../../services/organizationDocuments'
+import { authDenied, isAuthDenied } from '../../utils/authDenied'
 import Organizations from './Organizations'
 
 const getCostCenters = async ({
@@ -128,11 +133,32 @@ const costCenters = {
 
           return result
         } catch (error) {
-          logger.error({
-            error: describeClientError(error),
-            message: 'getCostCenterById-error',
+          const status =
+            getHttpStatus(error) ??
+            (error?.costCenterNotFound ? 404 : undefined)
+
+          const notFound = isNotFoundError(error) || status === 404
+
+          if (notFound) {
+            logger.warn({
+              costId: id,
+              message: 'getCostCenterById.notFound',
+              operation: 'getCostCenterById',
+            })
+          } else {
+            logger.error({
+              costId: id,
+              error: describeClientError(error),
+              message: 'getCostCenterById.error',
+              operation: 'getCostCenterById',
+            })
+          }
+
+          const graphQLError = new GraphQLError(getErrorMessage(error), {
+            status,
           })
-          throw new GraphQLError(getErrorMessage(error))
+
+          throw notFound ? withLogLevel(graphQLError, 'warn') : graphQLError
         }
       },
     })
@@ -152,13 +178,22 @@ const costCenters = {
     ensureConfigForQuery(ctx)
 
     if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
-      throw new Error('This organization is not active')
+      throw authDenied(logger, {
+        operation: 'getCostCenterByIdStorefront',
+        orgId: (ctx.vtex as any).sessionData?.namespaces?.[
+          'storefront-permissions'
+        ]?.organization?.value,
+        reason: 'inactive-organization',
+      })
     }
 
     const { sessionData } = vtex as any
 
     if (!sessionData?.namespaces?.['storefront-permissions']) {
-      throw new GraphQLError('organization-data-not-found')
+      throw authDenied(logger, {
+        operation: 'getCostCenterByIdStorefront',
+        reason: 'organization-data-not-found',
+      })
     }
 
     const {
@@ -186,7 +221,11 @@ const costCenters = {
       }
 
       if (costCenter.organization !== userOrganizationId) {
-        throw new GraphQLError('operation-not-permitted')
+        throw authDenied(logger, {
+          operation: 'getCostCenterByIdStorefront',
+          orgId: userOrganizationId,
+          reason: 'not-permitted',
+        })
       }
 
       if (costCenter.addresses) {
@@ -206,6 +245,11 @@ const costCenters = {
 
       return costCenter
     } catch (error) {
+      // A deny was already logged as `auth.denied`; rethrow it untouched.
+      if (isAuthDenied(error)) {
+        throw error
+      }
+
       logger.error({
         error: describeClientError(error),
         message: 'getCostCenterByIdStorefront-error',
@@ -391,7 +435,13 @@ const costCenters = {
     ensureConfigForQuery(ctx)
 
     if (!(await Organizations.checkOrganizationIsActive(_, null, ctx))) {
-      throw new Error('This organization is not active')
+      throw authDenied(logger, {
+        operation: 'getCostCentersByOrganizationIdStorefront',
+        orgId: (ctx.vtex as any).sessionData?.namespaces?.[
+          'storefront-permissions'
+        ]?.organization?.value,
+        reason: 'inactive-organization',
+      })
     }
 
     let checkUserPermission = null
@@ -419,7 +469,10 @@ const costCenters = {
 
     if (!isSalesAdmin) {
       if (!sessionData?.namespaces?.['storefront-permissions']) {
-        throw new GraphQLError('organization-data-not-found')
+        throw authDenied(logger, {
+          operation: 'getCostCentersByOrganizationIdStorefront',
+          reason: 'organization-data-not-found',
+        })
       }
 
       const {
@@ -435,7 +488,11 @@ const costCenters = {
       }
 
       if (id !== userOrganizationId) {
-        throw new GraphQLError('operation-not-permitted')
+        throw authDenied(logger, {
+          operation: 'getCostCentersByOrganizationIdStorefront',
+          orgId: userOrganizationId,
+          reason: 'not-permitted',
+        })
       }
     }
 

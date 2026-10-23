@@ -23,7 +23,13 @@ import {
   ORGANIZATION_REQUEST_STATUSES,
   ORGANIZATION_STATUSES,
 } from '../../utils/constants'
-import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
+import GraphQLError, {
+  getErrorMessage,
+  withLogLevel,
+} from '../../utils/GraphQLError'
+import { describeClientError } from '../../utils/clientError'
+import { isNotFoundError } from '../../utils/httpError'
+import { sendMutationAudit } from '../../utils/sendMutationAudit'
 import { invalidateOrganizationCache } from '../../services/organizationsCache'
 import {
   sendOrganizationStatusMetric,
@@ -68,8 +74,10 @@ const createUserAndAttachToOrganization = async ({
     })
     .catch((error: any) => {
       logger.error({
-        error,
-        message: 'addUser-error',
+        message: 'createUserAndAttachToOrganization.saveUserError',
+        error: describeClientError(error),
+        operation: 'createUserAndAttachToOrganization',
+        entity: 'User',
       })
     })
 }
@@ -443,8 +451,10 @@ const createOrganizationAndCostCenterWithAdminUser = async (
     }
   } catch (error) {
     logger.error({
-      error,
-      message: 'createOrganization-error',
+      entity: 'Organization',
+      error: describeClientError(error),
+      message: 'createOrganization.error',
+      operation: 'createOrganization',
     })
     throw new GraphQLError(getErrorMessage(error))
   }
@@ -471,7 +481,7 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, mail, audit },
+      clients: { storefrontPermissions, mail },
       vtex: { logger },
       ip,
     } = ctx
@@ -500,7 +510,7 @@ const Organizations = {
 
       const organizationId = createOrganizationResult.DocumentId
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'create-organization-event',
         operation: 'CREATE_ORGANIZATION',
         meta: {
@@ -582,8 +592,10 @@ const Organizations = {
       }
     } catch (error) {
       logger.error({
-        error,
-        message: 'createOrganization-error',
+        entity: 'Organization',
+        error: describeClientError(error),
+        message: 'createOrganization.error',
+        operation: 'createOrganization',
       })
       throw new GraphQLError(getErrorMessage(error))
     }
@@ -608,7 +620,7 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, storefrontPermissions, mail, audit },
+      clients: { masterdata, storefrontPermissions, mail },
       vtex: { logger },
       ip,
     } = ctx
@@ -659,7 +671,7 @@ const Organizations = {
         schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
       })) as any
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'create-organization-request-event',
         operation: 'CREATE_ORGANIZATION_REQUEST',
         meta: {
@@ -716,8 +728,10 @@ const Organizations = {
       }
     } catch (error) {
       logger.error({
-        error,
-        message: 'createOrganizationRequest-error',
+        message: 'createOrganizationRequest.error',
+        error: describeClientError(error),
+        operation: 'createOrganizationRequest',
+        entity: 'OrganizationRequest',
       })
       throw new GraphQLError(getErrorMessage(error))
     }
@@ -733,7 +747,6 @@ const Organizations = {
   }> => {
     const {
       vtex: { logger },
-      clients: { audit },
       ip,
     } = ctx
 
@@ -748,7 +761,7 @@ const Organizations = {
         ctx
       )
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'create-organization-and-cost-centers-with-id-event',
         operation: 'CREATE_ORGANIZATION_AND_COST_CENTERS_WITH_ID',
         meta: {
@@ -765,8 +778,10 @@ const Organizations = {
       }
     } catch (error) {
       logger.error({
-        error,
-        message: 'createOrganizationWitId-error',
+        message: 'createOrganizationAndCostCentersWithId.error',
+        error: describeClientError(error),
+        operation: 'createOrganizationAndCostCentersWithId',
+        entity: 'Organization',
       })
       throw new GraphQLError(getErrorMessage(error))
     }
@@ -778,7 +793,7 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, audit },
+      clients: { masterdata },
       ip,
     } = ctx
 
@@ -794,7 +809,7 @@ const Organizations = {
         id,
       })
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'delete-organization-request-event',
         operation: 'DELETE_ORGANIZATION_REQUEST',
         meta: {
@@ -807,7 +822,32 @@ const Organizations = {
 
       return { status: 'success', message: '' }
     } catch (e) {
-      throw new GraphQLError(getErrorMessage(e))
+      const {
+        vtex: { logger },
+      } = ctx
+
+      if (isNotFoundError(e)) {
+        logger.warn({
+          entity: 'OrganizationRequest',
+          entityId: id,
+          message: 'deleteOrganizationRequest.notFound',
+          operation: 'deleteOrganizationRequest',
+        })
+      } else {
+        logger.error({
+          entity: 'OrganizationRequest',
+          entityId: id,
+          error: describeClientError(e),
+          message: 'deleteOrganizationRequest.error',
+          operation: 'deleteOrganizationRequest',
+        })
+      }
+
+      const graphQLError = new GraphQLError(getErrorMessage(e))
+
+      throw isNotFoundError(e)
+        ? withLogLevel(graphQLError, 'warn')
+        : graphQLError
     }
   },
   updateOrganization: async (
@@ -842,7 +882,7 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { storefrontPermissions, mail, masterdata, audit },
+      clients: { storefrontPermissions, mail, masterdata },
       vtex: { logger },
       ip,
     } = ctx
@@ -878,8 +918,10 @@ const Organizations = {
       }
     } catch (error) {
       logger.warn({
-        error,
-        message: 'updateOrganization-emailOnStatusChangeError',
+        message: 'updateOrganization.emailOnStatusChangeError',
+        error: describeClientError(error),
+        operation: 'updateOrganization',
+        organizationId: id,
       })
     }
 
@@ -915,7 +957,7 @@ const Organizations = {
 
       await invalidateOrganizationCache(ctx, id)
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'update-organization-event',
         operation: 'UPDATE_ORGANIZATION',
         meta: {
@@ -938,8 +980,11 @@ const Organizations = {
       return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
-        error,
-        message: 'updateOrganization-error',
+        message: 'updateOrganization.error',
+        error: describeClientError(error),
+        operation: 'updateOrganization',
+        entity: 'Organization',
+        entityId: id,
       })
       throw new GraphQLError(getErrorMessage(error))
     }
@@ -956,7 +1001,7 @@ const Organizations = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, mail, storefrontPermissions, audit },
+      clients: { masterdata, mail, storefrontPermissions },
       vtex: { logger },
       ip,
     } = ctx
@@ -988,8 +1033,11 @@ const Organizations = {
       })
     } catch (error) {
       logger.error({
-        error,
-        message: 'getOrganizationRequest-error',
+        message: 'getOrganizationRequest.error',
+        error: describeClientError(error),
+        operation: 'updateOrganizationRequest',
+        entity: 'OrganizationRequest',
+        entityId: id,
       })
       throw new GraphQLError(getErrorMessage(error))
     }
@@ -1042,7 +1090,7 @@ const Organizations = {
             id,
           })
 
-          await audit.sendEvent({
+          await sendMutationAudit(ctx, {
             subjectId: 'update-organization-request-approved-event',
             operation: 'UPDATE_ORGANIZATION_REQUEST_APPROVED',
             meta: {
@@ -1065,8 +1113,11 @@ const Organizations = {
           return { status: 'success', message: '', id: organizationId }
         } catch (e) {
           logger.error({
-            error: e,
-            message: 'updateOrganizationRequest-error',
+            entity: 'OrganizationRequest',
+            entityId: id,
+            error: describeClientError(e),
+            message: 'updateOrganizationRequest.error',
+            operation: 'updateOrganizationRequest',
           })
           if (e.message) {
             throw new GraphQLError(e.message)
@@ -1085,7 +1136,7 @@ const Organizations = {
         id,
       })
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'update-organization-request-declined-event',
         operation: 'UPDATE_ORGANIZATION_REQUEST_DECLINED',
         meta: {

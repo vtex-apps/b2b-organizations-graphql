@@ -1,4 +1,6 @@
-import GraphQLError from '../../utils/GraphQLError'
+import { describeClientError } from '../../utils/clientError'
+import { sendMutationAudit } from '../../utils/sendMutationAudit'
+import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import checkConfig, { getAppId } from '../config'
 import type { B2BSettingsInput } from '../../typings'
 
@@ -7,9 +9,9 @@ export const B2B_SETTINGS_DOCUMENT_ID = 'b2bSettings'
 const Settings = {
   saveAppSettings: async (_: any, __: any, ctx: Context) => {
     const {
-      clients: { vbase, audit },
+      clients: { vbase },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     const app: string = getAppId()
@@ -18,14 +20,16 @@ const Settings = {
 
     try {
       let currentSettings = null
+
       try {
         currentSettings = await vbase.getJSON('b2borg', app)
       } catch {
         currentSettings = null
       }
+
       await vbase.saveJSON('b2borg', app, newSettings)
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'save-app-settings-event',
         operation: 'SAVE_APP_SETTINGS',
         meta: {
@@ -39,11 +43,13 @@ const Settings = {
       return { status: 'success', message: '' }
     } catch (error) {
       logger.error({
-        error,
-        message: 'saveAppSettings-error',
+        error: describeClientError(error),
+        message: 'saveAppSettings.error',
+        operation: 'saveAppSettings',
+        entity: 'Settings',
       })
 
-      return { status: 'error', message: error }
+      return { status: 'error', message: getErrorMessage(error) }
     }
   },
   saveB2BSettings: async (
@@ -68,9 +74,9 @@ const Settings = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase, audit },
+      clients: { vbase },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
     // create schema if it doesn't exist
@@ -133,7 +139,7 @@ const Settings = {
 
       await vbase.saveJSON(B2B_SETTINGS_DATA_ENTITY, 'settings', b2bSettings)
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'save-b2b-settings-event',
         operation: 'SAVE_B2B_SETTINGS',
         meta: {
@@ -168,17 +174,19 @@ const Settings = {
     ctx: Context
   ) => {
     const {
-      clients: { vbase, audit },
+      clients: { vbase },
       vtex: { logger },
-      ip
+      ip,
     } = ctx
 
-    const currentChannels = await vbase.getJSON('b2borg', 'salesChannels').catch(() => null)
+    const currentChannels = await vbase
+      .getJSON('b2borg', 'salesChannels')
+      .catch(() => null)
 
     try {
       await vbase.saveJSON('b2borg', 'salesChannels', channels)
 
-      await audit.sendEvent({
+      await sendMutationAudit(ctx, {
         subjectId: 'save-sales-channels-event',
         operation: 'SAVE_SALES_CHANNELS',
         meta: {
