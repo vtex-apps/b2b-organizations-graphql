@@ -12,6 +12,10 @@ import {
 } from './helper'
 import audit from '../../utils/audit'
 import { LICENSE_MANAGER_ROLES } from '../../constants'
+import {
+  getDirectiveDeniedReason,
+  logDirectiveDenied,
+} from '../../utils/directiveDenied'
 
 export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
   public visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -144,22 +148,26 @@ export class ValidateAdminUserAccess extends SchemaDirectiveVisitor {
       // deny access if no tokens were provided
       if (!hasAdminToken && !hasAdminTokenOnHeader && !hasApiToken) {
         await audit(context, operation, 401)
-        logger.warn({
-          message: 'ValidateAdminUserAccess: No token provided',
-          ...metricFields,
-        })
+        logDirectiveDenied(
+          logger,
+          'validateAdminUserAccess',
+          'no-token',
+          metricFields,
+          { requiredPermission }
+        )
         throw new AuthenticationError('No token was provided')
       }
 
       // deny access if no valid tokens were provided
       await audit(context, operation, 403)
 
-      logger.warn({
-        message:
-          'ValidateAdminUserAccess: Invalid token or insufficient role permissions',
-        requiredPermission,
-        ...metricFields,
-      })
+      logDirectiveDenied(
+        logger,
+        'validateAdminUserAccess',
+        getDirectiveDeniedReason(metricFields),
+        metricFields,
+        { requiredPermission }
+      )
       throw new ForbiddenError(`Unauthorized Access`)
     }
   }

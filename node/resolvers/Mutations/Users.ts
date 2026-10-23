@@ -892,19 +892,32 @@ const Users = {
       userId,
     }
 
+    let currentUserData: unknown = null
+
+    // Audit-only lookup, before the update so `entityBeforeAction` holds the
+    // pre-update user. storefront-permissions' getUser takes the CL id (it
+    // used to receive `{ userId }`, so it always failed silently). A failure
+    // never blocks the update (SDD §5).
+    if (clId) {
+      try {
+        currentUserData =
+          (await storefrontPermissionsClient.getUser(clId))?.data?.getUser ??
+          null
+      } catch (error) {
+        logger.warn({
+          entity: 'User',
+          error: describeClientError(error),
+          message: 'updateUser.auditLookupError',
+          operation: 'updateUser',
+          userId,
+        })
+        currentUserData = null
+      }
+    }
+
     return storefrontPermissionsClient
       .updateUser(fields)
       .then(async (result: any) => {
-        let currentUserData = null
-
-        try {
-          currentUserData = await storefrontPermissionsClient.getUser({
-            userId,
-          })
-        } catch (error) {
-          currentUserData = null
-        }
-
         await sendMutationAudit(ctx, {
           subjectId: 'update-user-event',
           operation: 'UPDATE_USER',

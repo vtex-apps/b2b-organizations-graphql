@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- **[B2BTEAM-3986]** `@validateAdminUserAccess` / `@validateStoreUserAccess` denials log `warn` `auth.denied` (`directive`, `reason`: `no-token` / `invalid-token` / `insufficient-role`, `requiredPermission`, plus every metric field they already logged) instead of the free-text `ValidateAdminUserAccess: ...` / `ValidateStoreUserAccess: ...` messages. The thrown `AuthenticationError` / `ForbiddenError` is unchanged.
+- **[B2BTEAM-3986]** Token validation helpers log `warn` `validateAdminToken.error` / `validateApiToken.error` / `validateStoreToken.error` with `describeClientError` instead of `Error validating ... token` with the raw error (which carried the request config, including the token). `Invalid store token:` becomes `warn` `validateStoreToken.notInBuyerOrg` and logs `userId` instead of the whole `authUser` (shopper email); `validateStoreToken.buyerOrgCheck` logs `userId` instead of the email.
+
+### Added
+
+- **[B2BTEAM-3986]** `warn` `findPaymentTerms.unmatched` / `findSellers.unmatched` / `findCollections.unmatched` (`entity`, `unmatchedNames`, `unmatchedCount`) when `createOrganizationAndCostCentersWithId`, an approved organization request or `updateOrganization` (name-only collections) send names that match nothing. Unmatched names are still dropped as before.
+
+### Fixed
+
+- **[B2BTEAM-3986]** `updateUser` audit lookup called storefront-permissions `getUser` with `{ userId }` instead of the CL id, so it always failed silently and the audit `entityBeforeAction` was always `null`. It now calls `getUser(clId)` (skipped without `clId`) before the update, so `entityBeforeAction` holds the pre-update user, and a failure logs `warn` `updateUser.auditLookupError` (`userId`, `describeClientError`) without blocking the update.
+
 ## [2.8.4] - 2026-10-23
 
 ### Changed
