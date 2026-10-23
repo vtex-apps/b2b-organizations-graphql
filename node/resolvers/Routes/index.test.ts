@@ -20,16 +20,48 @@ jest.mock('@vtex/api', () => {
     }
   }
 
-  return { ForbiddenError, UserInputError }
+  class NotFoundError extends ResolverWarning {
+    constructor(message: string) {
+      super(message, 404, 'NOT_FOUND')
+    }
+  }
+
+  class RequestCancelledError extends Error {}
+
+  class TooManyRequestsError extends Error {}
+
+  return {
+    ForbiddenError,
+    NotFoundError,
+    RequestCancelledError,
+    TooManyRequestsError,
+    UserInputError,
+  }
 })
 
 const orderId = 'qa-3984-order-1'
 const ownerEmail = 'owner@example.com'
 
+const sessionCookie = 'buyer-session-jwt'
+
+// Shaped like a client error: it carries the outbound request, including the
+// caller's session header, and the upstream response.
 const httpError = (status?: number) =>
   Object.assign(new Error(`Request failed with status code ${status}`), {
-    config: { method: 'get', url: '/api/x?email=owner@example.com' },
-    ...(status ? { response: { data: {}, headers: {}, status } } : {}),
+    config: {
+      headers: { 'x-vtex-session': sessionCookie },
+      method: 'get',
+      url: '/api/x?email=owner@example.com',
+    },
+    ...(status
+      ? {
+          response: {
+            data: { error: { message: 'upstream detail' } },
+            headers: { 'x-vtex-operation-id': 'op-1' },
+            status,
+          },
+        }
+      : {}),
   })
 
 const sessionWith = (overrides: Record<string, any> = {}) => ({
@@ -95,6 +127,30 @@ const messages = (fn: jest.Mock) =>
 const expectNoEmail = (fn: jest.Mock) =>
   expect(JSON.stringify(fn.mock.calls)).not.toContain(ownerEmail)
 
+const INTERNAL_ERROR = {
+  code: 'INTERNAL_SERVER_ERROR',
+  message: 'Internal server error',
+  status: 500,
+}
+
+// The response carries only the fixed fields, never the client error.
+const expectSafeResponse = (
+  ctx: Context,
+  expected: Record<string, unknown>
+) => {
+  const { body } = ctx.response as any
+  const serialized = JSON.stringify(body)
+
+  expect(ctx.response.status).toBe(expected.status)
+  expect(body).toEqual(expected)
+  expect(serialized).not.toContain(sessionCookie)
+  expect(serialized).not.toContain('x-vtex-session')
+  expect(serialized).not.toContain('config')
+  expect(serialized).not.toContain('upstream detail')
+  expect(serialized).not.toContain(ownerEmail)
+  expect(ctx.set).toHaveBeenCalledWith('Cache-Control', 'no-cache, no-store')
+}
+
 describe('Routes logging (B2BTEAM-3984)', () => {
   describe('order', () => {
     it('returns the order on the happy path without warn/error logs', async () => {
@@ -110,14 +166,18 @@ describe('Routes logging (B2BTEAM-3984)', () => {
       expect(ctx.vtex.logger.error).not.toHaveBeenCalled()
     })
 
-    it('logs warn route.order.notFound on OMS 404 and marks the error warn', async () => {
+    it('answers a clean 404 and logs warn route.order.notFound on OMS 404', async () => {
       const ctx = mockContext()
-      const error = httpError(404)
 
-      ;(ctx.clients.orders.order as jest.Mock).mockRejectedValue(error)
+      ;(ctx.clients.orders.order as jest.Mock).mockRejectedValue(httpError(404))
 
-      await expect(Routes.order(ctx)).rejects.toBe(error)
-      expect((error as any).level).toBe('warn')
+      await Routes.order(ctx)
+
+      expectSafeResponse(ctx, {
+        code: 'NOT_FOUND',
+        message: 'Order not found',
+        status: 404,
+      })
       expect(ctx.vtex.logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'route.order.notFound',
@@ -129,15 +189,21 @@ describe('Routes logging (B2BTEAM-3984)', () => {
     })
 
     it.each([400, 403, 429, 500, 503])(
-      'logs error route.order.error on OMS %i and rethrows unchanged',
+      'logs error route.order.error once on OMS %i and answers a generic 500',
       async (status) => {
         const ctx = mockContext()
-        const error = httpError(status)
 
-        ;(ctx.clients.orders.order as jest.Mock).mockRejectedValue(error)
+        ;(ctx.clients.orders.order as jest.Mock).mockRejectedValue(
+          httpError(status)
+        )
 
-        await expect(Routes.order(ctx)).rejects.toBe(error)
-        expect((error as any).level).toBeUndefined()
+        await Routes.order(ctx)
+
+        expectSafeResponse(ctx, INTERNAL_ERROR)
+        expect(messages(ctx.vtex.logger.error)).toEqual(['route.order.error'])
+        expect(JSON.stringify(ctx.vtex.logger.error.mock.calls)).not.toContain(
+          sessionCookie
+        )
         expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
           expect.objectContaining({
             dependency: 'orders.order',
@@ -156,7 +222,9 @@ describe('Routes logging (B2BTEAM-3984)', () => {
 
       ;(ctx.clients.orders.order as jest.Mock).mockRejectedValue(httpError())
 
-      await expect(Routes.order(ctx)).rejects.toThrow()
+      await Routes.order(ctx)
+
+      expectSafeResponse(ctx, INTERNAL_ERROR)
       expect(messages(ctx.vtex.logger.error)).toEqual(['route.order.error'])
     })
 
@@ -168,7 +236,10 @@ describe('Routes logging (B2BTEAM-3984)', () => {
         },
       })
 
-      await expect(Routes.order(ctx)).rejects.toMatchObject({
+      await Routes.order(ctx)
+
+      expectSafeResponse(ctx, {
+        code: 'FORBIDDEN',
         message: 'Access denied',
         status: 403,
       })
@@ -191,8 +262,12 @@ describe('Routes logging (B2BTEAM-3984)', () => {
         sessionData: { namespaces: {} },
       })
 
-      await expect(Routes.order(ctx)).rejects.toMatchObject({
+      await Routes.order(ctx)
+
+      expectSafeResponse(ctx, {
+        code: 'FORBIDDEN',
         message: 'Access denied',
+        status: 403,
       })
       expect(ctx.vtex.logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -204,13 +279,17 @@ describe('Routes logging (B2BTEAM-3984)', () => {
       )
     })
 
-    it('throws UserInputError without logging when orderId is missing', async () => {
+    it('answers 400 without logging when orderId is missing', async () => {
       const ctx = mockContext()
 
       ;(ctx.vtex.route as any).params = {}
 
-      await expect(Routes.order(ctx)).rejects.toMatchObject({
+      await Routes.order(ctx)
+
+      expectSafeResponse(ctx, {
+        code: 'BAD_USER_INPUT',
         message: 'Order ID is required',
+        status: 400,
       })
       expect(ctx.vtex.logger.warn).not.toHaveBeenCalled()
       expect(ctx.vtex.logger.error).not.toHaveBeenCalled()
@@ -291,13 +370,15 @@ describe('Routes logging (B2BTEAM-3984)', () => {
       expect(ctx.vtex.logger.warn).not.toHaveBeenCalled()
     })
 
-    it('logs error route.orders.error when oms.search fails', async () => {
+    it('logs error route.orders.error when oms.search fails and answers a generic 500', async () => {
       const ctx = mockContext()
-      const error = httpError(500)
 
-      ;(ctx.clients.oms.search as jest.Mock).mockRejectedValue(error)
+      ;(ctx.clients.oms.search as jest.Mock).mockRejectedValue(httpError(500))
 
-      await expect(Routes.orders(ctx)).rejects.toBe(error)
+      await Routes.orders(ctx)
+
+      expectSafeResponse(ctx, INTERNAL_ERROR)
+      expect(messages(ctx.vtex.logger.error)).toEqual(['route.orders.error'])
       expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
           dependency: 'oms.search',
@@ -311,8 +392,12 @@ describe('Routes logging (B2BTEAM-3984)', () => {
     it('logs warn route.denied no-token without orderId', async () => {
       const ctx = mockContext({ token: null })
 
-      await expect(Routes.orders(ctx)).rejects.toMatchObject({
+      await Routes.orders(ctx)
+
+      expectSafeResponse(ctx, {
+        code: 'FORBIDDEN',
         message: 'Access denied',
+        status: 403,
       })
       const [payload] = (ctx.vtex.logger.warn as jest.Mock).mock.calls[0]
 
@@ -342,8 +427,12 @@ describe('Routes logging (B2BTEAM-3984)', () => {
 
       ;(ctx.clients.orders.order as jest.Mock).mockRejectedValue(httpError(404))
 
-      await expect(Routes.requestCancellation(ctx)).rejects.toMatchObject({
-        level: 'warn',
+      await Routes.requestCancellation(ctx)
+
+      expectSafeResponse(ctx, {
+        code: 'NOT_FOUND',
+        message: 'Order not found',
+        status: 404,
       })
       expect(ctx.vtex.logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -360,7 +449,9 @@ describe('Routes logging (B2BTEAM-3984)', () => {
 
       ;(ctx.clients.orders.order as jest.Mock).mockRejectedValue(httpError(500))
 
-      await expect(Routes.requestCancellation(ctx)).rejects.toThrow()
+      await Routes.requestCancellation(ctx)
+
+      expectSafeResponse(ctx, INTERNAL_ERROR)
       expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
           dependency: 'orders.order',
@@ -378,8 +469,12 @@ describe('Routes logging (B2BTEAM-3984)', () => {
         },
       })
 
-      await expect(Routes.requestCancellation(ctx)).rejects.toMatchObject({
+      await Routes.requestCancellation(ctx)
+
+      expectSafeResponse(ctx, {
+        code: 'FORBIDDEN',
         message: 'Access denied',
+        status: 403,
       })
       expect(ctx.vtex.logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -393,17 +488,21 @@ describe('Routes logging (B2BTEAM-3984)', () => {
     })
 
     it.each([400, 403, 404, 409])(
-      'logs warn route.requestCancellation.rejected on checkout %i',
+      'logs warn route.requestCancellation.rejected on checkout %i and answers the same status',
       async (status) => {
         const ctx = mockContext()
-        const error = httpError(status)
 
         ;(
           ctx.clients.checkout.requestCancellation as jest.Mock
-        ).mockRejectedValue(error)
+        ).mockRejectedValue(httpError(status))
 
-        await expect(Routes.requestCancellation(ctx)).rejects.toBe(error)
-        expect((error as any).level).toBe('warn')
+        await Routes.requestCancellation(ctx)
+
+        expectSafeResponse(ctx, {
+          code: 'CANCELLATION_REJECTED',
+          message: 'Cancellation request rejected',
+          status,
+        })
         expect(ctx.vtex.logger.warn).toHaveBeenCalledWith(
           expect.objectContaining({
             message: 'route.requestCancellation.rejected',
@@ -417,17 +516,20 @@ describe('Routes logging (B2BTEAM-3984)', () => {
     )
 
     it.each([500, 503])(
-      'logs error route.requestCancellation.rejected on checkout %i',
+      'logs error route.requestCancellation.rejected on checkout %i and answers a generic 500',
       async (status) => {
         const ctx = mockContext()
-        const error = httpError(status)
 
         ;(
           ctx.clients.checkout.requestCancellation as jest.Mock
-        ).mockRejectedValue(error)
+        ).mockRejectedValue(httpError(status))
 
-        await expect(Routes.requestCancellation(ctx)).rejects.toBe(error)
-        expect((error as any).level).toBe('error')
+        await Routes.requestCancellation(ctx)
+
+        expectSafeResponse(ctx, INTERNAL_ERROR)
+        expect(messages(ctx.vtex.logger.error)).toEqual([
+          'route.requestCancellation.rejected',
+        ])
         expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
           expect.objectContaining({
             message: 'route.requestCancellation.rejected',
@@ -445,7 +547,9 @@ describe('Routes logging (B2BTEAM-3984)', () => {
         ctx.clients.checkout.requestCancellation as jest.Mock
       ).mockRejectedValue(httpError())
 
-      await expect(Routes.requestCancellation(ctx)).rejects.toThrow()
+      await Routes.requestCancellation(ctx)
+
+      expectSafeResponse(ctx, INTERNAL_ERROR)
       expect(messages(ctx.vtex.logger.error)).toEqual([
         'route.requestCancellation.error',
       ])
@@ -515,15 +619,17 @@ describe('Routes logging (B2BTEAM-3984)', () => {
       expect((ctx.response as any).body).toEqual({})
     })
 
-    it('logs error route.checkout.error when getDocument fails and rethrows', async () => {
+    it('logs error route.checkout.error when getDocument fails and answers a generic 500', async () => {
       const ctx = mockContext()
-      const error = httpError(500)
 
       ;(ctx.clients.masterdata.getDocument as jest.Mock).mockRejectedValue(
-        error
+        httpError(500)
       )
 
-      await expect(Routes.checkout(ctx)).rejects.toBe(error)
+      await Routes.checkout(ctx)
+
+      expectSafeResponse(ctx, INTERNAL_ERROR)
+      expect(messages(ctx.vtex.logger.error)).toEqual(['route.checkout.error'])
       expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
         expect.objectContaining({
           dependency: 'masterdata.getDocument',
@@ -534,5 +640,60 @@ describe('Routes logging (B2BTEAM-3984)', () => {
       )
       expectNoEmail(ctx.vtex.logger.error)
     })
+  })
+
+  describe('safeRoute (B2BTEAM-3988)', () => {
+    it('answers a generic 500 and logs route.<route>.error once for an unexpected failure', async () => {
+      const ctx = mockContext()
+
+      ;(ctx.clients.vtexId.getAuthenticatedUser as jest.Mock).mockRejectedValue(
+        httpError(401)
+      )
+
+      await Routes.orders(ctx)
+
+      expectSafeResponse(ctx, INTERNAL_ERROR)
+      expect(ctx.vtex.logger.error).toHaveBeenCalledTimes(1)
+      expect(ctx.vtex.logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({ status: 401 }),
+          message: 'route.orders.error',
+          operation: 'orders',
+          route: 'orders',
+        })
+      )
+      const logged = JSON.stringify(ctx.vtex.logger.error.mock.calls)
+
+      expect(logged).not.toContain(sessionCookie)
+      expect(logged).not.toContain(ownerEmail)
+    })
+
+    it('answers a generic 500 for a non-client error without leaking its message', async () => {
+      const ctx = mockContext()
+
+      ;(ctx.clients.oms.search as jest.Mock).mockImplementation(() => {
+        throw new TypeError(`Cannot read properties of ${sessionCookie}`)
+      })
+
+      await Routes.orders(ctx)
+
+      expectSafeResponse(ctx, INTERNAL_ERROR)
+    })
+
+    it.each(['RequestCancelledError', 'TooManyRequestsError'])(
+      'leaves %s to the runtime',
+      async (name) => {
+        const ErrorClass = jest.requireMock('@vtex/api')[name]
+        const ctx = mockContext()
+        const error = new ErrorClass('stop')
+
+        ;(ctx.clients.oms.search as jest.Mock).mockRejectedValue(error)
+
+        await expect(Routes.orders(ctx)).rejects.toBe(error)
+        expect((ctx.response as any).body).toBeUndefined()
+        // Only the route's own log; safeRoute adds none.
+        expect(messages(ctx.vtex.logger.error)).toEqual(['route.orders.error'])
+      }
+    )
   })
 })

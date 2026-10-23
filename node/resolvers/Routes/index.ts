@@ -1,4 +1,4 @@
-import { ForbiddenError, UserInputError } from '@vtex/api'
+import { ForbiddenError, NotFoundError, UserInputError } from '@vtex/api'
 
 import {
   COST_CENTER_DATA_ENTITY,
@@ -6,7 +6,12 @@ import {
 } from '../../mdSchema'
 import { describeClientError } from '../../utils/clientError'
 import type { RouteName } from '../../utils/routeLog'
-import { getResponseStatus, withLogLevel } from '../../utils/routeLog'
+import {
+  getResponseStatus,
+  markLogged,
+  RouteResponseError,
+  safeRoute,
+} from '../../utils/routeLog'
 
 const getUserAndPermissions = async (
   ctx: Context,
@@ -171,8 +176,9 @@ const getOrder = async (
         reason: 'not-found',
         route,
       })
-      // Already logged as warn above; keeps the runtime re-log at warn too.
-      throw withLogLevel(error, 'warn')
+      // A fresh error, not the client one: the response must not carry the
+      // failed request (its headers include the caller's session).
+      throw new NotFoundError('Order not found')
     }
 
     logger.error({
@@ -184,7 +190,7 @@ const getOrder = async (
       orderId: String(orderId),
       route,
     })
-    throw error
+    throw markLogged(error)
   }
 
   // Some dependencies rely on this property not being null but an empty array instead.
@@ -197,7 +203,7 @@ const getOrder = async (
 }
 
 const Index = {
-  checkout: async (ctx: Context) => {
+  checkout: safeRoute('checkout', async (ctx: Context) => {
     const {
       vtex: { storeUserAuthToken, sessionToken, logger },
       clients: { session, masterdata },
@@ -233,8 +239,8 @@ const Index = {
           operation: 'checkout',
           route: 'checkout',
         })
-        // No response change in this story: the runtime still answers 500.
-        throw error
+        // Answered as a generic 500 by safeRoute.
+        throw markLogged(error)
       }
     }
 
@@ -278,8 +284,8 @@ const Index = {
     ctx.set('Cache-Control', 'no-cache, no-store')
 
     ctx.response.body = response
-  },
-  order: async (ctx: Context) => {
+  }),
+  order: safeRoute('order', async (ctx: Context) => {
     const {
       vtex: {
         route: {
@@ -327,8 +333,8 @@ const Index = {
     ctx.response.body = order
 
     ctx.response.status = 200
-  },
-  orders: async (ctx: Context) => {
+  }),
+  orders: safeRoute('orders', async (ctx: Context) => {
     const {
       clients: { oms },
       request: { querystring },
@@ -385,7 +391,7 @@ const Index = {
         operation: 'orders',
         route: 'orders',
       })
-      throw error
+      throw markLogged(error)
     }
 
     ctx.set('Content-Type', 'application/json')
@@ -394,111 +400,129 @@ const Index = {
     ctx.response.body = orders
 
     ctx.response.status = 200
-  },
-  requestCancellation: async (ctx: Context) => {
-    const {
-      vtex: {
-        route: {
-          params: { orderId },
+  }),
+  requestCancellation: safeRoute(
+    'requestCancellation',
+    async (ctx: Context) => {
+      const {
+        vtex: {
+          route: {
+            params: { orderId },
+          },
         },
-      },
-      clients: { checkout },
-      vtex: { logger },
-    } = ctx
+        clients: { checkout },
+        vtex: { logger },
+      } = ctx
 
-    const order = await getOrder(ctx, 'requestCancellation')
+      const order = await getOrder(ctx, 'requestCancellation')
 
-    const {
-      permissions,
-      authEmail,
-      impersonatedEmail,
-      profileEmail,
-      organizationId,
-      costCenterId,
-    } = await getUserAndPermissions(ctx, 'requestCancellation', String(orderId))
-
-    const permitted = checkPermissionAgainstOrder({
-      permissions,
-      orderData: order,
-      authEmail: impersonatedEmail ?? authEmail,
-      profileEmail,
-      organizationId,
-      costCenterId,
-    })
-
-    if (!permitted) {
-      logger.warn({
-        entity: 'Order',
-        message: 'route.denied',
-        operation: 'requestCancellation',
-        orderId: String(orderId),
-        reason: 'not-permitted',
-        route: 'requestCancellation',
-      })
-      throw new ForbiddenError('Access denied')
-    }
-
-    const reason = `order canceled by user: ${authEmail}`
-
-    const logRejected = (status: number, error?: unknown) => {
-      const level = status >= 500 ? 'error' : 'warn'
-
-      logger[level]({
-        entity: 'Order',
-        ...(error ? { error: describeClientError(error) } : {}),
-        message: 'route.requestCancellation.rejected',
-        operation: 'requestCancellation',
-        orderId: String(orderId),
-        route: 'requestCancellation',
-        status,
-      })
-
-      return level
-    }
-
-    let requestCancellationResponse: any
-
-    try {
-      requestCancellationResponse = await checkout.requestCancellation(
-        orderId as string,
-        reason
+      const {
+        permissions,
+        authEmail,
+        impersonatedEmail,
+        profileEmail,
+        organizationId,
+        costCenterId,
+      } = await getUserAndPermissions(
+        ctx,
+        'requestCancellation',
+        String(orderId)
       )
-    } catch (error) {
-      const status = getResponseStatus(error)
 
-      if (status !== undefined) {
-        // Checkout answered non-2xx: a 4xx is checkout refusing the request
-        // (warn, also for the runtime re-log); a 5xx is a real failure.
-        throw withLogLevel(error, logRejected(status, error))
+      const permitted = checkPermissionAgainstOrder({
+        permissions,
+        orderData: order,
+        authEmail: impersonatedEmail ?? authEmail,
+        profileEmail,
+        organizationId,
+        costCenterId,
+      })
+
+      if (!permitted) {
+        logger.warn({
+          entity: 'Order',
+          message: 'route.denied',
+          operation: 'requestCancellation',
+          orderId: String(orderId),
+          reason: 'not-permitted',
+          route: 'requestCancellation',
+        })
+        throw new ForbiddenError('Access denied')
       }
 
-      // No response at all (timeout, network): checkout call failed.
-      logger.error({
-        dependency: 'checkout.requestCancellation',
-        entity: 'Order',
-        error: describeClientError(error),
-        message: 'route.requestCancellation.error',
-        operation: 'requestCancellation',
-        orderId: String(orderId),
-        route: 'requestCancellation',
-      })
-      throw error
+      const reason = `order canceled by user: ${authEmail}`
+
+      const logRejected = (status: number, error?: unknown) => {
+        const level = status >= 500 ? 'error' : 'warn'
+
+        logger[level]({
+          entity: 'Order',
+          ...(error ? { error: describeClientError(error) } : {}),
+          message: 'route.requestCancellation.rejected',
+          operation: 'requestCancellation',
+          orderId: String(orderId),
+          route: 'requestCancellation',
+          status,
+        })
+
+        return level
+      }
+
+      let requestCancellationResponse: any
+
+      try {
+        requestCancellationResponse = await checkout.requestCancellation(
+          orderId as string,
+          reason
+        )
+      } catch (error) {
+        const status = getResponseStatus(error)
+
+        if (status !== undefined) {
+          // Checkout answered non-2xx: a 4xx is checkout refusing the request
+          // (warn, answered with the same status); a 5xx is a real failure
+          // (error, answered as a generic 500).
+          logRejected(status, error)
+
+          if (status >= 400 && status < 500) {
+            throw new RouteResponseError(
+              status,
+              'CANCELLATION_REJECTED',
+              'Cancellation request rejected'
+            )
+          }
+
+          throw markLogged(error)
+        }
+
+        // No response at all (timeout, network): checkout call failed.
+        logger.error({
+          dependency: 'checkout.requestCancellation',
+          entity: 'Order',
+          error: describeClientError(error),
+          message: 'route.requestCancellation.error',
+          operation: 'requestCancellation',
+          orderId: String(orderId),
+          route: 'requestCancellation',
+        })
+        throw markLogged(error)
+      }
+
+      const { status } = requestCancellationResponse
+
+      if (typeof status === 'number' && (status < 200 || status > 299)) {
+        // Forwarded to the caller unchanged, as before; now it is also logged.
+        logRejected(status)
+      }
+
+      ctx.set('Content-Type', 'application/json')
+      ctx.set('Cache-Control', 'no-cache, no-store')
+
+      ctx.response.body = requestCancellationResponse.data
+
+      ctx.response.status = requestCancellationResponse.status
     }
-
-    const { status } = requestCancellationResponse
-
-    if (typeof status === 'number' && (status < 200 || status > 299)) {
-      // Forwarded to the caller unchanged, as before; now it is also logged.
-      logRejected(status)
-    }
-
-    ctx.set('Content-Type', 'application/json')
-    ctx.set('Cache-Control', 'no-cache, no-store')
-
-    ctx.response.body = requestCancellationResponse.data
-
-    ctx.response.status = requestCancellationResponse.status
-  },
+  ),
 }
 
 export default Index

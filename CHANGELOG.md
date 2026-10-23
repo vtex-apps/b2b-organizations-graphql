@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **[B2BTEAM-3988]** The HTTP routes (`/_v/private/b2b/oms/user/orders/`, `/_v/private/b2b/oms/user/orders/:orderId`, `/_v/private/b2b/checkout/pub/orders/:orderId/user-cancel-request` and `/b2b/oms/user/checkout/`) no longer write the thrown error to the response body. A failed OMS, checkout or Master Data call used to come back as a 500 with the serialized client error (the upstream response and, in linked workspaces, the outbound request with its `x-vtex-session` header, which is the caller's `vtex_session`). Every failure now answers `{ code, message, status }` with fixed values and `Cache-Control: no-cache, no-store`:
+  - Order not found in OMS: `404` `NOT_FOUND` `Order not found` (was 500). `route.order.notFound` is still logged as `warn`.
+  - Access denied: `403` `FORBIDDEN` `Access denied`; missing order id: `400` `BAD_USER_INPUT` (same status and message as before).
+  - Checkout refusing a cancellation with 4xx: the same status with `CANCELLATION_REJECTED` `Cancellation request rejected` (was 500). `route.requestCancellation.rejected` is still logged as `warn`.
+  - Anything else: `500` `INTERNAL_SERVER_ERROR` `Internal server error`. Failures the route already logs (`route.<route>.error`, `route.requestCancellation.rejected`) are not logged again; any other failure logs `error` `route.<route>.error` with `describeClientError`.
+
 ## [2.8.5] - 2026-10-23
 
 ### Changed
