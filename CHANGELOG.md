@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.8.3] - 2026-10-23
+
 ### Changed
 
 - **[B2BTEAM-3984]** HTTP routes (`orders`, `order`, `requestCancellation`, `checkout`) log stable `route.*` message keys with `describeClientError` payloads (no raw error objects or e-mails). Session failures log `route.getSessionError` with the calling `route` (was `orders-getSession-error` for every route, and `checkout-getSession-error`); storefront-permissions failures log `route.checkUserPermissionError` (fail-closed fallback unchanged). Responses are unchanged.
