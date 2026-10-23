@@ -1,7 +1,10 @@
 import { MessageSFPUserAddError, StatusAddUserError } from '../../constants'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import { describeClientError } from '../../utils/clientError'
-import { sendMutationAudit } from '../../utils/sendMutationAudit'
+import {
+  sendMutationAudit,
+  sendMutationAuditFireAndForget,
+} from '../../utils/sendMutationAudit'
 import type { ImpersonateMetricParams } from '../../utils/metrics/impersonate'
 import {
   sendImpersonateB2BUserMetric,
@@ -289,7 +292,7 @@ const Users = {
 
     const result = impersonation?.data?.impersonateUser ?? { status: 'error' }
 
-    await sendMutationAudit(ctx, {
+    sendMutationAuditFireAndForget(ctx, {
       subjectId: 'impersonate-b2b-user-event',
       operation: 'IMPERSONATE_B2B_USER',
       meta: {
@@ -442,7 +445,7 @@ const Users = {
       sessionData?.namespaces['storefront-permissions']
     )
 
-    await sendMutationAudit(ctx, {
+    sendMutationAuditFireAndForget(ctx, {
       subjectId: 'impersonate-user-event',
       operation: 'IMPERSONATE_USER',
       meta: {
@@ -706,7 +709,7 @@ const Users = {
     return storefrontPermissionsClient
       .addUser(fields)
       .then(async (result: any) => {
-        await sendMutationAudit(ctx, {
+        sendMutationAuditFireAndForget(ctx, {
           subjectId: 'add-user-event',
           operation: 'ADD_USER',
           meta: {
@@ -738,7 +741,7 @@ const Users = {
           entity: 'User',
         })
 
-        const message = error.graphQLErrors[0]?.message ?? error.message
+        const message = error.graphQLErrors?.[0]?.message ?? error.message
         let status = ''
 
         if (message.includes(MessageSFPUserAddError.DUPLICATED)) {
@@ -776,7 +779,7 @@ const Users = {
         canImpersonate,
       })
 
-      await sendMutationAudit(ctx, {
+      sendMutationAuditFireAndForget(ctx, {
         subjectId: 'create-user-with-email-event',
         operation: 'CREATE_USER_WITH_EMAIL',
         meta: {

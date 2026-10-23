@@ -335,3 +335,56 @@ describe('saveUser logging (B2BTEAM-3982)', () => {
     )
   })
 })
+
+describe('addUser (B2BTEAM-3982 review)', () => {
+  const buildCtx = (addUser: jest.Mock, sendEventStrict: jest.Mock) =>
+    ({
+      clients: {
+        audit: { sendEvent: jest.fn(), sendEventStrict },
+        storefrontPermissions: { addUser },
+      },
+      ip: '127.0.0.1',
+      vtex: {
+        account: 'testaccount',
+        adminUserAuthToken: 'token',
+        logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn() },
+      },
+    } as unknown as Context)
+
+  const args = {
+    costId: 'cost-1',
+    email: 'qa@example.com',
+    name: 'QA',
+    orgId: 'org-1',
+    roleId: 'role-1',
+  } as UserArgs
+
+  it('returns status error when the failure has no graphQLErrors', async () => {
+    const ctx = buildCtx(
+      jest.fn().mockRejectedValue(new Error('network down')),
+      jest.fn().mockResolvedValue(undefined)
+    )
+
+    const result = await Users.addUser(undefined as never, args, ctx)
+
+    expect(result).toEqual({ status: 'error', message: 'network down' })
+  })
+
+  it('keeps the created user when the audit call fails (fire-and-forget)', async () => {
+    const created = { id: 'user-1', status: 'success', userId: 'uid-1' }
+    const sendEventStrict = jest.fn().mockRejectedValue(new Error('audit down'))
+    const ctx = buildCtx(
+      jest.fn().mockResolvedValue({ data: { addUser: created } }),
+      sendEventStrict
+    )
+
+    const result = await Users.addUser(undefined as never, args, ctx)
+
+    await new Promise<void>((resolve) => setImmediate(() => resolve()))
+
+    expect(result).toEqual(created)
+    expect(sendEventStrict).toHaveBeenCalledWith(
+      expect.objectContaining({ operation: 'ADD_USER' })
+    )
+  })
+})
