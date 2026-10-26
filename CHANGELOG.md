@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.8.6] - 2026-10-26
+
 ### Changed
 
 - **[B2BTEAM-3987]** `checkConfig` (run by mutations and, cached, by queries through `ensureConfigForQuery`) logs `checkConfig.schemaUpdateError` (`dataEntity`), `checkConfig.saveSettingsError` (`settingsKey`) and `warn` `checkConfig.templateError` (`template`) with `describeClientError` instead of `checkConfig-createOrUpdateSchemaError`, `checkConfig-saveSettingsError`, `checkConfig-updatingTemplatesError` and `checkConfig-publishTemplateError` with the raw error. A schema `304` and a first-run `404` on the settings read stay silent.
