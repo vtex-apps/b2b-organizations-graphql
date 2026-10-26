@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- **[B2BTEAM-3982]** Non-idempotent mutations (`createOrganization`, `createOrganizationRequest`, `createOrganizationAndCostCentersWithId`, approved `updateOrganizationRequest`, `createCostCenter`, `createCostCenterWithId`, `createCostCenterAddress`, `addUser`, `createUserWithEmail`, `impersonateB2BUser`, `impersonateUser`) send their audit event fire-and-forget: an audit failure is still logged as `error` `audit.sendEventError` but no longer fails a mutation whose write already happened (a client retry would duplicate the record). Idempotent writes (`save*`, `update*`, `delete*`, `remove*`, declined request, `setMarketingTags`) keep the strict, fail-closed audit.
+
+### Fixed
+
+- **[B2BTEAM-3982]** `createCostCenterWithId` treats a 200 response with an empty body (`''` / `{}`) from Master Data as "not found" and creates the cost center, instead of reporting `createCostCenterWithId.alreadyExists`. Only a document carrying an `id` counts as existing.
+- **[B2BTEAM-3982]** `addUser` no longer throws a `TypeError` when the storefront-permissions error has no `graphQLErrors`; it falls back to `error.message`.
+
 ## [2.8.6] - 2026-10-26
 
 ### Changed

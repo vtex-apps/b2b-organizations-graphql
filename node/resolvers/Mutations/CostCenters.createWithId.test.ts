@@ -222,6 +222,61 @@ describe('createCostCenterWithId (B2BTEAM-3982)', () => {
     expect(CostCenterRepository.createCostCenter).not.toHaveBeenCalled()
   })
 
+  it.each([
+    ['empty object', {}],
+    ['empty string', ''],
+    ['null', null],
+  ])(
+    'creates when Master Data answers the lookup with an %s (miss without 404)',
+    async (_label, emptyDocument) => {
+      const ctx = mockContext()
+
+      ;(ctx.clients.masterdata.getDocument as jest.Mock).mockResolvedValue(
+        emptyDocument
+      )
+
+      const result = await CostCenters.createCostCenterWithId(
+        undefined as never,
+        { organizationId: orgId, input: baseInput as any },
+        ctx
+      )
+
+      expect(result).toEqual({ id: costId })
+      expect(CostCenterRepository.createCostCenter).toHaveBeenCalled()
+      expect(ctx.vtex.logger.warn).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'createCostCenterWithId.alreadyExists',
+        })
+      )
+    }
+  )
+
+  it('returns the created id when the audit call fails (fire-and-forget)', async () => {
+    const ctx = mockContext()
+    const notFound: any = new Error('Document not found')
+
+    notFound.response = { status: 404 }
+    ;(ctx.clients.masterdata.getDocument as jest.Mock).mockRejectedValue(
+      notFound
+    )
+    ;(ctx.clients.audit.sendEventStrict as jest.Mock).mockRejectedValue(
+      new Error('audit down')
+    )
+
+    const result = await CostCenters.createCostCenterWithId(
+      undefined as never,
+      { organizationId: orgId, input: baseInput as any },
+      ctx
+    )
+
+    await new Promise<void>((resolve) => setImmediate(() => resolve()))
+
+    expect(result).toEqual({ id: costId })
+    expect(ctx.clients.audit.sendEventStrict).toHaveBeenCalledWith(
+      expect.objectContaining({ operation: 'CREATE_COST_CENTER_WITH_ID' })
+    )
+  })
+
   it('warns alreadyExists and does not create when document is found', async () => {
     const ctx = mockContext()
 

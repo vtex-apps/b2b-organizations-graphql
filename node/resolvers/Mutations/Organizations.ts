@@ -29,7 +29,10 @@ import GraphQLError, {
 } from '../../utils/GraphQLError'
 import { describeClientError } from '../../utils/clientError'
 import { isNotFoundError } from '../../utils/httpError'
-import { sendMutationAudit } from '../../utils/sendMutationAudit'
+import {
+  sendMutationAudit,
+  sendMutationAuditFireAndForget,
+} from '../../utils/sendMutationAudit'
 import { invalidateOrganizationCache } from '../../services/organizationsCache'
 import {
   sendOrganizationStatusMetric,
@@ -510,7 +513,7 @@ const Organizations = {
 
       const organizationId = createOrganizationResult.DocumentId
 
-      await sendMutationAudit(ctx, {
+      sendMutationAuditFireAndForget(ctx, {
         subjectId: 'create-organization-event',
         operation: 'CREATE_ORGANIZATION',
         meta: {
@@ -671,7 +674,7 @@ const Organizations = {
         schema: ORGANIZATION_REQUEST_SCHEMA_VERSION,
       })) as any
 
-      await sendMutationAudit(ctx, {
+      sendMutationAuditFireAndForget(ctx, {
         subjectId: 'create-organization-request-event',
         operation: 'CREATE_ORGANIZATION_REQUEST',
         meta: {
@@ -761,7 +764,7 @@ const Organizations = {
         ctx
       )
 
-      await sendMutationAudit(ctx, {
+      sendMutationAuditFireAndForget(ctx, {
         subjectId: 'create-organization-and-cost-centers-with-id-event',
         operation: 'CREATE_ORGANIZATION_AND_COST_CENTERS_WITH_ID',
         meta: {
@@ -1090,7 +1093,7 @@ const Organizations = {
             id,
           })
 
-          await sendMutationAudit(ctx, {
+          sendMutationAuditFireAndForget(ctx, {
             subjectId: 'update-organization-request-approved-event',
             operation: 'UPDATE_ORGANIZATION_REQUEST_APPROVED',
             meta: {
