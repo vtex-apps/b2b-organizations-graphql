@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.8.7] - 2026-10-26
+
 ### Changed
 
 - **[B2BTEAM-3982]** Non-idempotent mutations (`createOrganization`, `createOrganizationRequest`, `createOrganizationAndCostCentersWithId`, approved `updateOrganizationRequest`, `createCostCenter`, `createCostCenterWithId`, `createCostCenterAddress`, `addUser`, `createUserWithEmail`, `impersonateB2BUser`, `impersonateUser`) send their audit event fire-and-forget: an audit failure is still logged as `error` `audit.sendEventError` but no longer fails a mutation whose write already happened (a client retry would duplicate the record). Idempotent writes (`save*`, `update*`, `delete*`, `remove*`, declined request, `setMarketingTags`) keep the strict, fail-closed audit.
