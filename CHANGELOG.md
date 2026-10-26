@@ -16,6 +16,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - **[B2BTEAM-3982]** `createCostCenterWithId` treats a 200 response with an empty body (`''` / `{}`) from Master Data as "not found" and creates the cost center, instead of reporting `createCostCenterWithId.alreadyExists`. Only a document carrying an `id` counts as existing.
 - **[B2BTEAM-3982]** `addUser` no longer throws a `TypeError` when the storefront-permissions error has no `graphQLErrors`; it falls back to `error.message`.
 
+## [2.8.6] - 2026-10-26
+
+### Changed
+
+- **[B2BTEAM-3987]** `checkConfig` (run by mutations and, cached, by queries through `ensureConfigForQuery`) logs `checkConfig.schemaUpdateError` (`dataEntity`), `checkConfig.saveSettingsError` (`settingsKey`) and `warn` `checkConfig.templateError` (`template`) with `describeClientError` instead of `checkConfig-createOrUpdateSchemaError`, `checkConfig-saveSettingsError`, `checkConfig-updatingTemplatesError` and `checkConfig-publishTemplateError` with the raw error. A schema `304` and a first-run `404` on the settings read stay silent.
+- **[B2BTEAM-3987]** Behavior change: a template failure (`getTemplate` / `publishTemplate`) no longer fails the mutation that ran `checkConfig` (previously `publishTemplate` errors were rethrown). It logs `warn` `checkConfig.templateError`, the template hash is not saved, and the sync is retried on the next call. A `404` from `getTemplate` now means "not published yet" and publishes the template.
+- **[B2BTEAM-3987]** `saveB2BSettings` logs `saveB2BSettings.readSettingsError` / `saveB2BSettings.error` and `saveSalesChannels` logs `saveSalesChannels.error`, all with `describeClientError`, instead of `saveB2BSettings-currentB2BSettings-error` / `saveB2BSettings-error` / `saveSalesChannels-Error` with the raw error. `saveSalesChannels` returns the error message (string) instead of the error object in `message`.
+- **[B2BTEAM-3987]** `getB2BSettings-error` / `getOrganizationCustomFields-error` become `getB2BSettings.error` / `getOrganizationCustomFields.error`. `getSellers`, `getSellersPaginated` and `getAccount` failures now log `getSellers.error` / `getSellersPaginated.error` / `getAccount.error` (`describeClientError`); they were not logged. Thrown errors are unchanged.
+
+### Fixed
+
+- **[B2BTEAM-3987]** `checkConfig` no longer treats any settings read failure as a first run: a non-`404` error logs `checkConfig.readSettingsError` (`settingsKey`) and skips the schema/template sync instead of overwriting the stored hashes. The caller continues.
+- **[B2BTEAM-3987]** `ensureConfigForQuery` no longer caches an incomplete sync (failed settings read, schema, template or settings save) as "synced" for the TTL; the next query retries. The cause is logged once by `checkConfig`, not again as `ensureConfigForQuery-error`.
+- **[B2BTEAM-3987]** `checkConfig` no longer writes the computed hashes into the shared default settings object.
+- **[B2BTEAM-3987]** `getAppSettings`: a non-`404` read error logs `getAppSettings.readSettingsError` and skips the schema update and save (a `404` is a first run and stays silent; it was logged as `b2borg.getAppSettings-Error`). A schema update error without an HTTP response no longer turns into a `TypeError`; non-`304` failures log `getAppSettings.schemaUpdateError` (`dataEntity`) and the original error is rethrown. A `304` stays silent.
+
 ## [2.8.5] - 2026-10-23
 
 ### Changed

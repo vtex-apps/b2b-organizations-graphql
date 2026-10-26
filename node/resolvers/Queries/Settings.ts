@@ -60,8 +60,10 @@ const B2BSettings = {
       return settings
     } catch (e) {
       ctx.vtex.logger.error({
+        entity: 'Settings',
         error: describeClientError(e),
-        message: 'getB2BSettings-error',
+        message: 'getB2BSettings.error',
+        operation: 'getB2BSettings',
       })
 
       if (e.message) {
@@ -95,8 +97,10 @@ const B2BSettings = {
       return settings.organizationCustomFields
     } catch (e) {
       ctx.vtex.logger.error({
+        entity: 'Settings',
         error: describeClientError(e),
-        message: 'getOrganizationCustomFields-error',
+        message: 'getOrganizationCustomFields.error',
+        operation: 'getOrganizationCustomFields',
       })
 
       if (e.message) {
@@ -125,7 +129,18 @@ const B2BSettings = {
       },
     })
 
-    return (await sellers.getSellers())?.items
+    try {
+      return (await sellers.getSellers())?.items
+    } catch (e) {
+      ctx.vtex.logger.error({
+        entity: 'Seller',
+        error: describeClientError(e),
+        message: 'getSellers.error',
+        operation: 'getSellers',
+      })
+
+      throw e
+    }
   },
   getSellersPaginated: async (
     _: void,
@@ -151,6 +166,13 @@ const B2BSettings = {
 
       return await sellers.getSellersPaginated(options)
     } catch (e) {
+      ctx.vtex.logger.error({
+        entity: 'Seller',
+        error: describeClientError(e),
+        message: 'getSellersPaginated.error',
+        operation: 'getSellersPaginated',
+      })
+
       if (e.message) {
         throw new GraphQLError(e.message)
       } else if (e.response?.data?.message) {
@@ -182,6 +204,13 @@ const B2BSettings = {
 
       return result
     } catch (e) {
+      ctx.vtex.logger.error({
+        entity: 'Account',
+        error: describeClientError(e),
+        message: 'getAccount.error',
+        operation: 'getAccount',
+      })
+
       if (e.message) {
         throw new GraphQLError(e.message)
       } else if (e.response?.data?.message) {
