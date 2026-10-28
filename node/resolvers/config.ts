@@ -1,16 +1,13 @@
-import { schemas } from '../mdSchema'
 import templates from '../templates'
 import { toHash } from '../utils'
 import { describeClientError } from '../utils/clientError'
 import { getHttpStatus } from '../utils/httpError'
 
 export interface Settings {
-  schemaHash: string | null
   templateHash: string | null
 }
 
 const defaultSettings: Settings = {
-  schemaHash: null,
   templateHash: null,
 }
 
@@ -40,7 +37,7 @@ const getSchemaSettingsKey = (): string => {
 
 /**
  * Thrown by `checkConfig(ctx, { throwOnIncomplete: true })` when the sync did
- * not finish (settings unreadable, a schema or template failed, or the hash
+ * not finish (settings unreadable, a template failed, or the hash
  * could not be saved). The cause is already logged with its own key; the
  * throw only exists so `ensureConfigForQuery` does not cache "synced" for the
  * TTL and the next Query retries.
@@ -64,7 +61,7 @@ const checkConfig = async (
 ) => {
   const {
     vtex: { logger },
-    clients: { mail, masterdata, vbase },
+    clients: { mail, vbase },
   } = ctx
 
   const settingsKey = getSchemaSettingsKey()
@@ -81,7 +78,7 @@ const checkConfig = async (
   } catch (error) {
     if (getHttpStatus(error) !== 404) {
       // Not a first run: we cannot tell what is already synced, so do not
-      // update schemas or overwrite the stored hashes blindly (same rule as
+      // update templates or overwrite the stored hash blindly (same rule as
       // the 404-only guard of B2BTEAM-3969). The caller goes on.
       logger.error({
         entity: 'Settings',
@@ -101,59 +98,16 @@ const checkConfig = async (
     storedSettings = null
   }
 
-  let schemaChanged = false
   let templatesChanged = false
 
-  // Copy: the hashes are assigned below and must never leak into the shared
-  // default object.
-  const settings: Settings =
-    !storedSettings?.schemaHash || !storedSettings?.templateHash
-      ? { ...defaultSettings }
-      : { ...storedSettings }
+  // Copy: the hash is assigned below and must never leak into the shared
+  // default object. Master Data schemas are no longer synced here
+  // (B2BTEAM-4295), so only the template hash decides what is in sync.
+  const settings: Settings = !storedSettings?.templateHash
+    ? { ...defaultSettings }
+    : { ...storedSettings }
 
-  const currSchemaHash = toHash(schemas)
   const currTemplateHash = toHash(templates)
-
-  if (!settings.schemaHash || settings.schemaHash !== currSchemaHash) {
-    logger.info({
-      message: 'checkConfig-updatingSchema',
-    })
-
-    const results = await Promise.all(
-      schemas.map((schema) =>
-        masterdata
-          .createOrUpdateSchema({
-            dataEntity: schema.name,
-            schemaBody: schema.body,
-            schemaName: schema.version,
-          })
-          .then(() => true)
-          .catch((error: any) => {
-            // 304: schema already up to date, that is a success.
-            if (getHttpStatus(error) === 304) {
-              return true
-            }
-
-            logger.error({
-              dataEntity: schema.name,
-              entity: 'Settings',
-              error: describeClientError(error),
-              message: 'checkConfig.schemaUpdateError',
-              operation: 'checkConfig',
-            })
-
-            return false
-          })
-      )
-    )
-
-    if (results.every((res) => res === true)) {
-      settings.schemaHash = currSchemaHash
-      schemaChanged = true
-    } else {
-      incomplete = true
-    }
-  }
 
   if (!settings.templateHash || settings.templateHash !== currTemplateHash) {
     logger.info({
@@ -203,7 +157,7 @@ const checkConfig = async (
     }
   }
 
-  if (schemaChanged || templatesChanged) {
+  if (templatesChanged) {
     try {
       await vbase.saveJSON('mdSchema', settingsKey, settings)
     } catch (error) {

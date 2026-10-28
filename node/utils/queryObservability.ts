@@ -36,7 +36,7 @@ export const maybeEmitCacheStats = (ctx: Context) => {
 }
 
 /**
- * Queries must not block on schema/template sync. Fire-and-forget when the
+ * Queries must not block on the email template sync. Fire-and-forget when the
  * per-tenant "already synced" memory flag is cold; mutations still await
  * `checkConfig` directly.
  *
@@ -50,12 +50,9 @@ export const maybeEmitCacheStats = (ctx: Context) => {
  * `throwOnIncomplete` makes checkConfig reject when the sync did not finish
  * (it does not throw for mutations), for the same reason.
  *
- * Not awaiting is safe for reads because the hot read path does not reference
- * the schema - `MasterDataExtended.getDocumentById` sends `_fields` only, no
- * `_schema` - so a Query does not depend on this having run. What is left is an
- * account whose data entity has never been created, which has no organizations
- * to return either way; the first mutation still awaits `checkConfig` and
- * creates it.
+ * Not awaiting is safe for reads because a Query does not depend on the email
+ * templates having been published. `checkConfig` no longer creates or updates
+ * Master Data schemas (B2BTEAM-4295): they must already exist on the account.
  */
 export const ensureConfigForQuery = (ctx: Context) => {
   getCachedCheckConfig(ctx, () =>

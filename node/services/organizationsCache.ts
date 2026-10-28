@@ -48,7 +48,7 @@ const cachedCostCenterSummary = createCachedResource<any>(
 )
 
 /**
- * "Schema/templates already synced for this tenant" flag. Only successes land
+ * "Email templates already synced for this tenant" flag. Only successes land
  * here: a rejected fetcher propagates out before the entry is written, so a
  * failed sync is retried by the next Query rather than pinned for the TTL. That
  * depends on the caller not swallowing the rejection inside the fetcher - see
