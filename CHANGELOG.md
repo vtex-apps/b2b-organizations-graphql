@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Removed
+
+- [B2BTEAM-4295] Remove automatic Master Data schema update from `checkConfig` and `getAppSettings`
+
 ## [0.65.1] - 2025-05-13
 
 ## [0.65.0] - 2025-04-11
