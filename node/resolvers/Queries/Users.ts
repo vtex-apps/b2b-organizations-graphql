@@ -2,9 +2,7 @@ import {
   ORGANIZATION_DATA_ENTITY,
   ORGANIZATION_FIELDS,
   ORGANIZATION_SCHEMA_VERSION,
-  schemas,
 } from '../../mdSchema'
-import { toHash } from '../../utils'
 import GraphQLError, { getErrorMessage } from '../../utils/GraphQLError'
 import { getAppId } from '../config'
 
@@ -171,7 +169,7 @@ const sleep = (ms: number) => {
 const Users = {
   getAppSettings: async (_: void, __: void, ctx: Context) => {
     const {
-      clients: { masterdata, vbase },
+      clients: { vbase },
       vtex: { logger },
     } = ctx
 
@@ -187,46 +185,6 @@ const Users = {
 
     if (!settings.adminSetup) {
       settings.adminSetup = {}
-    }
-
-    const currHash = toHash(schemas)
-
-    if (
-      !settings.adminSetup?.schemaHash ||
-      settings.adminSetup?.schemaHash !== currHash
-    ) {
-      const updates: any = []
-
-      schemas.forEach((schema) => {
-        updates.push(
-          masterdata
-            .createOrUpdateSchema({
-              dataEntity: schema.name,
-              schemaBody: schema.body,
-              schemaName: schema.version,
-            })
-            .then(() => true)
-            .catch((e: any) => {
-              if (e.response.status !== 304) {
-                throw e
-              }
-
-              return true
-            })
-        )
-      })
-
-      await Promise.all(updates)
-        .then(() => {
-          settings.adminSetup.schemaHash = currHash
-        })
-        .catch((e) => {
-          if (e.response.status !== 304) {
-            throw new Error(e)
-          }
-        })
-
-      await vbase.saveJSON('b2borg', app, settings)
     }
 
     return settings
