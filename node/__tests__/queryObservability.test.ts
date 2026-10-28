@@ -23,7 +23,7 @@ jest.mock('@vtex/diagnostics-nodejs', () => ({}))
 
 jest.mock('../resolvers/config', () => ({
   __esModule: true,
-  default: jest.fn().mockResolvedValue({ schemaHash: 'x', templateHash: 'y' }),
+  default: jest.fn().mockResolvedValue({ templateHash: 'y' }),
 }))
 
 jest.mock('../services/organizationsCache', () => {

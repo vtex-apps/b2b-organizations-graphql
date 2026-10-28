@@ -1,16 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * B2BTEAM-3987 (US-4, SDD §4.4): logger spies for the settings / schema /
- * template keys.
+ * B2BTEAM-3987 (US-4, SDD §4.4): logger spies for the settings / template
+ * keys.
  *
- * - `checkConfig.readSettingsError` / `checkConfig.schemaUpdateError` /
- *   `checkConfig.templateError` (warn, never fails the caller, hash not saved)
- *   / `checkConfig.saveSettingsError`; 304 and a first-run 404 stay silent.
+ * - `checkConfig.readSettingsError` / `checkConfig.templateError` (warn, never
+ *   fails the caller, hash not saved) / `checkConfig.saveSettingsError`; a
+ *   first-run 404 stays silent.
+ * - B2BTEAM-4295: neither `checkConfig` nor `getAppSettings` creates or updates
+ *   Master Data schemas any more.
  * - `ensureConfigForQuery` does not cache an incomplete sync.
  * - `saveB2BSettings.readSettingsError` / `saveB2BSettings.error` /
  *   `saveSalesChannels.error`.
- * - `getAppSettings.readSettingsError` / `getAppSettings.schemaUpdateError`
- *   (no TypeError when the error has no response).
+ * - `getAppSettings.readSettingsError`.
  * - `getB2BSettings.error` / `getOrganizationCustomFields.error` /
  *   `getSellers.error` / `getSellersPaginated.error` / `getAccount.error`.
  */
@@ -19,7 +20,6 @@ import SettingsMutations from '../resolvers/Mutations/Settings'
 import SettingsQueries from '../resolvers/Queries/Settings'
 import UsersQueries from '../resolvers/Queries/Users'
 import { ensureConfigForQuery } from '../utils/queryObservability'
-import { schemas } from '../mdSchema'
 import templates from '../templates'
 import { toHash } from '../utils'
 
@@ -116,7 +116,7 @@ beforeAll(() => {
 })
 
 describe('checkConfig (B2BTEAM-3987)', () => {
-  it('first run (404) is silent and saves both hashes', async () => {
+  it('first run (404) is silent and saves only the template hash', async () => {
     const ctx = makeCtx()
 
     ctx.clients.vbase.getJSON.mockRejectedValueOnce(httpError(404))
@@ -132,12 +132,36 @@ describe('checkConfig (B2BTEAM-3987)', () => {
     expect(ctx.clients.vbase.saveJSON).toHaveBeenCalledWith(
       'mdSchema',
       SETTINGS_KEY,
-      { schemaHash: toHash(schemas), templateHash: toHash(templates) }
+      { templateHash: toHash(templates) }
     )
-    expect(result).toEqual({
-      schemaHash: toHash(schemas),
-      templateHash: toHash(templates),
-    })
+    expect(result).toEqual({ templateHash: toHash(templates) })
+  })
+
+  it('never creates or updates Master Data schemas (B2BTEAM-4295)', async () => {
+    const ctx = makeCtx()
+
+    await checkConfig(ctx)
+
+    expect(ctx.clients.masterdata.createOrUpdateSchema).not.toHaveBeenCalled()
+    expect(messages(ctx.logger.info)).not.toContain(
+      'checkConfig-updatingSchema'
+    )
+  })
+
+  it('a legacy stored schemaHash does not trigger a schema update and is kept', async () => {
+    const ctx = makeCtx()
+    const stored = { schemaHash: 'legacy', templateHash: 'old' }
+
+    ctx.clients.vbase.getJSON.mockResolvedValue(stored)
+
+    await checkConfig(ctx)
+
+    expect(ctx.clients.masterdata.createOrUpdateSchema).not.toHaveBeenCalled()
+    expect(ctx.clients.vbase.saveJSON).toHaveBeenCalledWith(
+      'mdSchema',
+      SETTINGS_KEY,
+      { schemaHash: 'legacy', templateHash: toHash(templates) }
+    )
   })
 
   it('does not leak hashes into the shared default settings', async () => {
@@ -147,14 +171,11 @@ describe('checkConfig (B2BTEAM-3987)', () => {
 
     const second = makeCtx()
 
-    second.clients.masterdata.createOrUpdateSchema.mockRejectedValue(
-      httpError(500)
-    )
     second.clients.mail.getTemplate.mockRejectedValue(httpError(500))
 
     const result = await checkConfig(second)
 
-    expect(result).toEqual({ schemaHash: null, templateHash: null })
+    expect(result).toEqual({ templateHash: null })
   })
 
   it('non-404 read error logs checkConfig.readSettingsError and skips the sync', async () => {
@@ -178,52 +199,6 @@ describe('checkConfig (B2BTEAM-3987)', () => {
     expect(ctx.clients.vbase.saveJSON).not.toHaveBeenCalled()
   })
 
-  it('304 on schema update is silent and counts as success', async () => {
-    const ctx = makeCtx()
-
-    ctx.clients.masterdata.createOrUpdateSchema.mockRejectedValue(
-      httpError(304)
-    )
-
-    await checkConfig(ctx)
-
-    expect(ctx.logger.error).not.toHaveBeenCalled()
-    expect(ctx.clients.vbase.saveJSON.mock.calls[0][2].schemaHash).toBe(
-      toHash(schemas)
-    )
-  })
-
-  it('non-304 schema failure logs checkConfig.schemaUpdateError per data entity and keeps the schema hash unset', async () => {
-    const ctx = makeCtx()
-
-    ctx.clients.masterdata.createOrUpdateSchema.mockImplementation(
-      ({ dataEntity }: { dataEntity: string }) =>
-        dataEntity === schemas[0].name
-          ? Promise.reject(httpError(500))
-          : Promise.resolve()
-    )
-
-    await checkConfig(ctx)
-
-    const logs = ctx.logger.error.mock.calls
-      .map(([payload]: any[]) => payload)
-      .filter((p: any) => p.message === 'checkConfig.schemaUpdateError')
-
-    expect(logs).toHaveLength(1)
-    expect(logs[0]).toMatchObject({
-      dataEntity: schemas[0].name,
-      entity: 'Settings',
-      operation: 'checkConfig',
-    })
-    expect(logs[0].error.status).toBe(500)
-
-    // Templates still synced and saved; schema hash stays null for a retry.
-    expect(ctx.clients.vbase.saveJSON.mock.calls[0][2]).toEqual({
-      schemaHash: null,
-      templateHash: toHash(templates),
-    })
-  })
-
   it('template failure warns checkConfig.templateError, does not throw and does not save the template hash', async () => {
     const ctx = makeCtx()
 
@@ -244,15 +219,13 @@ describe('checkConfig (B2BTEAM-3987)', () => {
       template: templates[1].Name,
     })
     expect(ctx.logger.error).not.toHaveBeenCalled()
-    expect(ctx.clients.vbase.saveJSON.mock.calls[0][2]).toEqual({
-      schemaHash: toHash(schemas),
-      templateHash: null,
-    })
+    // Templates are the only thing synced: nothing changed, nothing saved.
+    expect(ctx.clients.vbase.saveJSON).not.toHaveBeenCalled()
   })
 
   it('getTemplate failure warns and is retried on the next call', async () => {
     const ctx = makeCtx()
-    const stored = { schemaHash: toHash(schemas), templateHash: 'old' }
+    const stored = { templateHash: 'old' }
 
     ctx.clients.vbase.getJSON.mockResolvedValue(stored)
     ctx.clients.mail.getTemplate.mockRejectedValueOnce(httpError(500))
@@ -267,7 +240,7 @@ describe('checkConfig (B2BTEAM-3987)', () => {
     expect(ctx.clients.vbase.saveJSON).toHaveBeenCalledWith(
       'mdSchema',
       SETTINGS_KEY,
-      { schemaHash: toHash(schemas), templateHash: toHash(templates) }
+      { templateHash: toHash(templates) }
     )
   })
 
@@ -296,11 +269,10 @@ describe('checkConfig (B2BTEAM-3987)', () => {
     ).toMatchObject({ settingsKey: SETTINGS_KEY, operation: 'checkConfig' })
   })
 
-  it('nothing to do when the stored hashes are current', async () => {
+  it('nothing to do when the stored template hash is current', async () => {
     const ctx = makeCtx()
 
     ctx.clients.vbase.getJSON.mockResolvedValue({
-      schemaHash: toHash(schemas),
       templateHash: toHash(templates),
     })
 
@@ -344,7 +316,7 @@ describe('ensureConfigForQuery (B2BTEAM-3987)', () => {
     await flush()
 
     expect(ctx.clients.vbase.getJSON).toHaveBeenCalledTimes(2)
-    expect(ctx.clients.vbase.saveJSON).toHaveBeenCalledTimes(2)
+    expect(ctx.clients.vbase.saveJSON).toHaveBeenCalledTimes(1)
 
     // Now synced: cached, no more reads.
     ensureConfigForQuery(ctx)
@@ -472,65 +444,49 @@ describe('saveB2BSettings / saveSalesChannels (B2BTEAM-3987)', () => {
 })
 
 describe('getAppSettings (B2BTEAM-3987)', () => {
-  it('first run (404) is silent and saves the schema hash', async () => {
+  it('first run (404) is silent and does not touch Master Data schemas (B2BTEAM-4295)', async () => {
     const ctx = makeCtx()
 
     ctx.clients.vbase.getJSON.mockRejectedValueOnce(httpError(404))
 
-    await UsersQueries.getAppSettings(undefined, undefined, ctx)
+    const result = await UsersQueries.getAppSettings(undefined, undefined, ctx)
 
+    expect(result).toEqual({ adminSetup: {} })
     expect(ctx.logger.error).not.toHaveBeenCalled()
-    expect(ctx.clients.vbase.saveJSON).toHaveBeenCalledTimes(1)
+    expect(ctx.clients.masterdata.createOrUpdateSchema).not.toHaveBeenCalled()
+    expect(ctx.clients.vbase.saveJSON).not.toHaveBeenCalled()
+    expect(ctx.clients.audit.sendEvent).toHaveBeenCalledTimes(1)
   })
 
-  it('non-404 read logs getAppSettings.readSettingsError and does not update or save', async () => {
+  it('returns the stored settings unchanged (B2BTEAM-4295)', async () => {
+    const ctx = makeCtx()
+    const stored = {
+      adminSetup: { schemaHashes: { '2': 'legacy' } },
+      autoApprove: true,
+    }
+
+    ctx.clients.vbase.getJSON.mockResolvedValueOnce(stored)
+
+    expect(
+      await UsersQueries.getAppSettings(undefined, undefined, ctx)
+    ).toEqual(stored)
+    expect(ctx.clients.masterdata.createOrUpdateSchema).not.toHaveBeenCalled()
+    expect(ctx.clients.vbase.saveJSON).not.toHaveBeenCalled()
+  })
+
+  it('non-404 read logs getAppSettings.readSettingsError and does not save', async () => {
     const ctx = makeCtx()
 
     ctx.clients.vbase.getJSON.mockRejectedValueOnce(httpError(503))
 
-    await expect(
-      UsersQueries.getAppSettings(undefined, undefined, ctx)
+    expect(
+      await UsersQueries.getAppSettings(undefined, undefined, ctx)
     ).toBeDefined()
 
     expect(
       findLog(ctx.logger.error, 'getAppSettings.readSettingsError')
     ).toMatchObject({ entity: 'Settings', operation: 'getAppSettings' })
     expect(ctx.clients.masterdata.createOrUpdateSchema).not.toHaveBeenCalled()
-    expect(ctx.clients.vbase.saveJSON).not.toHaveBeenCalled()
-  })
-
-  it('304 is silent', async () => {
-    const ctx = makeCtx()
-
-    ctx.clients.masterdata.createOrUpdateSchema.mockRejectedValue(
-      httpError(304)
-    )
-
-    await UsersQueries.getAppSettings(undefined, undefined, ctx)
-
-    expect(ctx.logger.error).not.toHaveBeenCalled()
-    expect(ctx.clients.vbase.saveJSON).toHaveBeenCalledTimes(1)
-  })
-
-  it('error without a response logs getAppSettings.schemaUpdateError and rethrows it (no TypeError)', async () => {
-    const ctx = makeCtx()
-    const boom = new Error('socket hang up')
-
-    ctx.clients.masterdata.createOrUpdateSchema.mockRejectedValue(boom)
-
-    await expect(
-      UsersQueries.getAppSettings(undefined, undefined, ctx)
-    ).rejects.toBe(boom)
-
-    const logs = ctx.logger.error.mock.calls
-      .map(([payload]: any[]) => payload)
-      .filter((p: any) => p.message === 'getAppSettings.schemaUpdateError')
-
-    expect(logs).toHaveLength(schemas.length)
-    expect(logs[0]).toMatchObject({
-      dataEntity: schemas[0].name,
-      operation: 'getAppSettings',
-    })
     expect(ctx.clients.vbase.saveJSON).not.toHaveBeenCalled()
   })
 })

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Removed
+
+- **[B2BTEAM-4295]** Automatic Master Data schema update. `checkConfig` (mutations and, cached, queries through `ensureConfigForQuery`) and `getAppSettings` no longer call `createOrUpdateSchema` nor store `schemaHash` / `adminSetup.schemaHashes`; the `checkConfig-updatingSchema`, `checkConfig.schemaUpdateError` and `getAppSettings.schemaUpdateError` logs are gone. `checkConfig` now only syncs the email templates: the stored settings are reset only when `templateHash` is missing, and the "synced" cache reflects the templates only. Master Data schemas must be created or updated manually through the Master Data schema API.
+
 ## [2.8.7] - 2026-10-26
 
 ### Changed
